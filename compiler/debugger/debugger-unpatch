@@ -1,0 +1,266 @@
+diff -aur patched/command_line.ml original/command_line.ml
+--- patched/command_line.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/command_line.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -75,7 +75,11 @@
+   raise Toplevel
+ 
+ let check_not_windows feature =
+-  ignore (error ("'" ^ feature ^ "' feature not supported"))
++  match Sys.os_type with
++  | "Win32" ->
++      error ("'"^feature^"' feature not supported on Windows")
++  | _ ->
++      ()
+ 
+ let eol =
+   end_of_line Lexer.lexeme
+diff -aur patched/debugcom.ml original/debugcom.ml
+--- patched/debugcom.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/debugcom.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -114,7 +114,13 @@
+ (* Perform a checkpoint *)
+ 
+ let do_checkpoint () =
+-  failwith "do_checkpoint"
++  match Sys.os_type with
++    "Win32" -> failwith "do_checkpoint"
++  | _ ->
++      output_char !conn.io_out 'c';
++      flush !conn.io_out;
++      let pid = input_binary_int !conn.io_in in
++      if pid = -1 then Checkpoint_failed else Checkpoint_done pid
+ 
+ (* Kill the given process. *)
+ let stop chan =
+@@ -205,7 +211,7 @@
+ 
+     let is_block = function
+     | Local obj -> Obj.is_block obj
+-    | Remote v -> ((Char.code v.[0]) land 1) = 0
++    | Remote v -> Obj.is_block (Array.unsafe_get (Obj.magic v : Obj.t array) 0)
+ 
+     let tag = function
+     | Local obj -> Obj.tag obj
+@@ -238,16 +244,10 @@
+           if input_byte !conn.io_in = 0 then
+             Remote(input_remote_value !conn.io_in)
+           else begin
+-            let buf = String.create 8 in
+-            really_input !conn.io_in buf 0 8;
+-            let bits = ref Int64.zero in
+-            for i = 0 to pred (String.length buf) do
+-              bits := Int64.(logor
+-                               (shift_left !bits 8)
+-                               (of_int (Char.code buf.[i])))
+-            done;
+-            let res = Int64.float_of_bits !bits in
+-            Local(Obj.repr res)
++            let buf = Misc.input_bytes !conn.io_in 8 in
++            let floatbuf = float n (* force allocation of a new float *) in
++            String.unsafe_blit buf 0 (Obj.magic floatbuf) 0 8;
++            Local(Obj.repr floatbuf)
+           end
+ 
+     let of_int n =
+diff -aur patched/debugger_config.ml original/debugger_config.ml
+--- patched/debugger_config.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/debugger_config.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -74,7 +74,10 @@
+ let checkpoint_max_count = ref 15
+ 
+ (* Whether to keep checkpoints or not. *)
+-let make_checkpoints = ref false
++let make_checkpoints = ref
++  (match Sys.os_type with
++    "Win32" -> false
++  | _ -> true)
+ 
+ (*** Environment variables for debugee. ***)
+ 
+diff -aur patched/exec.ml original/exec.ml
+--- patched/exec.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/exec.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -22,6 +22,13 @@
+   then interrupted := true
+   else raise Sys.Break
+ 
++let _ =
++  match Sys.os_type with
++    "Win32" -> ()
++  | _ ->
++      Sys.set_signal Sys.sigint (Sys.Signal_handle break);
++      Sys.set_signal Sys.sigpipe (Sys.Signal_handle(fun _ -> raise End_of_file))
++
+ let protect f =
+   if !is_protected then
+     f ()
+diff -aur patched/input_handling.ml original/input_handling.ml
+--- patched/input_handling.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/input_handling.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -68,13 +68,13 @@
+       while !continue_main_loop do
+         try
+           let (input, _, _) =
+-            (List.map fst !active_files), [], []
++            select (List.map fst !active_files) [] [] (-1.)
+           in
+             List.iter
+               (function fd ->
+                  let (funct, iochan) = (List.assoc fd !active_files) in
+                    funct iochan)
+-              [(List.hd input)]
++              input
+         with
+           Unix_error (EINTR, _, _) -> ()
+       done;
+diff -aur patched/main.ml original/main.ml
+--- patched/main.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/main.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -186,13 +186,17 @@
+   raise Not_found
+ 
+ let main () =
+-  Random.self_init ();
+   Callback.register "Debugger.function_placeholder" function_placeholder;
+   try
+     socket_name :=
+-      (Unix.string_of_inet_addr Unix.inet_addr_loopback) ^
+-      ":" ^
+-      (string_of_int (10000 + ((Random.bits ()) mod 10000)));
++      (match Sys.os_type with
++        "Win32" ->
++          (Unix.string_of_inet_addr Unix.inet_addr_loopback)^
++          ":"^
++          (string_of_int (10000 + ((Unix.getpid ()) mod 10000)))
++      | _ -> Filename.concat Filename.temp_dir_name
++                                ("camldebug" ^ (string_of_int (Unix.getpid ())))
++      );
+     begin try
+       Arg.parse speclist anonymous "";
+       Arg.usage speclist
+diff -aur patched/program_loading.ml original/program_loading.ml
+--- patched/program_loading.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/program_loading.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -66,6 +66,88 @@
+   done;
+   Buffer.contents res
+ 
++(* A generic function for launching the program *)
++let generic_exec_unix cmdline = function () ->
++  if !debug_loading then
++    prerr_endline "Launching program...";
++  let child =
++    try
++      fork ()
++    with x ->
++      Unix_tools.report_error x;
++      raise Toplevel in
++  match child with
++    0 ->
++      begin try
++         match fork () with
++           0 -> (* Try to detach the process from the controlling terminal,
++                   so that it does not receive SIGINT on ctrl-C. *)
++                begin try ignore(setsid()) with Invalid_argument _ -> () end;
++                execve shell [| shell; "-c"; cmdline() |] (get_environment ())
++         | _ -> exit 0
++       with x ->
++         Unix_tools.report_error x;
++         exit 1
++       end
++  | _ ->
++     match wait () with
++       (_, WEXITED 0) -> ()
++     | _ -> raise Toplevel
++
++let generic_exec_win cmdline = function () ->
++  if !debug_loading then
++    prerr_endline "Launching program...";
++  try ignore(create_process "cmd.exe" [| "/C"; cmdline() |] stdin stdout stderr)
++  with x ->
++    Unix_tools.report_error x;
++    raise Toplevel
++
++let generic_exec =
++  match Sys.os_type with
++    "Win32" -> generic_exec_win
++  | _ -> generic_exec_unix
++
++(* Execute the program by calling the runtime explicitly *)
++let exec_with_runtime =
++  generic_exec
++    (function () ->
++      match Sys.os_type with
++        "Win32" ->
++          (* This fould fail on a file name with spaces
++             but quoting is even worse because Unix.create_process
++             thinks each command line parameter is a file.
++             So no good solution so far *)
++          Printf.sprintf "%sset CAML_DEBUG_SOCKET=%s && %s %s %s"
++                     (get_win32_environment ())
++                     !socket_name
++                     runtime_program
++                     !program_name
++                     !arguments
++      | _ ->
++          Printf.sprintf "CAML_DEBUG_SOCKET=%s %s %s %s"
++                     !socket_name
++                     (Filename.quote runtime_program)
++                     (Filename.quote !program_name)
++                     !arguments)
++
++(* Excute the program directly *)
++let exec_direct =
++  generic_exec
++    (function () ->
++      match Sys.os_type with
++        "Win32" ->
++          (* See the comment above *)
++          Printf.sprintf "%sset CAML_DEBUG_SOCKET=%s && %s %s"
++                     (get_win32_environment ())
++                     !socket_name
++                     !program_name
++                     !arguments
++      | _ ->
++          Printf.sprintf "CAML_DEBUG_SOCKET=%s %s %s"
++                     !socket_name
++                     (Filename.quote !program_name)
++                     !arguments)
++
+ (* Ask the user. *)
+ let exec_manual =
+   function () ->
+@@ -79,7 +161,9 @@
+ type launching_function = (unit -> unit)
+ 
+ let loading_modes =
+-  ["manual", exec_manual]
++  ["direct", exec_direct;
++   "runtime", exec_with_runtime;
++   "manual", exec_manual]
+ 
+ let set_launching_function func =
+   launching_func := func
+@@ -87,7 +171,7 @@
+ (* Initialization *)
+ 
+ let _ =
+-  set_launching_function exec_manual
++  set_launching_function exec_direct
+ 
+ (*** Connection. ***)
+ 
+diff -aur patched/unix_tools.ml original/unix_tools.ml
+--- patched/unix_tools.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/unix_tools.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -34,7 +34,9 @@
+                prerr_endline "The port number should be an integer";
+                failwith "Can't convert address")))
+   with Not_found ->
+-    failwith "Unix sockets not supported"
++    match Sys.os_type with
++      "Win32" -> failwith "Unix sockets not supported"
++    | _ -> (PF_UNIX, ADDR_UNIX address)
+ 
+ (*** Report a unix error. ***)
+ let report_error = function

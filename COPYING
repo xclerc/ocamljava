@@ -1,0 +1,25 @@
+The OCaml-Java project uses different licences for its different components,
+in order to match the licences of the corresponding elements in the original
+OCaml distribution. The copyright holder for the whole OCaml-Java project is
+Xavier Clerc.
+
+The various components are:
+  - the build system: "*.sh" files of the root directory, and all files of the
+    "build/" directory;
+  - the compiler: all files of the "compiler/" directory, and subdirectories;
+  - the library: all files of the "library/" directory, and subdirectories;
+  - the optimizer: all files of the "optimizer/" directory, and subdirectories;
+  - the runtime: all files of the "runtime/" directory, and subdirectories;
+  - the wrapper: all files of the "wrapper/" directory, and subdirectories.
+
+The related licences are:
+  - the LGPL for the build system, library, optimizer, runtime, and wrapper;
+  - the QPL for the compiler.
+The texts of the licences can be found in the files named "COPYING.GPL",
+"COPYING.LGPL", and "COPYING.QPL" in the root directory.
+
+The files in the "third-party/" directory are copies of software needed in
+order to build OCaml-Java, and to then run files produced by its compiler.
+Each archive contains the copyright and licensing information related to its
+contents. The copyright and licenses of OCaml-Java therefore DO NOT apply to
+the elements stored in the various archives of this directory.

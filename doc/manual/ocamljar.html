@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>OCaml-Java: optimizer</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#description"><i class="icon-tag"></i>Description</a></li>
+  <li><a href="#options"><i class="icon-tag"></i>Options</a></li>
+</ul>
+</div>
+<div class="span8">
+
+
+<section id="top"><div class="page-header"><h1>OCaml-Java: optimizer</h1></div>
+<p>
+</p>
+</section>
+
+
+<section id="description"><div class="page-header"><h1>Description</h1></div>
+<p>
+The <code>ocamljava</code> compiler is quite conservative in order to compile and link programs in such a way that they can be used in very different settings. As an example, it is perfectly safe to have several <code>ocamljava</code>-compiled programs executing in the very same JVM, which can be useful when compiling to applets or servlets. However, this comes at a price, and the <code>ocamljar</code> tool allows to get rid of costly indirections when the user knows for example that there will be only one <code>ocamljava</code>-compiled program in the JVM.
+</p>
+<p>
+The developer could specify optimization directives to the <code>ocamljava</code> compiler, but it would imply to recompile many files (including those from the standard library, and even from the runtime support). This explains why it has been decided to apply such optimization on linked programs.
+</p>
+</section>
+
+
+<section id="options"><div class="page-header"><h1>Options</h1></div>
+<p>
+The optimizer is invoked through a command line such as the following one:
+<pre>
+ocamljar &lt;options&gt; input-file.jar output-file.jar
+</pre>
+where possible options are:
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>command-line switch</th><th>default value</th><th>meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><tt><code>-no-backtrace &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to assume absence of backtrace use</td></tr>
+<tr><td><tt><code>-no-debug &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to remove debug statements</td></tr>
+<tr><td><tt><code>-no-dynlink &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to assume absence of dynamic linking</td></tr>
+<tr><td><tt><code>-no-runtime-lock &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to remove support for runtime lock</td></tr>
+<tr><td><tt><code>-no-signals &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to remove support for signals</td></tr>
+<tr><td><tt><code>-no-unused-global &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to remove remove initialization of unused globals </td></tr>
+<tr><td><tt><code>-one-context &lt;bool&gt;</code></tt></td><td><code>true</code></td><td>whether to assume unique context (meaning that there should be only one OCaml-Java program executing in the JVM)</td></tr>
+<tr><td><tt><code>-unsafe &lt;bool&gt;</code></tt></td><td><code>false</code></td><td>whether to use unsafe containers (allowing to avoid array bound checks performed by the JVM for container classes representing OCaml values)</td></tr>
+</tbody>
+</table>
+</p>
+<div class="alert alert-error">
+<strong>Warning!</strong> when using the unsafe containers, it is necessary to run the code with enhanced privileges, through <code>java -Xbootclasspath/p:output-file.jar pack.ocamljavaMain</code> (where the default <code>pack</code> may have been changed by using the <code>-java-package</code> command-line switch from <code>ocamljava</code> at link time).
+</div></section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>

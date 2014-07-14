@@ -1,0 +1,12 @@
+diff -aur original/configure patched/configure
+--- original/configure	2014-03-11 21:58:51.000000000 +0100
++++ patched/configure	2014-03-11 21:57:32.000000000 +0100
+@@ -278,7 +278,7 @@
+     bytecccompopts="-fno-defer-pop $gcc_warnings -DSHRINKED_GNUC"
+     mathlib="";;
+   *,*-*-darwin*)
+-    bytecccompopts="-fno-defer-pop $gcc_warnings"
++    bytecccompopts="$gcc_warnings"
+     mathlib=""
+     mkexe="$mkexe -Wl,-no_compact_unwind"
+     # Tell gcc that we can use 32-bit code addresses for threaded code

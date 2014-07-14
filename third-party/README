@@ -1,0 +1,9 @@
+The various archives in this directory are copies of the following open source
+software:
+  - Barista, from http://barista.x9c.fr
+  - Camlzip, from http://forge.ocamlcore.org/projects/camlzip
+  - Camomile, from https://github.com/yoriyuki/Camomile
+  - Jacl, from http://tcljava.sourceforge.net
+  - OCaml, from http://caml.inria.fr
+  - Servlet API, from http://tomcat.apache.org
+  - Swank, from http://kenai.com/projects/swank

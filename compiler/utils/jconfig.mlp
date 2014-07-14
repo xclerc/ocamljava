@@ -1,0 +1,116 @@
+(*
+ * This file is part of OCaml-Java compiler.
+ * Copyright (C) 2007-2014 Xavier Clerc.
+ *
+ * OCaml-Java compiler is free software; you can redistribute it and/or modify
+ * it under the terms of the Q Public License as published by
+ * Trolltech (with a change to choice of law).
+ *
+ * OCaml-Java compiler is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Q Public License for more details.
+ *
+ * You should have received a copy of the Q Public License
+ * along with this program.  If not, see
+ * <http://opensource.org/licenses/QPL-1.0>.
+ *)
+
+
+let version = "%%VERSION%%"
+
+let git_sha1 = "%%GIT_SHA1%%"
+
+let ints_are_63_bit_long = %%OCAML_INTS_ARE_63_BIT_LONG%%
+
+let model = "JVM 1.7+"
+
+let cmj_magic_number = "Caml2007J007" (* last bump: 2.0-alpha1 *)
+
+let cmja_magic_number = "Caml2007K007" (* last bump: 2.0-alpha1 *)
+
+let cmjs_magic_number = Config.cmxs_magic_number
+
+let ext_compiled = ".cmj"
+
+let ext_library = ".cmja"
+
+let ext_class = ".class"
+
+let ext_consts = ".consts"
+
+let ext_obj = ".jo"
+
+let ext_lib = ".ja"
+
+let ext_exec = ".jar"
+
+let ext_plugin = ".cmjs"
+
+let default_executable_name = "camlprog.jar"
+
+let primitive_definitions = "ocamlrun.primitives"
+
+let parameters_entry = "ocamljava.parameters"
+
+let runtime_support_jar = "ocamlrun.jar"
+
+let main_class = "ocamljavaMain"
+
+let main_applet_class = "ocamljavaApplet"
+
+let main_servlet_class = "ocamljavaServlet"
+
+let get_runtime_jar () =
+  let default =
+    Filename.concat Config.standard_library runtime_support_jar in
+  try
+    let alternative =
+      Filename.concat
+        (Filename.dirname @@ Sys.getenv "OCAMLJAVA_RUNNING_FILE")
+        runtime_support_jar in
+    if Sys.file_exists alternative then
+      alternative
+    else
+      default
+  with Not_found ->
+    default
+
+let print_config chan =
+  let print_string name value =
+    Printf.fprintf chan "%s: %s\n" name value in
+  let print_bool name value =
+    Printf.fprintf chan "%s: %B\n" name value in
+  print_string "version (ocaml)" Config.version;
+  print_string "version (ocaml-java)" version;
+  print_string "git sha1" git_sha1;
+  print_bool   "ints_are_63_bit_long" ints_are_63_bit_long;
+  print_string "standard_library" Config.standard_library;
+  print_string "standard_runtime" Config.standard_runtime;
+  print_string "ccomp_type" "javac";
+  print_string "architecture" "Java";
+  print_string "model" model;
+  print_string "ext_compiled" ext_compiled;
+  print_string "ext_library" ext_library;
+  print_string "ext_class" ext_class;
+  print_string "ext_consts" ext_consts;
+  print_string "ext_obj" ext_obj;
+  print_string "ext_lib" ext_lib;
+  print_string "ext_exec" ext_exec;
+  print_string "ext_plugin" ext_plugin;
+  print_string "default_executable_name" default_executable_name;
+  print_string "primitive_definitions" primitive_definitions;
+  print_string "parameters_entry" parameters_entry;
+  print_string "main_class" main_class;
+  print_string "main_applet_class" main_applet_class;
+  print_string "main_servlet_class" main_servlet_class;
+  print_string "runtime_support_jar" runtime_support_jar;
+  print_bool   "systhread_supported" true;
+  print_string "cmi_magic_number" Config.cmi_magic_number;
+  print_string "cmj_magic_number" cmj_magic_number;
+  print_string "cmja_magic_number" cmja_magic_number;
+  print_string "cmjs_magic_number" cmjs_magic_number;
+  print_string "ast_impl_magic_number" Config.ast_impl_magic_number;
+  print_string "ast_intf_magic_number" Config.ast_intf_magic_number;
+  print_string "cmt_magic_number" Config.cmt_magic_number;
+  flush chan

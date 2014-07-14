@@ -1,0 +1,4 @@
+This directory contains third-party software that is needed in order to build
+OCaml-Java. Each archive contains the copyright and licensing information
+related to its contents. The copyright and licenses of OCaml-Java therefore DO
+NOT apply to the elements stored in the various archives of this directory.

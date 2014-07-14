@@ -1,0 +1,69 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+# Original file (tools/Makefile.shared in the OCaml source
+# distribution) is Copyright (C) INRIA.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../config/Makefile
+
+CAMLJAVA=../ocamljava.opt -strict-sequence -nostdlib -I ../boot -java-package 'ocaml.tools.ocamldep'
+CAMLLEX=../lex/ocamllex.opt
+INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
+         -I ../driver
+COMPFLAGS= -w +32..39 -warn-error A $(INCLUDES)
+LINKFLAGS=$(INCLUDES) -I ../stdlib
+
+all: ocamldep.jar
+
+# The dependency generator
+
+CAMLDEP_OBJ=depend.cmj ocamldep.cmj
+CAMLDEP_IMPORTS=misc.cmj config.cmj clflags.cmj terminfo.cmj \
+  warnings.cmj location.cmj longident.cmj \
+  syntaxerr.cmj parser.cmj lexer.cmj parse.cmj \
+  ccomp.cmj pparse.cmj compenv.cmj
+
+ocamldep.jar: depend.cmi ../driver/compenv.cmj ../utils/terminfo.cmj $(CAMLDEP_OBJ)
+	$(CAMLJAVA) $(LINKFLAGS) -runtime-parameter embedded=on -runtime-parameter embedded-base=FileAnchor -additional-jar-ref ocaml-lib-files.jar -o ocamldep.jar $(CAMLDEP_IMPORTS) $(CAMLDEP_OBJ)
+
+# ocamldep is precious: sometimes we are stuck in the middle of a
+# bootstrap and we need to remake the dependencies
+clean::
+	if test -f ocamldep; then mv -f ocamldep ocamldep.bak; else :; fi
+	rm -f ocamldep.opt
+
+install::
+	cp ocamldep.jar $(BINDIR)
+
+# Common stuff
+
+.SUFFIXES:
+.SUFFIXES: .ml .mli .cmi .cmj
+
+.ml.cmj:
+	$(CAMLJAVA) -c $(COMPFLAGS) $<
+
+.mli.cmi:
+	$(CAMLJAVA) -c $(COMPFLAGS) $<
+
+clean::
+	rm -f *.cmj *.cmi
+
+depend: beforedepend
+	./ocamldep.opt $(INCLUDES) *.mli *.ml > .depend
+
+include .depend

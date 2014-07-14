@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>OCaml-Java: scripting</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#interpretation"><i class="icon-tag"></i>Code interpretation</a></li>
+  <li><a href="#mapping"><i class="icon-tag"></i>Type mapping</a></li>
+  <li><a href="#compilation"><i class="icon-tag"></i>Code compilation</a></li>
+</ul>
+</div>
+<div class="span8">
+
+
+<section id="top"><div class="page-header"><h1>OCaml-Java: scripting</h1></div>
+<p>
+Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. This page first shows how the support for scripting can be used to interpret OCaml code. Then, the mapping of Java types to OCaml is presented. Finally, an example shows how the scripting framework can be used to compile code.
+</p>
+<p>
+<div class="alert alert-warning">
+<strong>Warning!</strong> scripting does not currently support the typer extension allowing to access Java elements.
+</div>
+</p>
+</section>
+
+
+<section id="interpretation"><div class="page-header"><h1>Code interpretation</h1></div>
+<p>
+In order to be able to use the script engine, it is sufficient to add the archive <code>lib/ocamlrun-scripting.jar</code> to the classpath. It is then possible to interpret OCaml phrases from a Java application as shown by the following code sample:
+<pre>
+import javax.script.*;
+import org.ocamljava.runtime.support.scripting.OCamlContext;
+
+public final class SimpleInterpreted {
+
+    private static final String SCRIPT =
+        "external get_binding : string -> 'a = \"script_get_binding\";;\n" +
+        "let n = Int32.to_int (get_binding \"repetitions\");;\n" +
+        "let s : string = get_binding \"message\";;\n" +
+        "for i = 1 to n do print_endline s done;;\n";
+
+    public static void main(final String[] args) throws Throwable {
+        final ScriptEngineManager manager = new ScriptEngineManager();
+        final ScriptEngine engine = manager.getEngineByName("OCaml");
+        final ScriptContext ctxt = new OCamlContext();
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("repetitions", 3);
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("message", "hello!!!");
+        engine.eval(SCRIPT, ctxt);
+    }
+
+}
+</pre>
+where the external <code>get_binding</code> function allows to access bindings registered on the Java side of the application. 
+</p>
+</section>
+
+
+<section id="mapping"><div class="page-header"><h1>Type mapping</h1></div>
+<p>
+The mapping of Java types to OCaml types is given by the following table (notice that Java primitive types are necessarily promoted to their wrapper equivalents through the use of the binding API):
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>Java type</th><th>OCaml type</th></tr>
+</thead>
+<tbody>
+<tr><td><tt>java.lang.Boolean</tt></td>    <td><tt>bool</tt></td>   </tr>
+<tr><td><tt>java.lang.Byte</tt></td>       <td><tt>int</tt></td>    </tr>
+<tr><td><tt>java.lang.Character</tt></td>  <td><tt>int</tt></td>    </tr>
+<tr><td><tt>java.lang.Double</tt></td>     <td><tt>float</tt></td>  </tr>
+<tr><td><tt>java.lang.Float</tt></td>      <td><tt>float</tt></td>  </tr>
+<tr><td><tt>java.lang.Integer</tt></td>    <td><tt>int32</tt></td>  </tr>
+<tr><td><tt>java.lang.Long</tt></td>       <td><tt>int64</tt></td>  </tr>
+<tr><td><tt>java.lang.Short</tt></td>      <td><tt>int</tt></td>    </tr>
+<tr><td><tt>java.lang.String</tt></td>     <td><tt>string</tt></td> </tr>
+</tbody>
+</table>
+</section>
+</p>
+</section>
+
+
+<section id="compilation"><div class="page-header"><h1>Code compilation</h1></div>
+<p>
+Besides interpretation, it is also possible to compile OCaml sources in order to benefit from better performance. To do so, the archive <code>lib/ocamljava.jar</code> has to be added to the classpath in addition to the archive <code>lib/ocamlrun-scripting.jar</code>. The following code shows how to compile and then run an OCaml snippet from a Java application.
+<pre>
+import javax.script.*;
+import org.ocamljava.runtime.support.scripting.OCamlContext;
+
+public final class SimpleCompiled {
+
+    private static final String SCRIPT =
+        "external get_binding : string -> 'a = \"script_get_binding\"\n" +
+        "let () =\n" +
+        "  let n = Int32.to_int (get_binding \"repetitions\") in\n" +
+        "  let s : string = get_binding \"message\" in\n" +
+        "  for i = 1 to n do print_endline s done\n";
+
+    public static void main(final String[] args) throws Throwable {
+        final ScriptEngineManager manager = new ScriptEngineManager();
+        final ScriptEngine engine = manager.getEngineByName("OCaml");
+        final ScriptContext ctxt = new OCamlContext();
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("repetitions", 3);
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("message", "hello!!!");
+        final CompiledScript compiled = ((Compilable) engine).compile(SCRIPT);
+        compiled.eval(ctxt);
+    }
+
+}
+</pre>
+</p>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>

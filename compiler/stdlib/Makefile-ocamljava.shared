@@ -1,0 +1,56 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+# Original file (stdlib/Makefile.shared in the OCaml source
+# distribution) is Copyright (C) INRIA.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../config/Makefile
+CAMLJAVA=../ocamljava.opt
+COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -nostdlib -java-package 'ocaml.stdlib'
+CAMLDEP=../tools/ocamldep.opt
+
+OBJS=pervasives.cmj $(OTHERS)
+OTHERS=array.cmj list.cmj char.cmj string.cmj sys.cmj \
+  sort.cmj marshal.cmj obj.cmj \
+  int32.cmj int64.cmj nativeint.cmj \
+  lexing.cmj parsing.cmj \
+  set.cmj map.cmj stack.cmj queue.cmj \
+  camlinternalLazy.cmj lazy.cmj stream.cmj \
+  buffer.cmj printf.cmj \
+  arg.cmj printexc.cmj gc.cmj \
+  digest.cmj random.cmj hashtbl.cmj format.cmj scanf.cmj callback.cmj \
+  camlinternalOO.cmj oo.cmj camlinternalMod.cmj \
+  genlex.cmj weak.cmj \
+  filename.cmj complex.cmj \
+  arrayLabels.cmj listLabels.cmj stringLabels.cmj moreLabels.cmj stdLabels.cmj
+
+.SUFFIXES: .mli .ml .cmi .cmj
+
+.mli.cmi:
+	$(CAMLJAVA) $(COMPFLAGS) `./Jcompflags $@` -c $<
+
+.ml.cmj:
+	$(CAMLJAVA) $(COMPFLAGS) `./Jcompflags $@` -c $<
+
+clean::
+	rm -f *.cm* *.jo *.ja
+	rm -f *~
+
+include .depend
+
+depend:
+	$(CAMLDEP) *.mli *.ml > .depend

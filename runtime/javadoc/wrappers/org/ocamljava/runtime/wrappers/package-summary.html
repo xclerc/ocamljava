@@ -1,0 +1,562 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- NewPage -->
+<html lang="fr">
+<head>
+<title>org.ocamljava.runtime.wrappers (OCaml-Java)</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<script type="text/javascript"><!--
+    if (location.href.indexOf('is-external=true') == -1) {
+        parent.document.title="org.ocamljava.runtime.wrappers (OCaml-Java)";
+    }
+//-->
+</script>
+<noscript>
+<div>JavaScript is disabled on your browser.</div>
+</noscript>
+<!-- ========= START OF TOP NAVBAR ======= -->
+<div class="topNav"><a name="navbar_top">
+<!--   -->
+</a><a href="#skip-navbar_top" title="Skip navigation links"></a><a name="navbar_top_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../overview-summary.html">Overview</a></li>
+<li><a href="../../../../org/ocamljava/runtime/wrappers/package-summary.html">Package</a></li>
+<li>Class</li>
+<li><a href="package-use.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../index-all.html">Index</a></li>
+<li><a href="../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev Package</li>
+<li>Next Package</li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../index.html?org/ocamljava/runtime/wrappers/package-summary.html" target="_top">Frames</a></li>
+<li><a href="package-summary.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_top">
+<li><a href="../../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_top");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<a name="skip-navbar_top">
+<!--   -->
+</a></div>
+<!-- ========= END OF TOP NAVBAR ========= -->
+<div class="header">
+<h1 title="Package" class="title">Package&nbsp;org.ocamljava.runtime.wrappers</h1>
+<div class="docSummary">
+<div class="block">The <code>org.ocamljava.runtime.wrappers</code> package contains classes
+ allowing to wrap OCaml values (instance of classes that inherit from
+ <code>org.ocamljava.runtime.values.Value</code>).</div>
+</div>
+<p>See:&nbsp;<a href="#package_description">Description</a></p>
+</div>
+<div class="contentContainer">
+<ul class="blockList">
+<li class="blockList">
+<table class="packageSummary" border="0" cellpadding="3" cellspacing="0" summary="Interface Summary table, listing interfaces, and an explanation">
+<caption><span>Interface Summary</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Interface</th>
+<th class="colLast" scope="col">Description</th>
+</tr>
+<tbody>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlNumber.html" title="interface in org.ocamljava.runtime.wrappers">OCamlNumber</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlNumber</code> interface is similar to the
+ <code>java.lang.Number</code> class, thus allowing to manipulate OCaml
+ values wrapping numeric values in the same way as classical Java
+ wrappers for primitive types.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/Wrapper.html" title="interface in org.ocamljava.runtime.wrappers">Wrapper</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>Wrapper</code> interface defines the contract for a class
+ allowing to wrap a <code>Value</code>
+ (internal type of OCaml values) into a
+ <a href="../../../../org/ocamljava/runtime/wrappers/package-summary.html"><code>org.ocamljava.runtime.wrappers</code></a> (allowing easy access and
+ manipulation from Java code).</div>
+</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li class="blockList">
+<table class="packageSummary" border="0" cellpadding="3" cellspacing="0" summary="Class Summary table, listing classes, and an explanation">
+<caption><span>Class Summary</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Class</th>
+<th class="colLast" scope="col">Description</th>
+</tr>
+<tbody>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/ComposedWrapper.html" title="class in org.ocamljava.runtime.wrappers">ComposedWrapper</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>AsbtractWrapper</code> class provides a partial implementation
+ for the <code>Wrapper</code> interface, by taking the elements to be
+ returned by the <code>getWrapper(int)</code> method as constructor
+ parameters.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlArray.html" title="class in org.ocamljava.runtime.wrappers">OCamlArray</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlArray</code> class is the wrapper class for OCaml values of
+ type <code>'a array</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlBool.html" title="class in org.ocamljava.runtime.wrappers">OCamlBool</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlBool</code> class is the wrapper class for OCaml values of
+ type <code>bool</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlChar.html" title="class in org.ocamljava.runtime.wrappers">OCamlChar</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlChar</code> class is the wrapper class for OCaml values of
+ type <code>char</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlExn.html" title="class in org.ocamljava.runtime.wrappers">OCamlExn</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlExn</code> class is the wrapper class for OCaml values of
+ type <code>exn</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFloat.html" title="class in org.ocamljava.runtime.wrappers">OCamlFloat</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlFloat</code> class is the wrapper class for OCaml values of
+ type <code>float</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction</code> class represent an OCaml function taking one
+ parameter.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction10.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction10</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T7 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T8 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T9 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction10</code> class represent an OCaml function taking ten
+ parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction2.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction2</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction3</code> class represent an OCaml function taking two
+ parameter.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction3.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction3</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction3</code> class represent an OCaml function taking three
+ parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction4.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction4</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction4</code> class represent an OCaml function taking four
+ parameter.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction5.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction5</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction5</code> class represent an OCaml function taking five
+ parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction6.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction6</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction6</code> class represent an OCaml function taking six
+ parameter.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction7.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction7</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction7</code> class represent an OCaml function taking seven
+ parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction8.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction8</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T7 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction8</code> class represent an OCaml function taking eight
+ parameter.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFunction9.html" title="class in org.ocamljava.runtime.wrappers">OCamlFunction9</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T7 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T8 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,TR extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlFunction9</code> class represent an OCaml function taking nine
+ parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlGraphics.html" title="class in org.ocamljava.runtime.wrappers">OCamlGraphics</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlGraphics</code> provides utility methods related to the
+ <code>Graphics</code> module.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlInChannel.html" title="class in org.ocamljava.runtime.wrappers">OCamlInChannel</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlInChannel</code> class is the wrapper class for OCaml values of
+ type <code>int</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlInt.html" title="class in org.ocamljava.runtime.wrappers">OCamlInt</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlInt</code> class is the wrapper class for OCaml values of
+ type <code>int</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlInt32.html" title="class in org.ocamljava.runtime.wrappers">OCamlInt32</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlInt32</code> class is the wrapper class for OCaml values of
+ type <code>int32</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlInt64.html" title="class in org.ocamljava.runtime.wrappers">OCamlInt64</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlInt64</code> class is the wrapper class for OCaml values of
+ type <code>int64</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlJavaInstance.html" title="class in org.ocamljava.runtime.wrappers">OCamlJavaInstance</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlJavaInstance</code> class is the wrapper class for OCaml values of
+ type <code>java_instance</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlLazy.html" title="class in org.ocamljava.runtime.wrappers">OCamlLazy</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlLazy</code> class is the wrapper class for OCaml values of
+ type <code>'a lazy_t</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlList.html" title="class in org.ocamljava.runtime.wrappers">OCamlList</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlList</code> class is the wrapper class for OCaml values of
+ type <code>'a list</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlNativeInt.html" title="class in org.ocamljava.runtime.wrappers">OCamlNativeInt</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlNativeInt</code> class is the wrapper class for OCaml values of
+ type <code>nativeint</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlOption.html" title="class in org.ocamljava.runtime.wrappers">OCamlOption</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a option</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlOutChannel.html" title="class in org.ocamljava.runtime.wrappers">OCamlOutChannel</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlOutChannel</code> class is the wrapper class for OCaml values of
+ type <code>int</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlRef.html" title="class in org.ocamljava.runtime.wrappers">OCamlRef</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlRef</code> class is the wrapper class for OCaml values of
+ type <code>'a ref</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlString.html" title="class in org.ocamljava.runtime.wrappers">OCamlString</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlString</code> class is the wrapper class for OCaml values of
+ type <code>string</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple2.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple2</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple3.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple3</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple4.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple4</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c * 'd</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple5.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple5</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c * 'd * 'e</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple6.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple6</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c * 'd * 'e * 'f</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple7.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple7</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c * 'd * 'e * 'f * 'g</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlTuple8.html" title="class in org.ocamljava.runtime.wrappers">OCamlTuple8</a>&lt;T0 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T1 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T2 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T3 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T4 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T5 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T6 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>,T7 extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>OCamlOption</code> class is the wrapper class for OCaml values of
+ type <code>'a * 'b * 'c * 'd * 'e * 'f * 'g * 'h</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlUnit.html" title="class in org.ocamljava.runtime.wrappers">OCamlUnit</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlUnit</code> class is the wrapper class for OCaml values of
+ type <code>unit</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlValue</code> class is the superclass of all classes wrapping
+ OCaml values.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlWrappers.html" title="class in org.ocamljava.runtime.wrappers">OCamlWrappers</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlWrappers</code> provides utility methods related to wrappers.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/SimpleWrapper.html" title="class in org.ocamljava.runtime.wrappers">SimpleWrapper</a>&lt;T extends <a href="../../../../org/ocamljava/runtime/wrappers/OCamlValue.html" title="class in org.ocamljava.runtime.wrappers">OCamlValue</a>&gt;</td>
+<td class="colLast">
+<div class="block">The <code>AsbtractWrapper</code> class provides a partial implementation
+ for the <code>Wrapper</code> interface, by making the <code>getWrapper(int)</code>
+ method return a dummy value.</div>
+</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li class="blockList">
+<table class="packageSummary" border="0" cellpadding="3" cellspacing="0" summary="Exception Summary table, listing exceptions, and an explanation">
+<caption><span>Exception Summary</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Exception</th>
+<th class="colLast" scope="col">Description</th>
+</tr>
+<tbody>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlAssertFailureException.html" title="class in org.ocamljava.runtime.wrappers">OCamlAssertFailureException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlAssertFailureException</code> class is the Java counterpart of
+ the <code>Assert_failure</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlDivisionByZeroException.html" title="class in org.ocamljava.runtime.wrappers">OCamlDivisionByZeroException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlDivisionByZeroException</code> class is the Java counterpart of
+ the <code>Division_by_zero</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlEndOfFileException.html" title="class in org.ocamljava.runtime.wrappers">OCamlEndOfFileException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlEndOfFileException</code> class is the Java counterpart of
+ the <code>End_of_file</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlException.html" title="class in org.ocamljava.runtime.wrappers">OCamlException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlException</code> class is the parent class of all wrapped
+ OCaml exceptions, also acting as a fallback cases for when the wrapped
+ exception cannot be precisely mapped.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlFailureException.html" title="class in org.ocamljava.runtime.wrappers">OCamlFailureException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlFailureException</code> class is the Java counterpart of
+ the <code>Failure</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlInvalidArgumentException.html" title="class in org.ocamljava.runtime.wrappers">OCamlInvalidArgumentException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlInvalidArgumentException</code> class is the Java counterpart of
+ the <code>Invalid_argument</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlMatchFailureException.html" title="class in org.ocamljava.runtime.wrappers">OCamlMatchFailureException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlMatchFailureException</code> class is the Java counterpart of
+ the <code>Match_failure</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlNotFoundException.html" title="class in org.ocamljava.runtime.wrappers">OCamlNotFoundException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlNotFoundException</code> class is the Java counterpart of
+ the <code>Not_found</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlOutOfMemoryException.html" title="class in org.ocamljava.runtime.wrappers">OCamlOutOfMemoryException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlOutOfMemoryException</code> class is the Java counterpart of
+ the <code>Out_of_memory</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlStackOverflowException.html" title="class in org.ocamljava.runtime.wrappers">OCamlStackOverflowException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlStackOverflowException</code> class is the Java counterpart of
+ the <code>Stack_overflow</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlSysBlockedIOException.html" title="class in org.ocamljava.runtime.wrappers">OCamlSysBlockedIOException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlSysBlockedIOException</code> class is the Java counterpart of
+ the <code>Sys_blocked_io</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlSysErrorException.html" title="class in org.ocamljava.runtime.wrappers">OCamlSysErrorException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlSysErrorException</code> class is the Java counterpart of
+ the <code>Sys_error</code> OCaml exception.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><a href="../../../../org/ocamljava/runtime/wrappers/OCamlUndefinedRecursiveModuleException.html" title="class in org.ocamljava.runtime.wrappers">OCamlUndefinedRecursiveModuleException</a></td>
+<td class="colLast">
+<div class="block">The <code>OCamlUndefinedRecursiveModuleException</code> class is the Java counterpart of
+ the <code>Undefined_recursive_module</code> OCaml exception.</div>
+</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<a name="package_description">
+<!--   -->
+</a>
+<h2 title="Package org.ocamljava.runtime.wrappers Description">Package org.ocamljava.runtime.wrappers Description</h2>
+<div class="block">The <code>org.ocamljava.runtime.wrappers</code> package contains classes
+ allowing to wrap OCaml values (instance of classes that inherit from
+ <code>org.ocamljava.runtime.values.Value</code>). <br/>
+ <br/>
+ Wrappers can be used to wrap either an already existing value (through
+ <code>wrap</code> methods), or a newly-created one (through <code>create</code>
+ methods). <br/>
+ <br/>
+ These wrappers are also used as the base classes from the code generated
+ by the <code>ocamlwrap</code> tool.</div>
+</div>
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<div class="bottomNav"><a name="navbar_bottom">
+<!--   -->
+</a><a href="#skip-navbar_bottom" title="Skip navigation links"></a><a name="navbar_bottom_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../overview-summary.html">Overview</a></li>
+<li><a href="../../../../org/ocamljava/runtime/wrappers/package-summary.html">Package</a></li>
+<li>Class</li>
+<li><a href="package-use.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../index-all.html">Index</a></li>
+<li><a href="../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev Package</li>
+<li>Next Package</li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../index.html?org/ocamljava/runtime/wrappers/package-summary.html" target="_top">Frames</a></li>
+<li><a href="package-summary.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_bottom">
+<li><a href="../../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_bottom");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<a name="skip-navbar_bottom">
+<!--   -->
+</a></div>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+</body>
+</html>

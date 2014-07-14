@@ -1,0 +1,49 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+TOPDIR=../../..
+LIBNAME=labltk
+include $(TOPDIR)/config/Makefile
+INSTALLDIR=$(LIBDIR)/$(LIBNAME)
+
+OCAMLJAVA=$(TOPDIR)/ocamljava.opt
+COMPFLAGS=-g -java-package 'ocaml.otherlibs.labltk' -nostdlib -I $(TOPDIR)/stdlib -I ../camltk -I ../support
+
+OBJS=frx_misc.cmj frx_widget.cmj frx_font.cmj frx_entry.cmj frx_text.cmj frx_listbox.cmj \
+	frx_req.cmj frx_fillbox.cmj frx_focus.cmj frx_dialog.cmj frx_mem.cmj frx_rpc.cmj frx_synth.cmj \
+	frx_selection.cmj frx_after.cmj frx_fit.cmj frx_ctext.cmj frx_color.cmj
+
+all: frxlib.cmja
+
+frxlib.cmja: $(patsubst %.cmj,%.cmi,$(CMJ_FILES)) $(OBJS)
+	$(OCAMLJAVA) -a -o frxlib.cmja $(OBJS)
+
+install:
+	cp frxlib.cmja frxlib.ja $(INSTALLDIR)
+
+clean:
+	rm -f *.cm* *.jo *.ja
+
+.SUFFIXES:
+.SUFFIXES: .mli .ml .cmi .cmj
+
+.mli.cmi:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+.ml.cmj:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<

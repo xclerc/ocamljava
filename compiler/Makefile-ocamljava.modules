@@ -1,0 +1,110 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+ORIGINAL_UTILS=utils/misc.cmo utils/tbl.cmo utils/config.cmo \
+  utils/clflags.cmo utils/terminfo.cmo utils/ccomp.cmo utils/warnings.cmo \
+  utils/consistbl.cmo
+
+PATCHED_UTILS=$(ORIGINAL_UTILS)
+
+ORIGINAL_PARSING=parsing/location.cmo parsing/longident.cmo \
+  parsing/syntaxerr.cmo parsing/parser.cmo \
+  parsing/lexer.cmo parsing/parse.cmo parsing/printast.cmo \
+  parsing/pprintast.cmo \
+  parsing/ast_mapper.cmo
+
+PATCHED_PARSING=$(ORIGINAL_PARSING)
+
+ORIGINAL_TYPING=typing/ident.cmo typing/path.cmo \
+  typing/primitive.cmo typing/types.cmo \
+  typing/btype.cmo typing/oprint.cmo \
+  typing/subst.cmo typing/predef.cmo \
+  typing/datarepr.cmo typing/cmi_format.cmo typing/env.cmo \
+  typing/typedtree.cmo typing/printtyped.cmo typing/ctype.cmo \
+  typing/printtyp.cmo typing/includeclass.cmo \
+  typing/mtype.cmo typing/envaux.cmo typing/includecore.cmo \
+  typing/includemod.cmo typing/typetexp.cmo typing/parmatch.cmo \
+  typing/typedtreeIter.cmo typing/typedtreeMap.cmo typing/cmt_format.cmo \
+  typing/stypes.cmo typing/typecore.cmo \
+  typing/typedecl.cmo typing/typeclass.cmo \
+  typing/typemod.cmo
+
+PATCHED_TYPING=typing/ident.cmo typing/path.cmo \
+  typing/primitive.cmo typing/types.cmo \
+  typing/btype.cmo typing/oprint.cmo \
+  typing/subst.cmo typing/predef.cmo \
+    utils/jconfig.cmo utils/jclflags.cmo javatyping/jutils.cmo javatyping/jtypes.cmo \
+  typing/datarepr.cmo typing/cmi_format.cmo typing/env.cmo \
+  typing/typedtree.cmo typing/printtyped.cmo typing/ctype.cmo \
+  typing/printtyp.cmo typing/includeclass.cmo \
+  typing/mtype.cmo typing/envaux.cmo typing/includecore.cmo \
+  typing/includemod.cmo typing/typetexp.cmo typing/parmatch.cmo \
+  typing/typedtreeIter.cmo typing/typedtreeMap.cmo typing/cmt_format.cmo \
+  typing/stypes.cmo typing/typecore.cmo \
+  typing/typedecl.cmo typing/typeclass.cmo \
+  typing/typemod.cmo
+
+ORIGINAL_COMP=bytecomp/lambda.cmo bytecomp/printlambda.cmo \
+  bytecomp/typeopt.cmo bytecomp/switch.cmo bytecomp/matching.cmo \
+  bytecomp/translobj.cmo bytecomp/translcore.cmo \
+  bytecomp/translclass.cmo bytecomp/translmod.cmo \
+  bytecomp/simplif.cmo bytecomp/runtimedef.cmo \
+  driver/pparse.cmo driver/main_args.cmo \
+  driver/compenv.cmo driver/compmisc.cmo
+
+PATCHED_COMP=$(ORIGINAL_COMP)
+
+ORIGINAL_COMMON=$(ORIGINAL_UTILS) $(ORIGINAL_PARSING) $(ORIGINAL_TYPING) $(ORIGINAL_COMP)
+
+PATCHED_COMMON=$(PATCHED_UTILS) $(PATCHED_PARSING) $(PATCHED_TYPING) $(PATCHED_COMP)
+
+ORIGINAL_BYTECOMP=bytecomp/meta.cmo bytecomp/instruct.cmo bytecomp/bytegen.cmo \
+  bytecomp/printinstr.cmo bytecomp/opcodes.cmo bytecomp/emitcode.cmo \
+  bytecomp/bytesections.cmo bytecomp/dll.cmo bytecomp/symtable.cmo \
+  bytecomp/bytelink.cmo bytecomp/bytelibrarian.cmo bytecomp/bytepackager.cmo \
+  driver/errors.cmo driver/compile.cmo
+
+JAVACOMP=asmcomp/debuginfo.cmo utils/jcomp.cmo \
+  javacomp/archiveutils.cmo javacomp/instrtree.cmo \
+  javacomp/jcompilenv.cmo javacomp/targetint.cmo \
+  javacomp/bytecodeutils.cmo javacomp/runtimeprimitives.cmo \
+  javacomp/jlambda.cmo javacomp/printjlambda.cmo \
+  javacomp/jclosure_arrays.cmo javacomp/jclosure_exceptions.cmo javacomp/jclosure.cmo \
+  javacomp/macroinstr.cmo javacomp/printmacroinstr.cmo \
+  javacomp/macrogen_global.cmo javacomp/macrogen_primitives.cmo javacomp/macrogen.cmo \
+  javacomp/printbytecode.cmo javacomp/bytecodegen_misc.cmo \
+  javacomp/bytecodegen_constants.cmo javacomp/bytecodegen_global.cmo \
+  javacomp/bytecodegen_size.cmo javacomp/bytecodegen_prim.cmo \
+  javacomp/bytecodegen_javaprim.cmo javacomp/bytecodegen.cmo \
+  javacomp/javagen_servlet.cmo javacomp/javagen.cmo \
+  javacomp/javalink_parameters.cmo javacomp/javalink_startup.cmo \
+  javacomp/javalink_applet.cmo javacomp/javalink_servlet.cmo \
+  javacomp/javalink.cmo javacomp/javalibrarian.cmo javacomp/javapackager.cmo \
+  driver/java_args.cmo driver/javaerrors.cmo driver/javacompile.cmo
+
+BYTESTART=driver/main.cmo
+
+JAVASTART=driver/javamain.cmo
+
+SCRIPT=$(PATCHED_UTILS) $(PATCHED_PARSING) $(PATCHED_TYPING) $(PATCHED_COMP) $(JAVACOMP) \
+  toplevel/genprintval.cmo toplevel/scriptloop.cmo toplevel/scriptmain.cmo \
+  toplevel/scriptstart.cmo
+
+JAVATOP=$(PATCHED_UTILS) $(PATCHED_PARSING) $(PATCHED_TYPING) $(PATCHED_COMP) $(JAVACOMP) \
+  toplevel/genprintval.cmo toplevel/javatoploop.cmo toplevel/javatopdirs.cmo \
+  toplevel/javatopmain.cmo toplevel/javatopstart.cmo

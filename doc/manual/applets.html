@@ -1,0 +1,193 @@
+<html>
+<head>
+<title>OCaml-Java: developing applets</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#awt"><i class="icon-tag"></i>AWT applets</a></li>
+  <li><a href="#swing"><i class="icon-tag"></i>Swing applets</a></li>
+  <li><a href="#graphics"><i class="icon-tag"></i>Graphics applets</a></li>
+  <li><a href="#deployment"><i class="icon-tag"></i>Deployment</a></li>
+  <li><a href="#example"><i class="icon-tag"></i>Example</a></li>
+</ul>
+</div>
+<div class="span8">
+
+  
+<section id="top"><div class="page-header"><h1>OCaml-Java: developing applets</h1></div>
+<p>
+This page contains the information explaining how to develop Java applets using OCaml-Java. The first sections describe how to link applets respectively based on the Java AWT toolkit, the Java Swing toolkit, and the OCaml Graphics module. Then, a section explains how to deploy compiled applets. Finally, the last section consists in a complete example of a Swing-based applet.
+</p>
+</section>
+
+
+<section id="awt"><div class="page-header"><h1>AWT applets</h1></div>
+<p>
+To produce an AWT applet using the <code>ocamljava</code> compiler, it is necessary to link with the command-line switch <code>-applet awt</code>. In order to be able to successfully link with this command-line switch, the main module has to abide the module type defined as <code>JavaApplet.AWT</code>. The definition of this module type is:
+<pre>
+val applet_info : java'lang'String java_instance
+val parameter_info : parameter_info
+val init : java'applet'Applet java_instance -> unit
+val start : java'applet'Applet java_instance -> unit
+val stop : java'applet'Applet java_instance -> unit
+val destroy : java'applet'Applet java_instance -> unit
+</pre>
+The bare values <code>applet_info</code> and <code>parameter_info</code> define the values returned respectively by the <code>getAppletInfo()</code> and <code>getParameterInfo()</code> methods of the produced applet. The functions <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> give the implementation of the applet methods having the very same name. The passed parameter is simply the applet instance.
+</p>
+</section>
+
+
+<section id="swing"><div class="page-header"><h1>Swing applets</h1></div>
+<p>
+An applet based on Swing is very similar to an applet based on AWT. The link is done by passing the <code>-applet swing</code> command-line switch, which implies that the main module should abide the <code>JavaApplet.Swing</code> module type. This module type only differs from <code>JavaApplet.AWT</code> in the type of the parameter passed to the <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> functions: <code>javax'swing'JApplet java_instance</code> instead of <code>java'applet'Applet java_instance</code>.
+</p>
+</section>
+
+
+<section id="graphics"><div class="page-header"><h1>Graphics applets</h1></div>
+<p>
+An applet based on the OCaml <code>Graphics</code> module is slightly different from an applet based on either AWT or Swing. The link is done by passing the <code>-applet graphics</code> command-line switch, which implies that the main module should abide the <code>JavaApplet.Graphics</code> module type. This module type is different from <code>JavaApplet.AWT</code> and <code>JavaApplet.Swing</code> in two aspects:
+<ul>
+  <li>the parameter passed to the <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> functions is <code>()</code> rather than the applet instance;</li>
+  <li>an additional function, namely <code>run</code>, with type <code>JavaApplet.graphics_event -> unit</code> is requested.</li>
+</ul>
+The <code>run</code> function is called for every event happening on the canvas containing the drawing area of the <code>Graphics</code> module. For example, the following module defines an applet that draws a small square around every pixel clicked by the user:
+<pre>
+let applet_info = JavaString.of_string "simple Graphics applet"
+
+let parameter_info = JavaApplet.parameter_info_of_list []
+
+let init () = ()
+
+let start () = ()
+
+let run event =
+  if event.JavaApplet.button then begin
+    let x = event.JavaApplet.mouse_x in
+    let y = event.JavaApplet.mouse_y in
+    Graphics.draw_rect (x - 5) (y - 5) 11 11
+  end
+
+let stop () = ()
+
+let destroy () = ()
+</pre>
+</p>
+</section>
+
+
+<section id="deployment"><div class="page-header"><h1>Deployment</h1></div>
+<p>
+In order to embed an applet into an HTML page, it is necessary to specify its archive, and the fully-qualified name of the class implementing the applet. The archive is simply the jar file produced by the <code>ocamljava</code> compiler. When using the applet linking mode, <code>ocamljava</code> produces a class named <code>ocamljavaApplet</code> located in the package specified by the <code>-java-package</code> command-line switch (defaulting to <code>pack</code>).
+</p>
+<p>
+The OCaml-Java runtime library relies on operations that needs privileged rights to be used inside an applet. For this very reason, it is mandatory to sign the jar file containing the applet. This is done by executing <code>jarsigner &lt;jar-file&gt; &lt;alias&gt;</code> where <em>alias</em> refers to an alias of a <code>crt</code> file. If you have no signing key, it is usually possible to create one and export it to a <code>crt</code> file through:
+<pre>
+keytool -genkey -keyalg rsa -alias <em>alias</em>
+keytool -export -alias <em>alias</em> -file cert.crt
+</pre>
+</p>
+</section>
+
+
+<section id="example"><div class="page-header"><h1>Example</h1></div>
+<p>
+In this section, we will develop a simple Swing-based applet. Its GUI will contain a text field and a button, and a click on the button will trigger a modal dialog displaying the contents of the text field. The initial contents of the text field we be retrieved from an applet parameter. The code of the applet heavily relies on the Java extensions that are presented <a href="javaext.html">here</a>.
+</p>
+<p>
+Firstly, we have to define the description of the applet and its parameters. This is done through the following code, using the <code>JavaString</code> to convert OCaml strings into Java ones:
+<pre>
+let applet_info = JavaString.of_string "Applet example"
+let parameter_info =
+  JavaApplet.(parameter_info_of_list [
+              { param_name = JavaString.of_string "default_text";
+                param_type = JavaString.of_string "string";
+                param_desc = JavaString.of_string "initial value of text field" }])
+</pre>
+</p>
+Then, we have to provide an <code>init</code> function that is responsible for the GUI creation:
+<pre>
+let init japplet =
+  (* retrieve the parameter value *)
+  let text =
+    Java.call "JApplet.getParameter(_)"
+      japplet
+      (JavaString.of_string "default_text") in
+  (* build a textfield and a button *)
+  let textfield = Java.make "JTextField(String)" text in
+  let button = Java.make "JButton(String)" (JavaString.of_string "open") in
+  (* add an event handler to the button *)
+  Java.call "JButton.addActionListener(_)"
+    button
+    (Java.proxy "ActionListener" (object
+      method actionPerformed _ =
+        let contents = Java.call "JTextField.getText()" textfield in
+        ignore (Java.call "JOptionPane.showMessageDialog(_,_)" japplet contents)
+    end));
+  (* add the textfield and the button to the GUI *)
+  Java.call "JApplet.add(Component,Object)"
+    japplet
+    textfield
+    (Java.get "BorderLayout.CENTER" ());
+  Java.call "JApplet.add(Component,Object)"
+    japplet
+    button
+    (Java.get "BorderLayout.EAST" ())
+</pre>
+</p>
+<p>
+Although we do not have any action to perform for the <code>start</code>, <code>stop</code>, and <code>destroy</code> events, we still have to provide the related functions. Otherwise, <code>ocamljava</code> will fail to link, indicating that the module does not abide to the applet module type signature. We therefore add the following no-op functions:
+<pre>
+let start _ = ()
+let stop _ = ()
+let destroy _ = ()
+</pre>
+</p>
+<p>
+We can now compile and link the code, through the following commands:
+<pre>
+ocamljava -java-extensions -c source.ml
+ocamljava -applet swing -o app.jar javalib.cmja source.cmj
+</pre>
+It is also necessary to sign the applet through:
+<pre>
+jarsigner app.jar <em>alias</em>
+</pre>
+The last step to be able to test the applet is to write an HTML file embedding it, for example:
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Applet test&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body bgcolor="blue"&gt;
+    &lt;applet code="pack.ocamljavaApplet"
+            archive="path/to/app.jar"
+            width="400"
+            height="32"&gt;
+      &lt;param name="default_text" value="enter a text here"/&gt;
+    &lt;/applet&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+The applet can now be tested by opening the HTML file in a Java-capable browser. It is noteworthy that the user will have to <em>validate</em> the applet, as it is a signed one.
+</p>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>
+

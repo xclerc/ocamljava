@@ -1,0 +1,127 @@
+diff -aur patched/_tags original/_tags
+--- patched/_tags	2013-03-09 01:33:21.000000000 +0100
++++ original/_tags	2013-03-09 01:33:21.000000000 +0100
+@@ -96,8 +96,3 @@
+ "otherlibs/labltk/browser/jglib.cma": -ocamlmklib
+ "otherlibs/labltk/browser/main.byte": use_unix, use_str, ocamlbrowser, bootstrap_thread
+ <otherlibs/labltk/{browser,jpf}/**.ml*>: include_unix, include_str
+-
+-
+-# ocamljava-specific elements
+-<camlp4/Camlp4Bin.jar> or <camlp4/{mkcamlp4,boot/camlp4boot}.jar>: use_dynlink
+-<camlp4/**/*.cmj*> or <camlp4/**/*.ja> or <camlp4/**/*.jar>: java-package(ocaml.tools.camlp4), inline(0)
+diff -aur patched/myocamlbuild.ml original/myocamlbuild.ml
+--- patched/myocamlbuild.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/myocamlbuild.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -145,16 +145,8 @@
+ Command.setup_virtual_command_solver "OCAMLOPT" ocamlopt_solver;;
+ Command.setup_virtual_command_solver "OCAMLOPTWIN" (convert_for_windows_shell ocamlopt_solver);;
+ 
+-let ocamljava_solver () =
+-  S[if Pathname.exists ("stdlib/stdlib.cmja")
+-  then A"./ocamljava.opt"
+-  else S[A"./ocamljava.opt"; A"-nostdlib"]];;
+-
+-Command.setup_virtual_command_solver "OCAMLJAVA" ocamljava_solver;;
+-
+ let ocamlc   = V"OCAMLC";;
+ let ocamlopt = V"OCAMLOPT";;
+-let ocamljava = V"OCAMLJAVA";;
+ 
+ let ar = A"ar";;
+ 
+@@ -216,7 +208,6 @@
+ 
+ flag ["ocaml"; "pp"; "camlp4boot"] (convert_command_for_windows_shell (S[ocamlrun; P hot_camlp4boot]));;
+ flag ["ocaml"; "pp"; "camlp4boot"; "native"] (S[A"-D"; A"OPT"]);;
+-flag ["ocaml"; "pp"; "camlp4boot"; "java"] (S[A"-D"; A"OPT"]);;
+ flag ["ocaml"; "pp"; "camlp4boot"; "pp:dep"] (S[A"-D"; A"OPT"]);;
+ flag ["ocaml"; "pp"; "camlp4boot"; "pp:doc"] (S[A"-printer"; A"o"]);;
+ let exn_tracer = Pathname.pwd/"camlp4"/"boot"/"Camlp4ExceptionTracer.cmo" in
+@@ -391,19 +382,6 @@
+     Nop
+   end;;
+ 
+-rule "java stdlib in mixed mode"
+-  ~stamp:"java_stdlib_mixed_mode"
+-  ~deps:["stdlib/stdlib.mllib"; "stdlib/stdlib.cmja";
+-         "stdlib/stdlib.ja"]
+-  begin fun env build ->
+-    let (_ : Command.t) =
+-      Ocamlbuild_pack.Ocaml_compiler.java_library_link_mllib
+-        "stdlib/stdlib.mllib" "stdlib/stdlib.cmja" env build
+-    in
+-    import_stdlib_contents build ["cmi"];
+-    Nop
+-  end;;
+-
+ copy_rule' ~insert:`top "otherlibs/dynlink/natdynlink.ml" "otherlibs/dynlink/nat/dynlink.ml";;
+ copy_rule' ~insert:`top "otherlibs/dynlink/dynlink.mli" "otherlibs/dynlink/nat/dynlink.mli";;
+ copy_rule' ~insert:`top "otherlibs/dynlink/nat/dynlink.cmx" "otherlibs/dynlink/dynlink.cmx";;
+@@ -683,9 +661,7 @@
+ 
+ let camlp4lib_cma = p4 "camlp4lib.cma"
+ let camlp4lib_cmxa = p4 "camlp4lib.cmxa"
+-let camlp4lib_cmja = p4 "camlp4lib.cmja"
+ let camlp4lib_lib = p4 ("camlp4lib"-.-C.a)
+-let camlp4lib_jar = p4 "camlp4lib.ja"
+ 
+ let special_modules =
+   if Sys.file_exists "./boot/Profiler.cmo" then [camlp4Profiler] else []
+@@ -736,29 +712,24 @@
+   let name = "camlp4"/name in
+   let byte = name-.-"byte" in
+   let native = name-.-"native" in
+-  let java = name-.-"jar" in
+-  let unix_cma, unix_cmxa, unix_cmja, include_unix =
++  let unix_cma, unix_cmxa, include_unix =
+     if link_unix
+-    then A"unix.cma", A"unix.cmxa", A"unix.cmja", S[A"-I"; P unix_dir]
+-    else N,N,N,N in
+-  let dep_unix_byte, dep_unix_native, dep_unix_java =
++    then A"unix.cma", A"unix.cmxa", S[A"-I"; P unix_dir]
++    else N,N,N in
++  let dep_unix_byte, dep_unix_native =
+     if link_unix && not mixed
+     then [unix_dir/"unix.cma"],
+-         [unix_dir/"unix.cmxa"; unix_dir/"unix"-.-C.a],
+-         [unix_dir/"unix.cmja"; unix_dir/"unix.ja"]
+-    else [],[], [] in
++         [unix_dir/"unix.cmxa"; unix_dir/"unix"-.-C.a]
++    else [],[] in
+   let deps = special_modules @ modules @ [camlp4_bin] in
+   let cmos = add_extensions ["cmo"] deps in
+   let cmxs = add_extensions ["cmx"] deps in
+-  let cmjs = add_extensions ["cmj"] deps in
+   let objs = add_extensions [C.o] deps in
+-  let jos = add_extensions ["jo"] deps in
+-  let dep_dynlink_byte, dep_dynlink_native, dep_dynlink_java =
++  let dep_dynlink_byte, dep_dynlink_native =
+     if mixed
+-    then [], [], []
++    then [], []
+     else [dynlink_dir/"dynlink.cma"],
+-         [dynlink_dir/"dynlink.cmxa"; dynlink_dir/"dynlink"-.-C.a],
+-         [dynlink_dir/"dynlink.cmja"; dynlink_dir/"dynlink.ja"]
++         [dynlink_dir/"dynlink.cmxa"; dynlink_dir/"dynlink"-.-C.a]
+   in
+   rule byte
+     ~deps:(camlp4lib_cma::cmos @ dep_unix_byte @ dep_dynlink_byte)
+@@ -777,17 +748,6 @@
+       Cmd(S[ocamlopt; A"-I"; P dynlink_dir; A "dynlink.cmxa"; include_unix; unix_cmxa;
+             T(tags_of_pathname native++"ocaml"++"link"++"native");
+             P camlp4lib_cmxa; A"-linkall"; atomize cmxs; A"-o"; Px (add_exe native)])
+-    end;
+-  rule java
+-    ~deps:(camlp4lib_cmja :: camlp4lib_jar :: (cmjs @ jos @ dep_unix_java @ dep_dynlink_java))
+-    ~prod:java
+-    ~insert:(`before "ocaml: cmj* & jo* -> jar")
+-    begin fun _ _ ->
+-      Cmd(S[ocamljava; A"-I"; P dynlink_dir; A "dynlink.cmja"; include_unix; unix_cmja;
+-            T(tags_of_pathname java++"ocaml"++"link"++"java");
+-            P camlp4lib_cmja; atomize cmjs;
+-            A"-java-package"; A"ocaml.tools.camlp4";
+-            A"-o"; Px java])
+     end;;
+ 
+ let mk_camlp4 name ?unix modules bin_mods top_mods =

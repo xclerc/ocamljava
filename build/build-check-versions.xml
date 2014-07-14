@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+
+This file is part of OCaml-Java build.
+Copyright (C) 2007-2014 Xavier Clerc.
+
+OCaml-Java build is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+OCaml-Java build is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<project name="ocamljava-check-ant-and-java-versions" default="check">
+
+  <property name="minimum-ant-version" value="1.8.0"/>
+  <property name="minimum-java-version" value="1.7"/>
+  <property name="class-introduced-in-minimum-java-version"
+            value="java.nio.file.Files"/>
+
+  <target name="check">
+    <fail message="!invalid Ant version (should be at least ${minimum-ant-version})!"
+          status="1">
+      <condition>
+        <not>
+          <antversion atleast="${minimum-ant-version}"/>
+        </not>
+      </condition>
+    </fail>
+    <fail message="!invalid Java version (should be at least ${minimum-java-version})!"
+          status="1">
+      <condition>
+        <not>
+          <available classname="${class-introduced-in-minimum-java-version}"/>
+        </not>
+      </condition>
+    </fail>
+  </target>
+
+</project>

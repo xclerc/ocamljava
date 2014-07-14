@@ -1,0 +1,59 @@
+/*
+ * This file is part of OCaml-Java runtime.
+ * Copyright (C) 2007-2014 Xavier Clerc.
+ *
+ * OCaml-Java runtime is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OCaml-Java runtime is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.ocamljava.runtime;
+
+/**
+ * This class defines some project-wide constants.
+ *
+ * @author <a href="mailto:xclerc@ocamljava.org">Xavier Clerc</a>
+ * @version 2.0
+ * @since 1.3
+ */
+public final class Infos {
+
+    /** Version number. */
+    public static final String OCAMLJAVA_VERSION = @@OCAMLJAVA_VERSION@@;
+
+    /** Author name. */
+    public static final String OCAMLJAVA_AUTHOR = @@OCAMLJAVA_AUTHOR@@;
+
+    /** Copyright years. */
+    public static final String OCAMLJAVA_YEARS = @@OCAMLJAVA_YEARS@@;
+
+    /** Mail address. */
+    public static final String OCAMLJAVA_MAIL = @@OCAMLJAVA_MAIL@@;
+
+    /** Homepage. */
+    public static final String OCAMLJAVA_URL = @@OCAMLJAVA_URL@@;
+
+    /** Supported OCaml version. */
+    public static final String OCAML_VERSION = @@OCAML_VERSION@@;
+
+    /** Installation prefix. */
+    public static String getPrefix() {
+        return @@PREFIX@@;
+    }
+
+    /**
+     * No instance of this class.
+     */
+    private Infos() {
+    } // end empty constructor
+
+} // end class 'Infos'

@@ -1,0 +1,361 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../Makefile.config
+include ./Makefile-ocamljava.modules
+include config/Makefile
+
+DIRECTORIES=utils parsing typing bytecomp asmcomp javatyping javacomp driver toplevel
+
+INCLUDES=-I +barista -I utils -I parsing -I typing -I bytecomp -I asmcomp -I javatyping -I javacomp -I driver -I toplevel
+
+SUPPORTED_OTHERLIBS=unix bigarray graph num str systhreads dynlink labltk
+
+OCAMLDEP=./tools/ocamldep.opt
+OCAMLDEP_FLAGS=$(INCLUDES)
+OCAMLC=./ocamlc.opt
+OCAMLOPT=./ocamlopt.opt
+OCAMLJAVA=./ocamljava.opt -java-package 'ocaml.compilers'
+COMPFLAGS=-strict-sequence $(INCLUDES)
+LINKFLAGS=
+LINKFLAGS_FOR_JAR_COMPILERS=\
+  -runtime-parameter stop-jvm=off \
+  -runtime-parameter embedded=on \
+  -runtime-parameter embedded-base=FileAnchor \
+  -additional-jar-ref ocaml-lib-files.jar
+
+COMPLIBDIR=$(LIBDIR)/compiler-libs
+
+
+build-byte-and-native-compilers-and-libraries:
+	rm -f compilerlibs/*.cma compilerlibs/*.cmxa compilerlibs/*.a
+	rm -fr $(COMPLIBDIR)
+	mkdir $(COMPLIBDIR)
+	patch -f -p1 < typing-patch
+	$(MAKE) -f Makefile-ocamljava depend
+	$(MAKE) -f Makefile-ocamljava ocamljava
+	$(MAKE) -f Makefile-ocamljava ocamljava.opt
+	$(MAKE) -f Makefile-ocamljava build-libraries
+
+build-ocamljava-jar:
+	$(MAKE) -f Makefile-ocamljava ocamljava.jar
+
+script.jar: $(SCRIPT:.cmo=.cmi) $(SCRIPT:.cmo=.cmj)
+	$(OCAMLJAVA) $(LINKFLAGS) $(LINKFLAGS_FOR_JAR_COMPILERS) -o script.jar \
+	  dynlink.cmja \
+	  -I +barista baristaLibrary.cmja \
+	  $(SCRIPT:.cmo=.cmj)
+
+ocamljava: compilerlibs/ocamlcommon.cma compilerlibs/ocamljavacomp.cma $(JAVASTART)
+	$(OCAMLC) $(LINKFLAGS) -o ocamljava \
+	  unix.cma -I +zip zip.cma bigarray.cma camomile.cma \
+	  -I +barista baristaLibrary.cma \
+	  compilerlibs/ocamlcommon.cma compilerlibs/ocamljavacomp.cma \
+	  $(JAVASTART)
+
+ocamljava.opt: compilerlibs/ocamlcommon.cmxa compilerlibs/ocamljavacomp.cmxa $(JAVASTART:.cmo=.cmx)
+	$(OCAMLOPT) $(LINKFLAGS) -o ocamljava.opt \
+	  unix.cmxa -I +zip zip.cmxa bigarray.cmxa camomile.cmxa \
+	  -I +barista baristaLibrary.cmxa \
+	  compilerlibs/ocamlcommon.cmxa compilerlibs/ocamljavacomp.cmxa \
+	  $(JAVASTART:.cmo=.cmx)
+
+ocamljava.jar: compilerlibs/ocamlcommon.cmja compilerlibs/ocamljavacomp.cmja $(JAVASTART:.cmo=.cmj)
+	$(OCAMLJAVA) $(LINKFLAGS) $(LINKFLAGS_FOR_JAR_COMPILERS) -o ocamljava.jar \
+	  unix.cmja \
+	  -I +barista baristaLibrary.cmja \
+	  compilerlibs/ocamlcommon.cmja compilerlibs/ocamljavacomp.cmja \
+	  $(JAVASTART:.cmo=.cmj)
+
+compilerlibs/ocamlcommon.cma: $(PATCHED_COMMON)
+	$(OCAMLC) -a -o $@ $(PATCHED_COMMON)
+
+compilerlibs/ocamlcommon.cmxa: $(PATCHED_COMMON:.cmo=.cmx)
+	$(OCAMLOPT) -a -o $@ $(PATCHED_COMMON:.cmo=.cmx)
+
+compilerlibs/ocamlcommon.cmja: $(PATCHED_COMMON:.cmo=.cmj)
+	$(OCAMLJAVA) -a -o $@ $(PATCHED_COMMON:.cmo=.cmj)
+
+compilerlibs/ocamlbytecomp.cmja: $(ORIGINAL_BYTECOMP:.cmo=.cmj)
+	$(OCAMLJAVA) -a -o $@ $(ORIGINAL_BYTECOMP:.cmo=.cmj)
+
+compilerlibs/ocamljavacomp.cma: preprocessor/java_pp.cmo $(JAVACOMP)
+	$(OCAMLC) -a -o $@ $(JAVACOMP)
+
+compilerlibs/ocamljavacomp.cmxa: preprocessor/java_pp.cmo $(JAVACOMP:.cmo=.cmx)
+	$(OCAMLOPT) -a -o $@ $(JAVACOMP:.cmo=.cmx)
+
+compilerlibs/ocamljavacomp.cmja: preprocessor/java_pp.cmo $(JAVACOMP:.cmo=.cmj)
+	$(OCAMLJAVA) -a -o $@ $(JAVACOMP:.cmo=.cmj)
+
+build-libraries:
+	cp $(PREFIX)/lib/ocaml/ocamlrun.primitives $(PREFIX)/lib/ocaml/ocamlrun.jar stdlib
+	cd stdlib && $(MAKE) -f Makefile-ocamljava all && cd ..
+	cp stdlib/*.cmj* stdlib/*.j[oa] boot
+	for dir in $(OTHERLIBRARIES); do \
+	  for supp in $(SUPPORTED_OTHERLIBS); do \
+	    if [ $$dir = $$supp ]; then \
+	      (cd otherlibs/$$dir && $(MAKE) -f Makefile-ocamljava && cd ../..) || exit $$?; \
+	    fi; \
+	  done; \
+	done
+
+install-byte-and-native-compilers-and-libraries:
+	cp ocamljava ocamljava.opt $(BINDIR)
+	cd stdlib && $(MAKE) -f Makefile-ocamljava install && cd ..
+	for i in $(OTHERLIBRARIES); do \
+	  for supp in $(SUPPORTED_OTHERLIBS); do \
+	    if [ $$i = $$supp ]; then \
+	      (cd otherlibs/$$i && $(MAKE) -f Makefile-ocamljava install) || exit $$?; \
+	    fi; \
+	  done; \
+	done
+	for dir in $(DIRECTORIES); do \
+	  cp $$dir/*.cmi $(COMPLIBDIR); \
+	done
+	cp compilerlibs/ocamlcommon.cma compilerlibs/ocamlcommon.cmxa compilerlibs/ocamlcommon.a $(COMPLIBDIR)
+	cp compilerlibs/ocamljavacomp.cma compilerlibs/ocamljavacomp.cmxa compilerlibs/ocamljavacomp.a $(JAVASTART) $(COMPLIBDIR)
+
+build-java-toplevel: $(JAVATOP:.cmo=.cmi) $(JAVATOP:.cmo=.cmj)
+	$(OCAMLJAVA) $(LINKFLAGS) $(LINKFLAGS_FOR_JAR_COMPILERS) -o ocamlj.jar \
+	  dynlink.cmja \
+	  -I +barista baristaLibrary.cmja \
+	  $(JAVATOP:.cmo=.cmj)
+
+install-java-toplevel:
+	cp ocamlj.jar $(BINDIR)
+
+install-ocamljava-jar:
+	cp ocamljava.jar $(BINDIR)
+	for dir in $(DIRECTORIES); do \
+	  if [ $$dir != toplevel ]; then \
+	    cp $$dir/*.cmj $(COMPLIBDIR); \
+	  fi \
+	done
+	cp compilerlibs/ocamlcommon.cmja compilerlibs/ocamlcommon.ja $(COMPLIBDIR)
+	cp compilerlibs/ocamljavacomp.cmja compilerlibs/ocamljavacomp.ja $(JAVASTART:.cmo=.cmj) $(COMPLIBDIR)
+
+build-extended-ocamlbuild:
+	cd ocamlbuild && \
+	$(MAKE) INSTALL_BIN=$(BINDIR) INSTALL_LIB=$(LIBDIR)/ocamlbuild \
+	  -f Makefile-ocamljava prepare compile restore && \
+	cd ..
+
+install-extended-ocamlbuild:
+	cd ocamlbuild && \
+	$(MAKE) INSTALL_BIN=$(BINDIR) INSTALL_LIB=$(LIBDIR)/ocamlbuild \
+	  -f Makefile-ocamljava install && \
+	cd ..
+
+build-extended-ocamldoc-byte-and-native:
+	rm -f asmcomp/cmx_format.cmi && \
+	$(MAKE) asmcomp/cmx_format.cmi && \
+	cd tools && \
+	rm -f *.cm* && \
+	$(MAKE) ocamldep && \
+	cd ../otherlibs/dynlink && \
+	rm -f *.cmx* *.cmj* && \
+	$(MAKE) allopt && \
+	$(MAKE) -f Makefile-ocamljava && \
+	cd ../../ocamldoc && \
+	$(MAKE) clean && \
+	$(MAKE) exe lib generators exeopt libopt generatorsopt && \
+	cd ..
+
+install-extended-ocamldoc-byte-and-native:
+	cd ocamldoc && \
+	$(MAKE) install installopt && \
+	cd ..
+
+build-extended-ocamldoc-jar:
+	cd ocamldoc && \
+	$(MAKE) -f Makefile-ocamljava exe lib generators && \
+	cd ..
+
+install-extended-ocamldoc-jar:
+	cd ocamldoc && \
+	$(MAKE) -f Makefile-ocamljava install && \
+	cd ..
+
+build-ocamllex-jar:
+	cd lex && \
+	$(MAKE) -f Makefile-ocamljava all && \
+	cd ..
+
+install-ocamllex-jar:
+	cd lex && \
+	cp ocamllex.jar $(BINDIR) && \
+	cd ..
+
+build-tools:
+	cd tools && \
+	patch -f -p1 < tools-patch && \
+	$(MAKE) ocamldep ocamldep.opt && \
+	cp ocamldep ocamldep.opt $(BINDIR) && \
+	$(MAKE) -f Makefile-ocamljava all && \
+	patch -f -p1 < tools-unpatch && \
+	cd ..
+
+install-tools:
+	cd tools && \
+	$(MAKE) -f Makefile-ocamljava install && \
+	cd ..
+
+# do not use ocamlcommon.cmja, because it includes OCaml-Java-specific modules
+ocamlc.jar: $(ORIGINAL_COMMON:.cmo=.cmj) compilerlibs/ocamlbytecomp.cmja $(BYTESTART:.cmo=.cmj)
+	$(OCAMLJAVA) $(LINKFLAGS) $(LINKFLAGS_FOR_JAR_COMPILERS) -o ocamlc.jar \
+	  $(ORIGINAL_COMMON:.cmo=.cmj) \
+	  compilerlibs/ocamlbytecomp.cmja \
+	  $(BYTESTART:.cmo=.cmj)
+
+build-ocamlc-jar:
+	rm -f compilerlibs/*.cma compilerlibs/*.cmxa compilerlibs/*.a
+	patch -f -p1 < typing-unpatch
+	$(MAKE) -f Makefile-ocamljava depend
+	$(MAKE) -f Makefile-ocamljava ocamlc.jar
+
+install-ocamlc-jar:
+	cp ocamlc.jar $(BINDIR)
+
+build-camlp4: toplevel/genprintval.cmj toplevel/toploop.cmj toplevel/trace.cmj toplevel/topdirs.cmj
+	cp ocamljava.opt _build
+	mv camlp4/Camlp4Bin.ml camlp4/Camlp4Bin.ml.old
+	sed -e 's/cmxs/cmjs/g' camlp4/Camlp4Bin.ml.old > camlp4/Camlp4Bin.ml
+	cp $(LIBDIR)/ocamlrun.jar _build
+	rm -f _build/myocamlbuild
+	patch -f -p1 < myocamlbuild-patch
+	./build/camlp4-java-only.sh
+	mv -f camlp4/Camlp4Bin.ml.old camlp4/Camlp4Bin.ml
+	patch -f -p1 < myocamlbuild-unpatch
+
+install-camlp4:
+	./build/java-partial-install.sh
+
+prepare-debugger: $(ORIGINAL_COMMON:.cmo=.cmi) $(ORIGINAL_COMMON) \
+  $(ORIGINAL_BYTECOMP:.cmo=.cmi) $(ORIGINAL_BYTECOMP) \
+  toplevel/genprintval.cmi toplevel/genprintval.cmo
+
+clean:
+	$(MAKE) clean
+	rm -f ocamljava*
+	rm -f ocamlc.jar
+	rm -f compilerlibs/*.cm* compilerlibs/*.a compilerlibs/*.j*
+	cd stdlib && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	for d in $(OTHERLIBRARIES); do \
+	  for supp in $(SUPPORTED_OTHERLIBS); do \
+	    if [ $$d = $$supp ]; then \
+	      cd otherlibs/$$d && $(MAKE) -f Makefile-ocamljava clean && cd ../..; \
+	    fi; \
+	  done; \
+	done
+	cd debugger && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	cd lex && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	cd ocamlbuild && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	cd ocamldoc && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	cd tools && $(MAKE) -f Makefile-ocamljava clean && cd ..
+	rm -fr _build
+	for d in $(DIRECTORIES); do \
+	  rm -f $$d/*.cmj* $$d/*.annot $$d/*.jo $$d/*.ja $$d/*.jar $$d/*~; \
+	done
+	rm -f *~
+
+
+preprocessor/java_pp.cmo: preprocessor/java_pp.ml
+	$(OCAMLC) $(COMPFLAGS) -w Ae -warn-error A -c \
+	  -o preprocessor/java_pp.cmo -I +camlp4 camlp4lib.cma \
+	  -pp $(PREFIX)/bin/camlp4of preprocessor/java_pp.ml
+
+PP_INCLUDES=-I $(PREFIX)/lib/ocaml/zip -I $(PREFIX)/lib/ocaml/barista
+PP_CMA_FILES=bigarray.cma camomile.cma unix.cma zip.cma baristaLibrary.cma
+PP_RUNTIME_JAR=$(PREFIX)/lib/ocaml/ocamlrun.jar
+PP_SERVLET_JAR=../external-jars/servlet-api.jar
+PP_SWITCH=-pp '$(PREFIX)/bin/camlp4o $(PP_INCLUDES) $(PP_CMA_FILES) preprocessor/java_pp.cmo -jar $(PP_RUNTIME_JAR) -jar $(PP_SERVLET_JAR)'
+
+javacomp/bytecodeutils.cmo: preprocessor/java_pp.cmo
+	$(OCAMLC) $(COMPFLAGS) -c $(PP_SWITCH) javacomp/bytecodeutils.ml
+
+javacomp/bytecodeutils.cmx: preprocessor/java_pp.cmo
+	$(OCAMLOPT) $(COMPFLAGS) -c $(PP_SWITCH) javacomp/bytecodeutils.ml
+
+javacomp/bytecodeutils.cmj: preprocessor/java_pp.cmo
+	$(OCAMLJAVA) $(COMPFLAGS) -c $(PP_SWITCH) javacomp/bytecodeutils.ml
+
+
+utils/jconfig.ml: utils/jconfig.mlp
+	export ints_are_63_bits=`echo $(OCAML_INTS_ARE_63_BIT_LONG) | tr [A-Z] [a-z]` && \
+	export git_sha1=`if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then git rev-parse HEAD; fi` && \
+	cat utils/jconfig.mlp | \
+	  sed -e "s/%%VERSION%%/$(VERSION)/" | \
+	  sed -e "s/%%OCAML_INTS_ARE_63_BIT_LONG%%/$$ints_are_63_bits/" | \
+	  sed -e "s/%%GIT_SHA1%%/$$git_sha1/" \
+	  > utils/jconfig.ml
+
+utils/jconfig.cmo: utils/jconfig.cmi utils/jconfig.ml
+
+utils/jconfig.cmx: utils/jconfig.cmi utils/jconfig.ml
+
+utils/jconfig.cmj: utils/jconfig.cmi utils/jconfig.ml
+
+bytecomp/opcodes.cmi:
+	$(OCAMLC) $(COMPFLAGS) -c bytecomp/opcodes.ml
+
+
+.SUFFIXES: .mli .ml .cmi .cmo .cmx .cmj
+
+.mli.cmi:
+	$(OCAMLC) $(COMPFLAGS) `./Warnflags $<` -c $<
+
+.ml.cmo:
+	$(OCAMLC) $(COMPFLAGS) `./Warnflags $<` -c $<
+
+.ml.cmx:
+	$(OCAMLOPT) $(COMPFLAGS) `./Warnflags $<` -c $<
+
+.ml.cmj:
+	$(OCAMLJAVA) $(COMPFLAGS) `./Warnflags $<` -c $<
+
+
+.PHONY: build-byte-and-native-compilers-and-libraries
+.PHONY: build-ocamljava-jar
+.PHONY: build-libraries
+.PHONY: install-byte-and-native-compilers-and-libraries
+.PHONY: install-ocamljava-jar
+.PHONY: build-extended-ocamlbuild
+.PHONY: install-extended-ocamlbuild
+.PHONY: build-extended-ocamldoc-byte-and-native
+.PHONY: install-extended-ocamldoc-byte-and-native
+.PHONY: build-extended-ocamldoc-jar
+.PHONY: install-extended-ocamldoc-jar
+.PHONY: build-ocamllex-jar
+.PHONY: install-ocamllex-jar
+.PHONY: build-tools
+.PHONY: install-tools
+.PHONY: build-ocamlc-jar
+.PHONY: install-ocamlc-jar
+.PHONY: build-camlp4
+.PHONY: install-camlp4
+.PHONY: clean
+.PHONY: depend
+
+
+depend:
+	(for dir in $(DIRECTORIES); do \
+	  $(OCAMLDEP) $(OCAMLDEP_FLAGS) $$dir/*.mli $$dir/*.ml; \
+	done) > .depend
+
+include .depend

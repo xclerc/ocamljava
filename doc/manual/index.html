@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>OCaml-Java: 2.0 alpha</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="#introduction"><i class="icon-home"></i>Introduction</a></li>
+  <li class="divider"></li>
+  <li><a href="#firststeps"><i class="icon-tag"></i>First steps</a></li>
+  <li><a href="#compatibility"><i class="icon-tag"></i>Compatibility</a></li>
+  <li><a href="#performance"><i class="icon-tag"></i>Performance</a></li>
+  <li><a href="#optimizer"><i class="icon-tag"></i>Optimizer</a></li>
+  <li><a href="#concurrency"><i class="icon-tag"></i>Concurrency</a></li>
+  <li><a href="#java"><i class="icon-tag"></i>Java access</a></li>
+  <li><a href="#applets"><i class="icon-tag"></i>Applets</a></li>
+  <li><a href="#servlets"><i class="icon-tag"></i>Servlets</a></li>
+  <li><a href="#scripting"><i class="icon-tag"></i>Scripting</a></li>
+  <li><a href="#wrapping"><i class="icon-tag"></i>Wrapping</a></li>
+  <li class="divider"></li>
+  <li><a href="#contact"><i class="icon-envelope"></i>Contact</a></li>
+</ul>
+</div>
+<div class="span8">
+
+  
+<section id="top"><div class="page-header"><h1>OCaml-Java: 2.0 alpha</h1></div>
+<p>
+</p>
+</section>
+
+
+<section id="introduction"><div class="page-header"><h1>Introduction</h1></div>
+<p>
+The objective of the OCaml-Java project is to allow seamless integration of OCaml and Java. Its <code>ocamljava</code> compiler can generate Java archives to be run on any Java virtual machine (version 1.7 or above). This possibility will allow to leverage Java libraries from purely OCaml code. Moreover, the OCaml-Java runtime does not need to rely on a global runtime lock, meaning that concurrent programming is now possible in a single OCaml process.
+</p>
+<p>
+OCaml-Java exhibits good compatibility with respect to the original OCaml implementation since its very first version. However, versions 1.x should be regarded as mere prototypes, due to terrible performance and huge memory consumption. The upcoming 2.0 version fixes a number of issues, and greatly improves both CPU usage and memory footprint. The current <em>alpha</em> version is globally representative of what will be available in version 2.0; however, non-compatible changes may occur before 2.0 is actually published.
+</p>
+<p>
+OCaml-Java is relased under the QPL/LGPL licences.
+</p>
+</section>
+
+
+<section id="firststeps"><div class="page-header"><h1>First steps</h1></div>
+<p>
+The new <code>ocamljava</code> compiler is akin to the <code>ocamlc</code>/<code>ocamlopt</code> compilers from the original OCaml distribution. However, rather than producing OCaml bytecode, or native code, it will compile source files to Java classes. The following table presents the correspondence between the files manipulated by the various OCaml compilers.
+</p>
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th></th><th><tt>ocamlc</tt></th><th><tt>ocamlopt</tt></th><th><tt>ocamljava</tt></th></tr>
+</thead>
+<tbody>
+<tr><td>interface source</td>         <td><tt>.mli</tt></td>  <td><tt>.mli</tt></td>          <td><tt>.mli</tt></td></tr>
+<tr><td>implementation source</td>    <td><tt>.ml</tt></td>   <td><tt>.ml</tt></td>           <td><tt>.ml</tt></td></tr>
+<tr><td>compiled interface</td>       <td><tt>.cmi</tt></td>  <td><tt>.cmi</tt></td>          <td><tt>.cmi</tt></td></tr>
+<tr><td>compiled implementation</td>  <td><tt>.cmo</tt></td>  <td><tt>.cmx</tt></td>          <td><tt>.cmj</tt></td></tr>
+<tr><td>object binary</td>            <td><tt>-</tt></td>     <td><tt>.o</tt></td>            <td><tt>.jo</tt></td></tr>
+<tr><td>compiled library</td>         <td><tt>.cma</tt></td>  <td><tt>.cmxa</tt></td>         <td><tt>.cmja</tt></td></tr>
+<tr><td>library binary</td>           <td><tt>-</tt></td>     <td><tt>.a, .so, ...</tt></td>  <td><tt>.ja</tt></td></tr>
+<tr><td>plugin</td>                   <td><tt>-</tt></td>     <td><tt>.cmxs</tt></td>         <td><tt>.cmjs</tt></td></tr>
+</tbody>
+</table>
+<p>
+Compiling sources through the <code>ocamljava</code> compiler is not different from compiling through one of the original compilers. Compiling then linking a <code>source.ml</code> file can be done in either two steps:
+<pre>
+ocamljava -c source.ml
+ocamljava -o myprog.jar source.cmj
+</pre>
+or just one step:
+<pre>
+ocamljava -o myprog.jar source.ml
+</pre>
+Then, the created archive can be executed by any Java virtual machine:
+<pre>
+java -jar myprog.jar
+</pre>
+</p>
+<br/>
+<p>
+The binary distribution of OCaml-Java ships with the command-line tools listed in the following table.
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>command name</th><th>description</th></tr>
+</thead>
+<tbody>
+<tr><td><tt>camlp4*</tt></td><td>the various camlp4 preprocessors</td></tr>
+<tr><td><tt>ocaml</tt></td><td>the toplevel, as a terminal application</td></tr>
+<tr><td><tt>ocamlbuild</tt></td><td>the compilation manager</td></tr>
+<tr><td><tt>ocamlc</tt></td><td>the OCaml bytecode compiler</td></tr>
+<tr><td><tt>ocamldebug</tt></td><td>the debugger (for <code>ocamlc</code>-compiled programs)</td></tr>
+<tr><td><tt>ocamldep</tt></td><td>the dependency analyzer</td></tr>
+<tr><td><tt>ocamldoc</tt></td><td>the documentation generator</td></tr>
+<tr><td><tt>ocamlj</tt></td><td>the toplevel, with typer extensions (using Java bytecode)</td></tr>
+<tr><td><tt>ocamljar</tt></td><td>the post-compilation optimizer</td></tr>
+<tr><td><tt>ocamljava</tt></td><td>the Java bytecode compiler</td></tr>
+<tr><td><tt>ocamllex</tt></td><td>the lexer generator</td></tr>
+<tr><td><tt>ocamlrun</tt></td><td>the interpreter for <tt>ocamlc</tt>-compiled programs</td></tr>
+<tr><td><tt>ocamltop</tt></td><td>the toplevel, as a windowed application</td></tr>
+<tr><td><tt>ocamlwrap</tt></td><td>the Java wrapper</td></tr>
+</tbody>
+</table>
+</p>
+</section>
+
+
+<section id="compatibility"><div class="page-header"><h1>Compatibility</h1></div>
+<p>
+In its current version, OCaml-Java is based on OCaml version 4.01.0, and requires a Java 1.7 virtual machine to run compiled programs. The whole OCaml language is supported, with some limitations:
+<ul>
+  <li>tail calls are optimized only for direct self-recursion;</li>
+  <li>evaluation order is not guaranteed to be the same as in <code>ocamlc</code>/<code>ocamlopt</code> (however, it should not be a major problem as evaluation order is not specified in the OCaml language);</li>
+  <li>stack overflow as well as memory shortage are not diagnosed by the OCaml-Java runtime;</li>
+  <li>backtrace support is rudimentary;</li>
+  <li><code>ocamljava</code> may fail to compile some (very) large functions (Java set a hard limit on method length).</li>
+</ul>
+</p>
+<p>
+Regarding primitives/libraries, compatibility is high but not perfect. Indeed, some POSIX routines are not available from Java. The libraries shipped with the original OCaml implementation are available in OCaml-Java: <code>str</code>, <code>num</code>, <code>dynlink</code>, <code>bigarray</code>, <code>systhreads</code>, <code>threads</code>, and <code>graph</code> should behave roughly as their equivalents in the original distribution. The <code>unix</code> library is only partially supported, and support for <code>labltk</code> is experimental.
+</p>
+</section>
+
+
+<section id="performance"><div class="page-header"><h1>Performance</h1></div>
+<p>
+Performance of <code>ocamljava</code>-generated code is regurlarly improved, but a reasonable rule of thumb for the current version is to consider that such code is on average 3 times slower than <code>ocamlopt</code>-generated code. On some numerical codes, <code>ocamljava</code>-compiled programs are on par with <code>ocamlopt</code>-compiled ones.
+</p>
+<p>
+<div class="alert alert-warning">
+<strong>Warning!</strong> OCaml-Java is much slower than the original OCaml in the handling of exceptions.
+</div>
+</p>
+</section>
+
+
+<section id="optimizer"><div class="page-header"><h1>Optimizer</h1></div>
+<p>
+Since version 2.0-early-access5, the distribution features a post-compilation optimizer (namely <code>ocamljar</code>) that can be applied to a linked OCaml-Java program (that is, a jar file) in order to produce an optimized version of the program. An overview of the tool is available <a href="ocamljar.html">here</a>.
+</p>
+</section>
+
+
+<section id="concurrency"><div class="page-header"><h1>Concurrency</h1></div>
+<p>
+The current version of OCaml-Java ships with a draft version of the <code>Concurrent</code> library which is a pack of several modules that are bare wrappers around Java classes. The <code>doc</code> directory contains the <code>ocamldoc</code>-generated documentation for these modules. An overview of the library is available <a href="concurrency.html">here</a>.
+</p>
+<p>
+<div class="alert alert-error">
+<strong>Warning!</strong> by default, OCaml-Java favors compatibility with the original OCaml implementation, meaning that it is based on a global runtime lock. In order to leverage the power of the <tt>concurrent</tt> library, it is necessary to disable the runtime lock by linking the program with the <tt>-runtime-parameter runtime-lock=off</tt> command-line option.
+</div>
+</p>
+</section>
+
+
+<section id="java"><div class="page-header"><h1>Java access</h1></div>
+<p>
+Since version 2.0-early-access8, the distribution includes a new extension to the OCaml typer that allows to create and manipulate Java instances using OCaml code. An overview of these extensions is available <a href="javaext.html">here</a>.
+</p>
+</section>
+
+
+<section id="applets"><div class="page-header"><h1>Applets</h1></div>
+<p>
+Since version 2.0-early-access9, the distribution allows to write applets. Applets can be based on the Java AWT toolkit, the Java Swing toolkit, or the OCaml Graphics module. More information on how to develop and deploy applet is available <a href="applets.html"> here</a>.
+</p>
+</section>
+
+
+<section id="servlets"><div class="page-header"><h1>Servlets</h1></div>
+<p>
+Since version 2.0-alpha1, the distribution allows to write servlets. Servlets can then be deployed to a container such as Apache Tomcat or Jetty. More information on how to develop and deploy servlets is available <a href="servlets.html"> here</a>.
+</p>
+</section>
+
+
+<section id="scripting"><div class="page-header"><h1>Scripting</h1></div>
+<p>
+Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. An overview of the support for scripting is available <a href="scripting.html"> here</a>.
+</p>
+</section>
+
+
+
+<section id="wrapping"><div class="page-header"><h1>Wrapping</h1></div>
+<p>
+Since version 2.0-early-access6, the distribution features a tool named <code>ocamlwrap</code> that can be used to generate Java class definitions for easy access to <code>ocamljava</code>-compiled code from the Java language. An overview of the tool is available <a href="ocamlwrap.html">here</a>.
+</p>
+</section>
+
+
+<section id="contact"><div class="page-header"><h1>Contact</h1></div>
+<p>
+The developer of OCaml-Java can be reached either by mail (<code>xclerc AT ocamljava.org</code>) or through the project bugtracker (available on <a href="https://github.com/xclerc/ocamljava">github</a>).
+</p>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>

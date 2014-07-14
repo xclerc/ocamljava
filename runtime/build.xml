@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+
+This file is part of OCaml-Java runtime.
+Copyright (C) 2007-2014 Xavier Clerc.
+
+OCaml-Java runtime is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+OCaml-Java runtime is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see http://www.gnu.org/licenses/.
+
+-->
+
+<!DOCTYPE project [
+  <!ENTITY services SYSTEM "prebuilt/services.xml">
+  <!ENTITY serviceslabltk SYSTEM "prebuilt/services-labltk.xml">
+]>
+
+<project name="ocamljava-runtime" basedir=".">
+
+  <property file="../Makefile.config"/>
+  <property file="../Makefile.project"/>
+  <property file="../Makefile.versions"/>
+
+  <target name="build">
+    <copy file="src/org/ocamljava/runtime/Infos.tmpl"
+          tofile="src/org/ocamljava/runtime/Infos.java"
+          overwrite="true"/>
+    <replace file="src/org/ocamljava/runtime/Infos.java">
+      <replacefilter token="@@OCAMLJAVA_VERSION@@" value="${VERSION}"/>
+      <replacefilter token="@@OCAMLJAVA_AUTHOR@@" value="${OCAMLJAVA_AUTHOR}"/>
+      <replacefilter token="@@OCAMLJAVA_YEARS@@" value="${OCAMLJAVA_YEARS}"/>
+      <replacefilter token="@@OCAMLJAVA_MAIL@@" value="${OCAMLJAVA_MAIL}"/>
+      <replacefilter token="@@OCAMLJAVA_URL@@" value="${OCAMLJAVA_URL}"/>
+      <replacefilter token="@@OCAML_VERSION@@" value="${OCAML_VERSION}"/>
+      <replacefilter token="@@PREFIX@@" value="${PREFIX}"/>
+    </replace>
+    <mkdir dir="classes"/>
+    <mkdir dir="build"/>
+    <javac srcdir="src"
+           destdir="classes"
+           debug="on"
+           optimize="on"
+           deprecation="on"
+           includeantruntime="false"
+           target="1.7"
+           source="1.7"/>
+    <delete file="build/ocamlrun.jar" failonerror="false"/>
+    <jar destfile="build/ocamlrun.jar">
+      <fileset dir="classes" includes="**/*.class"/>
+      <zipfileset includes="**/*.class" src="prebuilt/ocamlrun.jar"/>
+      <manifest>
+        <attribute name="Main-Class" value="org.ocamljava.runtime.Main"/>
+      </manifest>
+      &services;
+    </jar>
+    <copy file="prebuilt/ocamlrun.primitives"
+          tofile="build/ocamlrun.primitives"
+          overwrite="true"/>
+    <copy file="prebuilt/ocamlrun-labltk.jar"
+          tofile="build/ocamlrun-labltk.jar"
+          overwrite="true"/>
+  </target>
+
+  <target name="build-scripting">
+    <delete file="build/ocamlrun-scripting.jar" failonerror="false"/>
+    <jar destfile="build/ocamlrun-scripting.jar">
+      <fileset dir="classes" includes="**/*.class"/>
+      <zipfileset includes="**/*.class" src="prebuilt/ocamlrun-scripting.jar"/>
+      &services;
+    </jar>
+  </target>
+
+</project>

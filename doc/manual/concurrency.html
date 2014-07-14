@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>OCaml-Java: overview of the concurrent library</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#abstractionlevels"><i class="icon-tag"></i>Abstraction levels</a></li>
+  <li><a href="#basics"><i class="icon-tag"></i>Basics</a></li>
+  <li><a href="#atomics"><i class="icon-tag"></i>Atomics</a></li>
+  <li><a href="#futures"><i class="icon-tag"></i>Futures</a></li>
+  <li><a href="#forkjoin"><i class="icon-tag"></i>Fork/join computations</a></li>
+  <li><a href="#mapreduce"><i class="icon-tag"></i>Map/reduce computations</a></li>
+  <li><a href="#parallelarray"><i class="icon-tag"></i>Parallel arrays</a></li>
+  <li><a href="#stm"><i class="icon-tag"></i>STM</a></li>
+</ul>
+</div>
+<div class="span8">
+
+  
+<section id="top"><div class="page-header"><h1>OCaml-Java: overview of the concurrent library</h1></div>
+<p>
+This page contains the information about the <tt>concurrent</tt> library that ships with the <em>alpha</em> version of OCaml-Java 2.0.
+</p>
+<p>
+<div class="alert alert-error">
+<strong>Warning!</strong> by default, OCaml-Java favors compatibility with the original OCaml implementation, meaning that it is based on a global runtime lock. In order to leverage the power of the <tt>concurrent</tt> library, it is necessary to disable the runtime lock by linking the program with the <tt>-runtime-parameter runtime-lock=off</tt> command-line option.
+</div>
+</p>
+</section>
+
+
+<section id="abstractionlevels"><div class="page-header"><h1>Abstraction levels</h1></div>
+<p>
+The <tt>concurrent</tt> library is a pack of several modules into the <tt>Concurrent</tt> module. These modules fall into nine categories of raising abstraction levels:
+<ul>
+  <li>basic thread manipulation (<code>Thread</code>, <code>ThreadGroup</code>, and <code>ThreadLocal</code> modules);</li>
+  <li>locks (<code>Lock</code>, <code>ReadWriteLock</code>, and <code>Condition</code> modules);</li>
+  <li>synchronization (<code>Semaphore</code>, <code>CountDownLatch</code>, <code>CyclicBarrier</code>, <code>Exchanger</code>, and <code>Phaser</code> modules);</li>
+  <li>atomic containers (see below);</li>
+  <li>futures (<code>Future</code>, <code>ScheduledFuture</code>, <code>ThreadPoolExecutor</code>, <code>ScheduledThreadPoolExecutor</code>, and <code>ExecutorCompletionService</code> modules);</li>
+  <li>fork/join computations (<code>ForkJoinPool</code>, and <code>ForkJoin</code> modules);</li>
+  <li>map/reduce computations (<code>MapReduce</code> module);</li>
+  <li>parallel operations over arrays (<code>ParallelArray</code> module);</li>
+  <li>minimalistic software transactional memory (<code>STM</code> module).</li>
+</ul>
+Besides these modules, <code>TimeUnit</code> defines the various time units and a conversion function, and <code>Runtime</code> gives access to timers, number of logical processors, and memory statistics.
+</p>
+<p>
+The <code>doc</code> directory of the binary distribution contains the <code>ocamldoc</code>-generated documentation for all modules. Most modules from the first five categories above are the counterparts of Java classes with the same name in the package <tt>java.util.concurrent</tt> (and its sub-packages). It is thus possible to get additional information from the JDK documentation.
+</p>
+</section>
+
+
+<section id="basics"><div class="page-header"><h1>Basics</h1></div>
+<p>
+Threads created through the <code>Thread</code> module from the <code>concurrent</code> library are akin to those from the <code>Thread</code> module from the original OCaml distribution (in either <code>systhread</code>, or <code>thread</code> library). The three main differences are:
+<ul>
+  <li>that threads need to be first created and then started;</li>
+  <li>that a thread identifier can be recycled once a thread has terminated;</li>
+  <li>that threads can be organized in groups which form a tree-like structure.</li>
+</ul>
+</p>
+<p>
+Thread-local storage is available through the <code>ThreadLocal</code> module, and locks/conditions in the POSIX tradition are available through the <code>Lock</code>/<code>ReadWriteLock</code>/<code>Condition</code> modules. Advanced synchronization is provided through the following modules:
+<ul>
+  <li><code>Semaphore</code>;</li>
+  <li><code>Exchanger</code> for simple rendez-vous allowing to swap data between two threads;</li>
+  <li><code>CountDownLatch</code> for one-use barriers;</li>
+  <li><code>CyclicBarrier</code> for reusable barriers;</li>
+  <li><code>Phaser</code> for customizable barriers.</li>
+</ul>
+</p>
+<p>
+Here is an example of threads with a locally-stored accumulator variable:
+<pre>
+open Concurrent
+
+let acc = ThreadLocal.make 0 (* initial value *)
+
+let compute x =
+  ...
+  let old = ThreadLocal.get acc in (* read access *)
+  ...
+  ThreadLocal.set acc (f old) (* write access *)
+  ...
+
+let () =
+ let threads =
+    List.map
+      (fun s ->
+        Thread.make
+          None (* thread group *)
+          None (* thread name *)
+          (compute s) n)
+      [ 1; 2; 3; 5; 7; 11; 13 ] in
+  List.iter Thread.start threads;
+  List.iter Thread.join threads
+</pre>
+</p>
+</section>
+
+
+<section id="atomics"><div class="page-header"><h1>Atomics</h1></div>
+<p>
+The atomic containers have module names that slightly differ from the equivalent Java class names, the complete mapping being given by the following table. All the atomic containers provide <em>compare-and-set</em> operations, thus allowing to write lock-free algorithms.
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>OCaml module name</th><th>Java class name</th><th>note</th></tr>
+</thead>
+<tbody>
+<tr><td><tt>AtomicBool</tt></td><td><tt>AtomicBoolean</tt></td><td></td></tr>
+<tr><td><tt>AtomicInt32</tt></td><td><tt>AtomicInteger</tt></td><td></td></tr>
+<tr><td><tt>AtomicInt32Array</tt></td><td><tt>AtomicIntegerArray</tt></td><td></td></tr>
+<tr><td><tt>AtomicInt64</tt></td><td><tt>AtomicLong</tt></td><td></td></tr>
+<tr><td><tt>AtomicInt64Array</tt></td><td><tt>AtomicLongArray</tt></td><td></td></tr>
+<tr><td><tt>AtomicMarkableReference</tt></td><td><tt>AtomicMarkableReference</tt></td><td>[1]</td></tr>
+<tr><td><tt>AtomicReference</tt></td><td><tt>AtomicReference</tt></td><td>[1]</td></tr>
+<tr><td><tt>AtomicReferenceArray</tt></td><td><tt>AtomicReferenceArray</tt></td><td>[1]</td></tr>
+<tr><td><tt>AtomicStampedReference</tt></td><td><tt>AtomicStampedReference</tt></td><td>[1]</td></tr>
+</tbody>
+</table>
+[1]: physical comparison is used by the container. As OCaml-Java uses boxed values for OCaml <code>int</code> values, the container should not be used to store <code>int</code> values. Any other type can be safely stored (caching of <code>int</code> values ensure that sum types are correctly handled).
+</p>
+<p>
+Here is an example of atomic use, comparing the use of a bare <code>Pervasives.ref</code> value with an atomic one:
+<pre>
+open Concurrent
+
+let () = Random.self_init ()
+
+let a = AtomicInt64.make 0L (* accesses to the value are atomic *)
+let b = ref 0L (* accesses to the value are not atomic *)
+
+let print s n =
+  let l = ref 0L in
+  for _i = 1 to n do
+    let t = Int64.of_int (Random.int 250) in
+    Printf.printf "%s (waiting %Ld)\n%!" s t;
+    b := Int64.add !b t;
+    l := Int64.add !l t;
+    ignore (AtomicInt64.add_and_get a t);
+    Thread.sleep t
+  done;
+  Printf.printf "l = %Ld\n" !l
+
+let () =
+  let n = 10 in
+  let threads =
+    List.map
+      (fun s -> Thread.make None None (print s) n)
+      [ "hello"; "salut" ] in
+  List.iter Thread.start threads;
+  List.iter Thread.join threads;
+  Printf.printf "a = %Ld, b = %Ld\n" (AtomicInt64.get a) !b
+</pre>
+</p>
+</section>
+
+
+<section id="futures"><div class="page-header"><h1>Futures</h1></div>
+<p>
+Futures are similar to lazy values in the sense that, once created, it is possible to <em>wait</em> for their evaluation (though <code>Future.get</code>). However, they differ from lazy values as their evaluation is done in the background by another thread. Basic future manipulation is done through the <code>Future</code> module, but they are created by submitting a computation to a thread pool (by <code>submit</code>, or some <code>invoke</code> variant), as provided by the <code>ThreadPoolExecutor</code> module. Such pools need to be shutdown at program termination: as they contain threads, they prevent the JVM from ending the program (unless <code>exit</code> is explicitly called). Here is a basic example of future use:
+<pre>
+open Concurrent
+
+let pool =
+  ThreadPoolExecutor.make
+    4l (* core pool size *)
+    4l (* max pool size *)
+    1L TimeUnit.Seconds (* keep-alive time for threads outside core *)
+    RejectedExecutionHandler.Discard_policy (* how to handle rejected execution *)
+
+let compute x =
+  ...
+
+let () =
+  let f = ThreadPoolExecutor.submit pool compute 137 in
+  ...
+  Printf.printf "result = %d\n" (Future.get f);
+  ThreadPoolExecutor.shutdown pool
+</pre>
+</p>
+<p>
+It is also possible to launch several computations in parallel and wait for the first one to return:
+<pre>
+let () =
+  let l = [ 1; 2; 3; 5; 7; 11; 13 ] in
+  let res = ThreadPoolExecutor.invoke_any pool (List.map compute l) in
+  let others = ThreadPoolExecutor.shutdown_now pool in (* get all futures still running *)
+  List.iter (fun f -> ignore (Future.cancel f true)) others;
+  Printf.printf "result = %d\n" res
+</pre>
+However, for <code>Future.cancel</code> to succeed, it is necessary for <code>compute</code> to <em>cooperate</em>: the <code>compute</code> function should periodically test whether is has been interrupted. A simple way to perform that test is to check the value returned by <code>Thread.interrupted</code> before each computation step:
+<pre>
+let compute x =
+  ...
+  while (not !done) && (not (Thread.interrupted ())) do
+    ...
+    perform computation step
+    ...
+  done;
+  ...
+</pre>
+</p>
+<p>
+Besides <em>simple</em> futures, it is also possible to use <em>scheduled</em> futures (through the <code>ScheduledFuture</code>, and <code>ScheduledThreadPoolExecutor</code> modules). It is possible to schedule a one-shot future through <code>schedule</code> by just specifying a delay before future evaluation. It is also possible to schedule a future that will be repeatedly evaluated according to a given periodicity:
+<ul>
+  <li><code>schedule_at_fixed_rate</code> allows to specify the period between two evaluation starts;</li>
+  <li><code>schedule_with_fixed_delay</code> allows to specify the period between one evaluation end and the next evaluation start.</li>
+</ul>
+The following code will print <em>"hello!"</em> once per second:
+<pre>
+open Concurrent
+
+let pool = ScheduledThreadPoolExecutor.make 4l RejectedExecutionHandler.Discard_policy
+
+let () =
+ let f =
+    ScheduledThreadPoolExecutor.schedule_at_fixed_rate
+      pool
+      print_endline "hello!"
+      1L 1L TimeUnit.Seconds (* one second before first call, one second between two calls *) in
+  ScheduledFuture.get f;
+  ScheduledThreadPoolExecutor.shutdown pool
+</pre>
+</p>
+<p>
+Finally, the <code>ExecutorCompletionService</code> module allows to either <em>poll</em> or <em>wait</em> until any of the submitted futures has completed evaluation.
+</p>
+</section>
+
+
+<section id="forkjoin"><div class="page-header"><h1>Fork/join computations</h1></div>
+<p>
+Fork/join computations as supported by the <code>concurrent</code> library are quite different from their Java counterpart in order to provide a less general but safer abstraction. Basically, one can turn a <em>sequential</em> function into a <em>parallel</em> one by applying a very simple divide-and-conquer strategy that is defined by:
+<ul>
+  <li>a function indicating when the passed problem (<em>i. e.</em> parameter value) should be split into sub-problems;</li>
+  <li>a function indicating how to combine the partial results of the sub-problems.</li>
+</ul>
+As an exemple, a (very inefficient) way of computing the fibonacci function is:
+<pre>
+let rec fib n =
+  if n <= 1 then
+    1
+  else
+    (fib (n - 2)) + (fib (n - 1))
+</pre>
+that can be turned into a parallel version through:
+<pre>
+let fork n =
+  if n < threshold
+    then None (* below a given value, we do not fork *)
+    else Some (n - 1, n - 2) (* otherwise, we fork and create two subproblems *)
+
+let join x y = x + y
+
+let parallel_fib pool = Concurrent.ForkJoin.split pool fork join fib
+</pre>
+where <code>pool</code> is a value with type <code>ForkJoinPool.t</code>.
+</p>
+<p>
+The behaviour of <code>parallel_fib</code> when passed a value <code>x</code> is the following:
+<ol>
+  <li>evaluate <code>fork x</code>;</li>
+  <li>if <code>fork x</code> matches <code>None</code>, then the result for <code>parallel_fib x</code> is <code>fib x</code>;</li>
+  <li>if <code>fork x</code> matches <code>Some (x1, x2)</code>, then the result for <code>parallel_fib x</code> is <code>join y1 y2</code> where <code>y<em>i</em></code> is the result of <code>parallel_fib x<em>i</em></code>.</li>
+</ol>
+</p>
+<p>
+Besides the <code>ForkJoin.split</code> function that is based on an <code>option</code> type, the <code>ForkJoin</code> module provides similar functions based on <code>list</code>, and <code>array</code> types. They allow to divide a problem into more than two subproblems at once, possibly saving recursion steps when possible.
+</p>
+</section>
+
+
+<section id="mapreduce"><div class="page-header"><h1>Map/reduce computations</h1></div>
+<p>
+Map/reduce computations are a way to express computations through a bunch of functions:
+<ul>
+  <li><code>map : input -> (key * value) list</code></li>
+  <li><code>combine : key -> value -> value -> value</code></li>
+  <li><code>reduce : key -> value -> output -> output</code></li>
+</ul>
+The computation is started by providing an <code>input Stream.t</code> that is used to launch <em>map</em> computations for the stream values in different threads. Results computed by threads are then stored into a map from <code>key</code> to <code>value</code>, using <code>combine</code> to merge the values for equivalent keys. Once all <em>map</em> computations have returned, <code>reduce</code> acts as a bare fold over the aforementioned map, calculating the final result. <br/>
+Here is how to define a map/reduce computation:
+<pre>
+module C = struct
+  type input = int
+  type key = int
+  type value = int
+  type output = (int * int) list
+  let compare_keys = Pervasives.compare
+
+  let map x = [x, compute x]
+  let combine _ x y = x + y
+  let reduce _ v acc = v + acc
+end
+</pre>
+that is then passed to the <code>MapReduce.Make</code> functor:
+<pre>
+open Concurrent
+
+let pool =
+  ThreadPoolExecutor.make
+    4l 4l
+    1L TimeUnit.Days
+    RejectedExecutionHandler.Discard_policy
+
+module MR = MapReduce.Make (C)
+
+let () =
+  let s = Stream.of_list [ 1; 2; 3; 5; 7; 9; 11; 13; ... ] in
+  let res = MR.compute pool s 0 in
+  Printf.printf "result = %d\n" res;
+  ThreadPoolExecutor.shutdown pool
+</pre>
+</p>
+</section>
+
+
+<section id="parallelarray"><div class="page-header"><h1>Parallel arrays</h1></div>
+<p>
+The <code>ParallelArray</code> module provides the same functions as the <code>Array</code> module from the standard library, except that the following ones take advantage of the multiple cores to execute operations in parallel:
+<ul>
+  <li><code>init</code>;</li>
+  <li><code>iter</code> and <code>iteri</code>;</li>
+  <li><code>fold_left</code> and <code>fold_right</code>;</li>
+  <li><code>sort</code>, <code>stable_sort</code>, and <code>fast_sort</code>.</li>
+</ul>
+Of course, when using one of these functions, there is no guarantee on the order in which operations will be executed.
+</p>
+<p>
+The <code>ParallelArray</code> module also provides some functions with no counterpart in the <code>Array</code> module:
+<ul>
+  <li><code>mem</code> and <code>memq</code>;</li>
+  <li><code>exists</code> and <code>for_all</code>;</li>
+  <li><code>find</code>, <code>find_index</code>, and <code>fast_find_all</code>.</li>
+</ul>
+</p>
+<p>
+All functions accept two optional parameters:
+<ul>
+  <li><code>?pool:ThreadPoolExecutor</code> that allows to specify which thread pool to use;</li>
+  <li><code>?chunk_size:int</code>that allows to specify the size of the data chunks passed to the various threads.</li>
+</ul>
+In order to get rid of these optional parameters, it is possible to use the <code>ParallelArray.Make</code> functor to set the parameters once for all function calls.
+</p>
+<p>
+<div class="alert alert-error">
+<strong>Warning!</strong> most functions have the same signature as in the <code>Array</code> module, but it is not possible for the <em>fold</em> functions. Indeed, as folds are executed on parts of the array, an additional function is needed in order to combine the results from those partial folds. This leads to the following type for the <code>fold_left</code> function:
+<pre>
+?pool:ThreadPoolExecutor.t ->
+?chunk_size:int ->
+('a -> 'b -> 'a) -> (* original fold function *)
+('a -> 'a -> 'a) -> (* function used to combine results from partial folds *)
+'a ->
+'b array ->
+'a
+</pre>
+Of course, the parallel folds will yield the same results as their classical counterparts iff passed functions are associative and commutative.
+</div>
+</p>
+<p>
+Here is an example comparing the use of <code>Array</code> and <code>ParallelArray</code>:
+<pre>
+open Concurrent
+
+let size = 10000
+
+let a = Array.make size init_func
+
+let sequential () =
+  let b = Array.map compute_func a in
+  let res = Array.fold_left (fun acc elem -> acc + (aux_func elem)) 0 b in
+  Printf.printf "result = %d\n" res
+
+let parallel () =
+  let b = ParallelArray.map compute_func a in
+  let res = ParallelArray.fold_left (fun acc elem -> acc + (aux_func elem)) (+) 0 b in
+  Printf.printf "result = %d\n" res;
+  ParallelArray.shutdown_now () (* stop threads from the default ParallelArray pool *)
+</pre>
+</section>
+
+
+<section id="stm"><div class="page-header"><h1>STM</h1></div>
+<p>
+<div class="alert alert-error">
+<strong>Warning!</strong> the current implementation has only been lightly tested.
+</div>
+</p>
+<p>
+The <code>STM</code> module provides support for a <em>partial</em> software transactional memory. This means that the whole memory is not protected by transactions: only values of type <code>STM.ref</code> are protected. Such values are akin to <code>Pervasives.ref</code> values, and are created through the <code>STM.ref</code> function. However, those values can only be accessed from within a transaction.
+</p>
+<p>
+Two functions allow to process transactions:
+<ul>
+  <li><code>STM.run</code> that executes any transaction;</li>
+  <li><code>STM.run_read_only</code> that executes a transaction that cannot modify values.</li>
+</ul>
+A transaction function is passed to one of these functions in order to specify the transaction behavior. The transaction function can access <code>STM.ref</code> values through accessor functions. As an example, the canonical banking account example can be written:
+</p>
+<pre>
+open Concurrent
+
+type account = {
+    name : string; (* bare value *)
+    balance : int STM.ref; (* value protected by transactions *)
+  }
+
+let make_account n b =
+  { name = n; balance = STM.ref b }
+
+let print_account acc =
+  STM.run_read_only (fun get ->
+    Printf.printf "%s = %d\n" acc.name (get acc.balance))
+
+let transfer x y a =
+ STM.run (fun get set ->
+    let xv, yv = get x.balance, get y.balance in
+    set x.balance (xv - a);
+    set y.balance (yv + a));
+</pre>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>

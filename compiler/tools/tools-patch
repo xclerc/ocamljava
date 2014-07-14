@@ -1,0 +1,138 @@
+diff -aur original/ocamldep.ml patched/ocamldep.ml
+--- original/ocamldep.ml	2013-08-20 17:32:13.000000000 +0200
++++ patched/ocamldep.ml	2013-08-20 17:32:13.000000000 +0200
+@@ -23,6 +23,8 @@
+ let ml_synonyms = ref [".ml"]
+ let mli_synonyms = ref [".mli"]
+ let native_only = ref false
++let java_only = ref false
++let no_java = ref false
+ let error_occurred = ref false
+ let raw_dependencies = ref false
+ let sort_files = ref false
+@@ -100,7 +102,7 @@
+ | x :: rem -> try find_file x with Not_found -> find_file_in_list rem
+ 
+ 
+-let find_dependency target_kind modname (byt_deps, opt_deps) =
++let find_dependency target_kind modname (byt_deps, opt_deps, java_deps) =
+   try
+     let candidates = List.map ((^) modname) !mli_synonyms in
+     let filename = find_file_in_list candidates in
+@@ -108,20 +110,21 @@
+     let cmi_file = basename ^ ".cmi" in
+     let ml_exists =
+       List.exists (fun ext -> Sys.file_exists (basename ^ ext)) !ml_synonyms in
+-    let new_opt_dep =
++    let new_opt_dep, new_java_dep =
+       if !all_dependencies then
+         match target_kind with
+-        | MLI -> [ cmi_file ]
++        | MLI -> [ cmi_file ], [ cmi_file ]
+         | ML  ->
+-          cmi_file :: (if ml_exists then [ basename ^ ".cmx"] else [])
++          cmi_file :: (if ml_exists then [ basename ^ ".cmx" ] else []),
++          cmi_file :: (if ml_exists then [ basename ^ ".cmj" ] else [])
+       else
+         (* this is a make-specific hack that makes .cmx to be a 'proxy'
+            target that would force the dependency on .cmi via transitivity *)
+         if ml_exists
+-        then [ basename ^ ".cmx" ]
+-        else [ cmi_file ]
++        then [ basename ^ ".cmx" ], [ basename ^ ".cmj" ]
++        else [ cmi_file ], [ cmi_file ]
+     in
+-    ( cmi_file :: byt_deps, new_opt_dep @ opt_deps)
++    ( cmi_file :: byt_deps, new_opt_dep @ opt_deps, new_java_dep @ java_deps)
+   with Not_found ->
+   try
+     (* "just .ml" case *)
+@@ -135,17 +138,21 @@
+         | ML  -> [basename ^ ".cmi";]
+       else
+         (* again, make-specific hack *)
+-        [basename ^ (if !native_only then ".cmx" else ".cmo")] in
+-    let optnames =
++        let ext =
++          if !java_only then ".cmj"
++          else if !native_only then ".cmx"
++          else ".cmo" in
++        [basename ^ ext] in
++    let optnames, javanames =
+       if !all_dependencies
+       then match target_kind with
+-        | MLI -> [basename ^ ".cmi"]
+-        | ML  -> [basename ^ ".cmi"; basename ^ ".cmx"]
+-      else [ basename ^ ".cmx" ]
++        | MLI -> [basename ^ ".cmi"], [basename ^ ".cmi"]
++        | ML  -> [basename ^ ".cmi"; basename ^ ".cmx"], [basename ^ ".cmi"; basename ^ ".cmj"]
++      else [ basename ^ ".cmx" ], [ basename ^ ".cmj" ]
+     in
+-    (bytenames @ byt_deps, optnames @  opt_deps)
++    (bytenames @ byt_deps, optnames @  opt_deps, javanames @ java_deps)
+   with Not_found ->
+-    (byt_deps, opt_deps)
++    (byt_deps, opt_deps, java_deps)
+ 
+ let (depends_on, escaped_eol) = (":", " \\\n    ")
+ 
+@@ -266,20 +273,26 @@
+         if !all_dependencies
+         then [ basename ^ ".cmx"; basename ^ ".o" ]
+         else [ basename ^ ".cmx" ] in
++      let java_targets =
++        if !all_dependencies
++        then [ basename ^ ".cmj"; basename ^ ".jo" ]
++        else [ basename ^ ".cmj" ] in
+       let init_deps = if !all_dependencies then [source_file] else [] in
+       let cmi_name = basename ^ ".cmi" in
+       let init_deps, extra_targets =
+         if List.exists (fun ext -> Sys.file_exists (basename ^ ext))
+                        !mli_synonyms
+-        then (cmi_name :: init_deps, cmi_name :: init_deps), []
+-        else (init_deps, init_deps),
++        then (cmi_name :: init_deps, cmi_name :: init_deps, cmi_name :: init_deps), []
++        else (init_deps, init_deps, init_deps),
+              (if !all_dependencies then [cmi_name] else [])
+       in
+-      let (byt_deps, native_deps) =
++      let (byt_deps, native_deps, java_deps) =
+         Depend.StringSet.fold (find_dependency ML)
+           extracted_deps init_deps in
+       print_dependencies (byte_targets @ extra_targets) byt_deps;
+       print_dependencies (native_targets @ extra_targets) native_deps;
++      if not !no_java then
++        print_dependencies (java_targets @ extra_targets) java_deps;
+     end
+ 
+ let mli_file_dependencies source_file =
+@@ -294,9 +307,9 @@
+       print_raw_dependencies source_file extracted_deps
+     end else begin
+       let basename = Filename.chop_extension source_file in
+-      let (byt_deps, opt_deps) =
++      let (byt_deps, opt_deps, java_deps) =
+         Depend.StringSet.fold (find_dependency MLI)
+-          extracted_deps ([], []) in
++          extracted_deps ([], [], []) in
+       print_dependencies [basename ^ ".cmi"] byt_deps
+     end
+ 
+@@ -426,6 +439,8 @@
+         "<f>  Process <f> as a .ml file";
+      "-intf", Arg.String (file_dependencies_as MLI),
+         "<f>  Process <f> as a .mli file";
++     "-java", Arg.Set java_only,
++        " Generate dependencies for OCaml-Java only (no .cmo files)";
+      "-ml-synonym", Arg.String(add_to_synonym_list ml_synonyms),
+         "<e>  Consider <e> as a synonym of the .ml extension";
+      "-mli-synonym", Arg.String(add_to_synonym_list mli_synonyms),
+@@ -434,6 +449,8 @@
+         " Print module dependencies in raw form (not suitable for make)";
+      "-native", Arg.Set native_only,
+         " Generate dependencies for native-code only (no .cmo files)";
++     "-no-java", Arg.Set no_java,
++        " Do not generate dependencies for OCaml-Java (classical behaviour)";
+      "-one-line", Arg.Set one_line,
+         " Output one line per file, regardless of the length";
+      "-pp", Arg.String(fun s -> Clflags.preprocessor := Some s),

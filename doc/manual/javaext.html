@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>OCaml-Java: creating and manipulating Java instances from OCaml code</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#types"><i class="icon-tag"></i>Types</a></li>
+  <li><a href="#functions"><i class="icon-tag"></i>Functions</a></li>
+  <li><a href="#sugar"><i class="icon-tag"></i>Sugar</a></li>
+  <li><a href="#example"><i class="icon-tag"></i>Example</a></li>
+  <li><a href="#exceptions"><i class="icon-tag"></i>Exceptions</a></li>
+  <li><a href="#arrays"><i class="icon-tag"></i>Arrays</a></li>
+</ul>
+</div>
+<div class="span8">
+
+
+<section id="top"><div class="page-header"><h1>OCaml-Java: creating and manipulating Java instances from OCaml code</h1></div>
+<p>
+This page contains the information about the typer extensions that allows to access Java elements from OCaml sources, as shipped with the distribution since version 2.0-early-access8.
+</p>
+<p>
+<div class="alert alert-error">
+<strong>Warning!</strong> these extensions, as well as the associated library, are still at the experimental stage and subject to changes.
+</div>
+</p>
+<p>
+<div class="alert alert-warning">
+<strong>Warning!</strong> in order to enable the extensions, it is necessary to pass the <tt>-java-extensions</tt> switch to the <tt>ocamljava</tt> compiler, and to link with the <tt>javalib</tt> library. Thus resulting in the following command-line for a one-file application:<br/> <center><tt>ocamljava javalib.cmja -java-extensions source.ml</tt></center><br/>
+The same command-line switch should be passed to <tt>ocamldoc</tt> when generating documentation. This command-line switch can be requested in an <tt>ocamlbuild</tt> <tt>_tags</tt> file through the <tt>java-extensions</tt> tag.
+</div>
+</p>
+</section>
+
+
+<section id="types"><div class="page-header"><h1>Types</h1></div>
+<p>
+In order to be able to manipulate Java elements from OCaml sources, it is necessary to choose a mapping from Java types to OCaml types. The following table shows how Java primitive types are mapped to OCaml predefined types.
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>Java type</th><th>OCaml type</th></tr>
+</thead>
+<tbody>
+<tr><td><tt>boolean</tt></td>  <td><tt>bool</tt></td>   </tr>
+<tr><td><tt>byte</tt></td>     <td><tt>int</tt></td>    </tr>
+<tr><td><tt>char</tt></td>     <td><tt>int</tt></td>    </tr>
+<tr><td><tt>double</tt></td>   <td><tt>float</tt></td>  </tr>
+<tr><td><tt>float</tt></td>    <td><tt>float</tt></td>  </tr>
+<tr><td><tt>int</tt></td>      <td><tt>int32</tt></td>  </tr>
+<tr><td><tt>long</tt></td>     <td><tt>int64</tt></td>  </tr>
+<tr><td><tt>short</tt></td>    <td><tt>int</tt></td>    </tr>
+</tbody>
+</table>
+</p>
+<p>
+Java reference types are mapped to two OCaml types, namely <tt>java_instance</tt> and <tt>java_extends</tt>. Both are abstract data types accepting one type parameter used to denote a class name. The difference between the two types is that <tt>java_instance</tt> designates exactly an instance of a given class, while <tt>java_extends</tt> designates an instance of either that class or any of its subclasses.
+</p>
+<p>
+A special notation is introduced to specify the class name: the type parameter of either <tt>java_instance</tt> or <tt>java_extends</tt> can be:
+<ul>
+  <li>a classical type variable, <i>e.g.</i> <tt>'a</tt>;</li>
+  <li>a Java class name, <i>e.g.</i> <tt>java'lang'String</tt>.</li>
+</ul>
+When writing a Java class name, single quotes have to be used instead of dots to abide the OCaml syntactic rules. Thus leading to the type expression <tt>java'lang'String java_instance</tt> to designate in OCaml an instance of the <tt>java.lang.String</tt> class.
+</p>
+</section>
+
+
+<section id="functions"><div class="page-header"><h1>Functions</h1></div>
+<p>
+Once the mapping from Java types to OCaml types is defined, we need mechanisms to create new instances, call methods, and access fields. This is done through functions from the <tt>Java</tt> module.
+</p>
+<p>
+A new instance is built by calling <tt>Java.make</tt> with a first parameter describing the constructor to be used (as a string literal), the other parameters being the parameters actually passed to the constructor. For example, the following code builds a bare object and an <tt>Integer</tt>:
+<pre>
+let obj = Java.make "java.lang.Object()"
+let itg = Java.make "java.lang.Integer(int)" 123l
+</pre>
+</p>
+<p>
+A similar mechanism is used to invoke methods, through the <tt>Java.call</tt> function. The first parameter to this function is a descriptor to the method to be called. The other parameters are the parameters passed to the function, including the instance on which the method should be invoked (if the method is not static). For example, the following code retrieves the hash code of the previously-created object and then tests whether the two instances are equal:
+<pre>
+let obj_hash = Java.call "java.lang.Object.hashCode():int" obj
+let eq = Java.call "java.lang.Object.equals(java.lang.Object):boolean" obj itg
+</pre>
+</p>
+<p>
+It is noteworthy that the subtyping relationship over Java instances is preserved, so that it is possible to define a function retrieving the hash code, and then apply it to <tt>Object</tt> and <tt>Integer</tt> instances:
+<pre>
+let hash_code x = Java.call "java.lang.Object.hashCode():int" x
+let obj_hash = hash_code obj
+let itg_hash = hash_code itg
+</pre>
+</p>
+<p>
+When calling a Java method with a variable number of arguments, it is possible to choose how arguments will be passed: through a Java array, or through an OCaml literal array. The choice is made by using one of the two allowed variants for the method (or constructor descriptor):
+<ul>
+  <li><code>"C.m(T[])"</code> implies the use of a Java array;</li>
+  <li><code>"C.m(T...)"</code> implies the use of an OCaml literal array.</li>
+</ul>
+The following example applies these notations to the <code>Arrays.asList</code> method:
+<pre>
+let a1 =
+  let res = Java.make_array "Object[]" 5l in
+  ...
+  res
+let l1 = Java.call "Arrays.asList(Object[])" a1
+
+let l2 =
+  Java.call "Arrays.asList(Object...)"
+  [| Java.null ;
+     Java.make "Object()" () ;
+     (JavaString.of_string "xyz" :> java'lang'Object java_instance) |]
+</pre>
+</p>
+<p>
+Accessing fields to read (respectively write) their values is done through the <tt>Java.get</tt> function (respectively <tt>Java.set</tt>). The first parameter to the function is a descriptor of the Java field to access, and the second parameter the instance to use (or <tt>unit</tt> if the field is static). For example, we can retrieve the maximum integer value and and increment the width of a dimension by:
+<pre>
+let max_int = Java.get "java.lang.Integer.MAX_VALUE:int" ()
+let incr_width dim =
+  let w = Java.get "java.awt.Dimension.width:int" dim in
+  Java.set "java.awt.Dimension.width:int" dim (Int32.succ w)
+</pre>
+</p>
+<p>
+Finally, it is possible to implement a Java interface with OCaml code through the <tt>Java.proxy</tt> function. The first parameter to the function is a descriptor designating a Java interface, while the second parameter is an OCaml object implementing the methods specified by the Java interface. The <tt>Java.proxy</tt> function then returns a fully-functional instance of the interface. For example, the following code implements an <em>action listener</em> and registers it with a previously created button:
+</p>
+<pre>
+let button = Java.make "java.awt.Button()"
+
+let listener =
+  Java.proxy "java.awt.event.ActionListener" (object
+    method actionPerformed _ =
+      print_endline "clicked!"
+  end)
+
+let () =
+  Java.call "java.awt.Button.addActionListener(java.awt.event.ActionListener):void"
+    button listener
+</pre>
+</section>
+
+
+<section id="sugar"><div class="page-header"><h1>Sugar</h1></div>
+<p>
+So far, we have seen how to create and manipulate Java instances from purely OCaml code. However, the resulting code is quite verbose. We thus introduce some syntactic sugar to allow terser programs. Firstly, it is possible to remove the return type of a method or the type of a field as long as there is no ambiguity. Secondly, the type of a method parameter can be replaced by an underscore provided there is no ambiguity. The combination of these rules already allows us to switch from
+<pre>
+let eq = Java.call "java.lang.Object.equals(java.lang.Object):boolean" obj itg
+</pre>
+to
+<pre>
+let eq = Java.call "java.lang.Object.equals(_)" obj itg
+</pre>
+Another notation, <tt>(-)</tt> allows to match any number of parameters, allowing to write
+<pre>
+let x = Java.call "Integer.rotateLeft(-)" y z
+</pre>
+</p>
+<p>
+It is noteworthy that the types are not affected by these shorthand notations, and that the compiler will issue an error if there is an ambiguity.
+</p>
+<p>
+Lastly, we introduce a mechanism akin to the Java <tt>import pack.*</tt> directive through a special form of the OCaml <tt>open</tt> directive. Importing all the classes of the Java package <em>pack</em> is done by writing <tt>open Package'pack</tt> (note that, as in Java, the <tt>java.lang</tt> package is always opened). Thus leading to a revised version of our proxy example:
+<pre>
+open Package'java'awt
+open Package'java'awt'event
+
+let button = Java.make "Button()"
+
+let listener =
+  Java.proxy "ActionListener" (object
+    method actionPerformed _ =
+      print_endline "clicked!"
+  end)
+
+let () = Java.call "Button.addActionListener(_)" button listener
+</pre>
+Opened packages also allow to reduce the verbosity of type expressions, allowing to replace the package name by an underscore. The type of the aforementioned <tt>hash_code</tt> function
+can then be written:
+<pre>
+val hash_code : _'Object java_extends -> int32
+</pre>
+rather than:
+<pre>
+val hash_code : java'lang'Object java_extends -> int32
+</pre>
+</p>
+</section>
+
+
+<section id="example"><div class="page-header"><h1>Example</h1></div>
+<p>
+The following code builds a simple Celsius-Fahrenheit converter based on a Swing GUI. The code is derived from the Clojure code sample available <a href="http://clojure.org/jvm_hosted">here</a>. The code uses the <tt>JavaString</tt> module for conversion between Java and OCaml strings.
+<pre>
+open Package'java'awt
+open Package'java'awt'event
+open Package'javax'swing
+
+let () =
+   let str = JavaString.of_string in
+   let open Java in
+   let title = str "Celsius Converter" in
+   let frame = make "JFrame(String)" title in
+   let temp_text = make "JTextField()" () in
+   let celsius_label = make "JLabel(String)" (str "Celsius") in
+   let convert_button = make "JButton(String)" (str "Convert") in
+   let farenheit_label = make "JLabel(String)" (str "Farenheit") in
+   let handler = proxy "ActionListener" (object
+     method actionPerformed _ =
+       try
+         let c = call "JTextField.getText()" temp_text in
+         let c = call "Double.parseDouble(_)" c in
+         let f = (c *. 1.8) +. 32.0 in
+         let f = Printf.sprintf "%f Farenheit" f in
+         call "JLabel.setText(_)" farenheit_label (str f)
+       with Java_exception je ->
+         let je_msg = call "Throwable.getMessage()" je in
+         let je_msg = JavaString.to_string je_msg in
+         let msg = str (Printf.sprintf "invalid float value (%s)" je_msg) in
+         let error = get "JOptionPane.ERROR_MESSAGE" () in
+         call "JOptionPane.showMessageDialog(_,_,_,_)"
+           frame msg title error
+   end) in
+   let () = call "JButton.addActionListener(_)" convert_button handler in
+   let layout = make "GridLayout(_,_,_,_)" 2l 2l 3l 3l in
+   call "JFrame.setLayout(_)" frame layout;
+   ignore (call "JFrame.add(Component)" frame temp_text);
+   ignore (call "JFrame.add(Component)" frame celsius_label);
+   ignore (call "JFrame.add(Component)" frame convert_button);
+   ignore (call "JFrame.add(Component)" frame farenheit_label);
+   call "JFrame.setSize(_,_)" frame 300l 80l;
+   let exit = get "WindowConstants.EXIT_ON_CLOSE" () in
+   call "JFrame.setDefaultCloseOperation(int)" frame exit;
+   call "JFrame.setVisible(_)" frame true
+</pre>
+</p>
+</section>
+
+<section id="exceptions"><div class="page-header"><h1>Exceptions</h1></div>
+<p>
+<div class="alert alert-warning">
+<strong>Warning!</strong> Up to version 2.0-early-access11, all exceptions where encapsulated into <tt>Java_exception</tt>.
+</div>
+</p>
+<p>
+On the OCaml side, Java exceptions are encapsulated into one of the following exceptions:
+<ul>
+  <li><tt>Java_exception</tt> for instances of <tt>java.lang.Exception</tt>;</li>
+  <li><tt>Java_error</tt> for instances of <tt>java.lang.Error</tt>.</li>
+</ul>
+These exceptions are defined as follows:
+<pre>
+exception Java_exception of java'lang'Exception java_instance
+exception Java_error of java'lang'Error java_instance
+</pre>
+The <tt>Java.instanceof</tt> and <tt>Java.cast</tt> functions can be used to respectively test whether a given object is an instance of a given class, and to cast it to a given class. Both functions accept as their first parameter the name of the class as a string literal. The following code illustrates how OCaml and Java exceptions can be mixed:
+<pre>
+open Package'java'io
+
+let f ... =
+  try
+    ...
+  with
+  | Not_found ->
+    (* predefined OCaml Not_found exception *)
+    ...
+  | Java_exception t when Java.instanceof "IOException" t ->
+    (* Java exception that is a subclass of java.io.IOException *)
+    ...
+  | Java_exception _ ->
+    (* any other Java exception inheriting from java.lang.Exception *)
+    ...
+  | _ ->
+    (* any other OCaml exception *)
+    ...
+</pre>
+</p>
+<p>
+Java exceptions are raised from OCaml code by calling the <tt>Java.throw</tt> function with a parameter of type <tt>java'lang'Throwable java_extends</tt>.
+</p>
+</section>
+
+
+<section id="arrays"><div class="page-header"><h1>Arrays</h1></div>
+<p>
+For effiency reasons, Java arrays are mapped to specialized implementations, as shown by the following table:
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>Java type</th><th>OCaml type</th></tr>
+</thead>
+<tbody>
+<tr><td><tt>boolean[]</tt></td>  <td><tt>int java_boolean_array = int JavaBooleanArray.t</tt></td>   </tr>
+<tr><td><tt>byte[]</tt></td>     <td><tt>int java_byte_array = int JavaByteArray.t</tt></td>    </tr>
+<tr><td><tt>char[]</tt></td>     <td><tt>int java_char_array = int JavaCharArray.t</tt></td>    </tr>
+<tr><td><tt>double[]</tt></td>   <td><tt>float java_double_array = float JavaDoubleArray.t</tt></td>  </tr>
+<tr><td><tt>float[]</tt></td>    <td><tt>float java_float_array = int JavaFloatArray.t</tt></td>  </tr>
+<tr><td><tt>int[]</tt></td>      <td><tt>int32 java_int_array = int32 JavaIntArray.t</tt></td>  </tr>
+<tr><td><tt>long[]</tt></td>     <td><tt>int64 java_long_array = int64 JavaLongArray.t</tt></td>  </tr>
+<tr><td><tt>short[]</tt></td>    <td><tt>int java_short_array = int JavaShortArray.t</tt></td>    </tr>
+<tr><td><tt><em>reference</em>[]</tt></td>    <td><tt><em>reference</em> java_reference_array = <em>reference</em> JavaReferenceArray.t</tt></td>    </tr>
+</tbody>
+</table>
+note 1: each array type has a type parameter representing the OCaml type of array elements. <br/>
+note 2: all primitive array types share a common signature, namely <tt>JavaArraySignature.T</tt>.
+</p>
+
+<p>
+Array instances are created through either the <tt>Java.make_array</tt> function, or any of the <tt>make</tt> functions from the various modules. The <tt>Java.make_array</tt> function accepts as its first parameter an array descriptor, and as additional parameters <tt>int32</tt> values for the various dimensions. For example, a 2x3 <tt>byte</tt> matrix can be created through:
+<pre>
+let m = Java.make_array "byte[][]" 2l 3l
+</pre>
+</p>
+<p>
+It is also possible to use a uniform representation for arrays by wrapping array instances into <tt>JavaArray.t</tt> values. The <tt>JavaArray.t</tt> type is a GADT that unifies all specialized arrays types into one common type. This allows to write generic code over arrays, at the price of an indirection. The <tt>JavaArray</tt> modules provides the functions to wrap the various kinds of arrays into <tt>JavaArray.t</tt> values.
+</p>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>

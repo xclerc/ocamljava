@@ -1,0 +1,12 @@
+<service type="org.ocamljava.runtime.annotations.primitives.PrimitiveProvider">
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkCaml"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkEval"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkEvent"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkFile"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkImg"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkMain"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkMisc"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkTimer"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkVar"/>
+  <provider classname="org.ocamljava.runtime.primitives.otherlibs.labltk.CltkWait"/>
+</service>

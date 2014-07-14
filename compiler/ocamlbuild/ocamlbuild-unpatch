@@ -1,0 +1,749 @@
+diff -aur patched/_tags original/_tags
+--- patched/_tags	2014-04-13 09:05:24.000000000 +0200
++++ original/_tags	2014-04-13 09:05:24.000000000 +0200
+@@ -20,10 +20,3 @@
+ <*.cmx>: for-pack(Ocamlbuild_pack)
+ <{ocamlbuild_{pack,unix_plugin,plugin,executor},ppcache}{,.p}.cmx>: -for-pack(Ocamlbuild_pack)
+ "doc": not_hygienic
+-
+-# ocamljava-specific elements
+-<*.cmj>: for-pack(Ocamlbuild_pack)
+-<{ocamlbuild_{pack,plugin},my_unix_with_unix,ppcache,executor}{,.p}.cmj>: -for-pack(Ocamlbuild_pack)
+-<*.jar>: use_unix
+-<*.cmj*> or <*.ja> or <*.jar>: java-package(ocaml.tools.ocamlbuild)
+-<ocamlbuild.jar>: runtime-parameter(embedded=on), runtime-parameter(embedded-base=FileAnchor), additional-jar-ref(ocaml-lib-files.jar)
+diff -aur patched/display.ml original/display.ml
+--- patched/display.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/display.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -76,7 +76,6 @@
+ let default_update_interval = 0.05;;
+ let default_tagline_description = [
+   "ocaml",     'O';
+-  "java",      'J';
+   "native",    'N';
+   "byte",      'B';
+   "program",   'P';
+diff -aur patched/fda.ml original/fda.ml
+--- patched/fda.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/fda.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -24,13 +24,13 @@
+ let laws =
+   [
+     { law_name = "Leftover OCaml compilation files";
+-      law_rules = [Not ".cmo"; Not ".cmi"; Not ".cmx"; Not ".cmj"; Not ".cma"; Not ".cmxa"; Not ".cmja"];
++      law_rules = [Not ".cmo"; Not ".cmi"; Not ".cmx"; Not ".cma"; Not ".cmxa"];
+       law_penalty = Fail };
+     { law_name = "Leftover OCaml type annotation files";
+       law_rules = [Not ".annot"];
+       law_penalty = Warn };
+     { law_name = "Leftover object files";
+-      law_rules = [Not ".o"; Not ".a"; Not ".so"; Not ".obj"; Not ".lib"; Not ".dll"; Not "jo"; Not "ja"];
++      law_rules = [Not ".o"; Not ".a"; Not ".so"; Not ".obj"; Not ".lib"; Not ".dll"];
+       law_penalty = Fail };
+     { law_name = "Leftover ocamlyacc-generated files";
+       law_rules = [Implies_not(".mly",".ml"); Implies_not(".mly",".mli")];
+diff -aur patched/main.ml original/main.ml
+--- patched/main.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/main.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -83,14 +83,11 @@
+      <**/*.byte>: ocaml, byte, program\n\
+      <**/*.odoc>: ocaml, doc\n\
+      <**/*.native>: ocaml, native, program\n\
+-     <**/*.jar>: ocaml, java, program\n\
+      <**/*.cma>: ocaml, byte, library\n\
+      <**/*.cmxa>: ocaml, native, library\n\
+-     <**/*.cmja>: ocaml, java, library\n\
+      <**/*.cmo>: ocaml, byte\n\
+      <**/*.cmi>: ocaml, byte, native\n\
+      <**/*.cmx>: ocaml, native\n\
+-     <**/*.cmj>: ocaml, java\n\
+     ";
+ 
+   Configuration.tag_any !Options.tags;
+@@ -221,13 +218,13 @@
+         let link x =
+           if !Options.make_links then ignore (call (S [A"ln"; A"-sf"; P x; A Pathname.current_dir_name])) in
+         match ext with
+-        | "byte" | "native" | "jar" | "top" ->
++        | "byte" | "native" | "top" ->
+             link cmd; cmd :: acc
+         | "html" ->
+             link (Pathname.dirname cmd); acc
+         | _ ->
+             if !Options.program_to_execute then
+-              eprintf "Warning: Won't execute %s whose extension is neither .byte nor .native nor .jar" cmd;
++              eprintf "Warning: Won't execute %s whose extension is neither .byte nor .native" cmd;
+             acc
+       end targets [] in
+ 
+@@ -237,12 +234,7 @@
+         | [] -> raise (Exit_usage "Using -- requires one target");
+         | cmd :: rest ->
+           if rest <> [] then dprintf 0 "Warning: Using -- only run the last target";
+-        let prefix =
+-            if Filename.check_suffix cmd ".jar" then
+-              [A(!Options.java); A"-jar"]
+-            else
+-              [] in
+-            let cmd_spec = S (prefix @ [P cmd; atomize !Options.program_args]) in
++          let cmd_spec = S [P cmd; atomize !Options.program_args] in
+           dprintf 3 "Running the user command:@ %a" Pathname.print cmd;
+           raise (Exit_with_code (call cmd_spec)) (* Exit with the exit code of the called command *)
+       end
+diff -aur patched/my_std.ml original/my_std.ml
+--- patched/my_std.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/my_std.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -256,7 +256,7 @@
+   match sys_readdir dirname with
+   | Outcome.Bad _ -> false
+   | Outcome.Good a ->
+-      if (basename = Filename.current_dir_name) || ((Sys.os_type = "Win32") && (basename = "\\")) then true else
++      if basename = Filename.current_dir_name then true else
+       try Array.iter (fun x -> if x = basename then raise Exit) a; false
+       with Exit -> true
+ 
+diff -aur patched/my_unix.ml original/my_unix.ml
+--- patched/my_unix.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/my_unix.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -84,7 +84,7 @@
+   if sys_file_exists x then
+     try
+       let y = readlinkcmd x in
+-      if (sys_file_exists y) && ((lstat y).stat_file_kind) = FK_dir then raise Link_to_directories_not_supported else y
++      if (lstat y).stat_file_kind = FK_dir then raise Link_to_directories_not_supported else y
+     with Failure(_) -> raise Not_a_link
+   else raise No_such_file
+ 
+diff -aur patched/ocaml_compiler.ml original/ocaml_compiler.ml
+--- patched/ocaml_compiler.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/ocaml_compiler.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -31,12 +31,7 @@
+ 
+ let ocamlc_c tags arg out =
+   let tags = tags++"ocaml"++"byte" in
+-  let compiler =
+-    if Tags.mem "java-extensions" tags then
+-      !Options.ocamljava
+-    else
+-      !Options.ocamlc in
+-  Cmd (S [compiler; A"-c"; T(tags++"compile");
++  Cmd (S [!Options.ocamlc; A"-c"; T(tags++"compile");
+           ocaml_ppflags tags; ocaml_include_flags arg; A"-o"; Px out; P arg])
+ 
+ let ocamlc_link flag tags deps out =
+@@ -110,37 +105,6 @@
+ 
+ let native_lib_linker_tags tags = tags++"ocaml"++"link"++"native"++"library"
+ 
+-let ocamljava_c tags arg out =
+-  let tags = tags++"ocaml"++"java" in
+-  Cmd (S [!Options.ocamljava; A"-c"; Ocaml_arch.forpack_flags_of_pathname arg;
+-          T(tags++"compile"); ocaml_ppflags tags; ocaml_include_flags arg;
+-          A"-o"; Px out; P arg])
+-
+-let ocamljava_link flag tags deps out =
+-  Cmd (S [!Options.ocamljava; flag; forpack_flags out tags; T tags;
+-          atomize_paths deps; A"-o"; Px out])
+-
+-let ocamljava_link_lib = ocamljava_link (A"-a")
+-let ocamljava_link_prog = ocamljava_link N
+-
+-let ocamljava_p tags deps out =
+-  let dirnames = List.union [] (List.map Pathname.dirname deps) in
+-  let include_flags = List.fold_right ocaml_add_include_flag dirnames [] in
+-  let mli = Pathname.update_extensions "mli" out in
+-  let cmd =
+-    S [!Options.ocamljava; A"-pack"; forpack_flags out tags; T tags;
+-       S include_flags; atomize_paths deps;
+-       A"-o"; Px out] in
+-  if (*FIXME true ||*) Pathname.exists mli then Cmd cmd
+-  else
+-    let rm = S[A"rm"; A"-f"; P mli] in
+-    Cmd(S[A"touch"; P mli; Sh" ; if "; cmd; Sh" ; then "; rm; Sh" ; else ";
+-          rm; Sh" ; exit 1; fi"])
+-
+-let java_lib_linker tags =
+-  ocamljava_link_lib tags
+-
+-let java_lib_linker_tags tags = tags++"ocaml"++"link"++"java"++"library"
+ 
+ let prepare_compile build ml =
+   let dir = Pathname.dirname ml in
+@@ -204,13 +168,6 @@
+   prepare_link cmx cmi [cmx_ext; "cmi"] build;
+   ocamlopt_c (Tags.union (tags_of_pathname ml) (tags_of_pathname cmx)++"implem"+++tag) ml cmx
+ 
+-let java_compile_ocaml_implem ?tag ?(cmj_ext="cmj") ml env build =
+-  let ml = env ml in
+-  let cmi = Pathname.update_extensions "cmi" ml in
+-  let cmj = Pathname.update_extensions cmj_ext ml in
+-  prepare_link cmj cmi [cmj_ext; "cmi"] build;
+-  ocamljava_c (Tags.union (tags_of_pathname ml) (tags_of_pathname cmj)++"implem"+++tag) ml cmj
+-
+ let libs_of_use_lib tags =
+   Tags.fold begin fun tag acc ->
+     try let libpath, extern = Hashtbl.find info_libraries tag in
+@@ -309,15 +266,6 @@
+ let native_profile_library_link x = native_profile_link_gen native_lib_linker
+   (fun tags -> native_lib_linker_tags tags++"profile") x
+ 
+-let java_link_gen linker =
+-  link_gen "cmj" "cmja" !Options.ext_java_lib [!Options.ext_java_obj; "cmi"] linker
+-
+-let java_link x = java_link_gen ocamljava_link_prog
+-  (fun tags -> tags++"ocaml"++"link"++"java"++"program") x
+-
+-let java_library_link x =
+-  java_link_gen java_lib_linker java_lib_linker_tags x
+-
+ let link_units table extensions cmX_ext cma_ext a_ext linker tagger contents_list cmX env build =
+   let cmX = env cmX in
+   let tags = tagger (tags_of_pathname cmX) in
+@@ -444,15 +392,3 @@
+ let native_profile_library_link_mllib = link_from_file native_profile_library_link_modules
+ 
+ let native_profile_shared_library_link_mldylib = link_from_file native_profile_shared_library_link_modules
+-
+-let java_library_link_modules x =
+-  link_modules [("cmj",[!Options.ext_java_obj])] "cmj" "cmja"
+-     !Options.ext_java_lib java_lib_linker java_lib_linker_tags x
+-
+-let java_library_link_mllib = link_from_file java_library_link_modules
+-
+-let java_pack_modules x =
+-  pack_modules [("cmj",["cmi"; !Options.ext_java_obj]); ("cmi",[])] "cmj" "cmja" !Options.ext_java_lib ocamljava_p
+-    (fun tags -> tags++"ocaml"++"pack"++"java") x
+-
+-let java_pack_mlpack = link_from_file java_pack_modules
+diff -aur patched/ocaml_compiler.mli original/ocaml_compiler.mli
+--- patched/ocaml_compiler.mli	2014-04-13 09:05:24.000000000 +0200
++++ original/ocaml_compiler.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -23,10 +23,6 @@
+ val ocamlopt_link_shared_lib : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+ val ocamlopt_link_prog : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+ val ocamlopt_p : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+-val ocamljava_c : Tags.t -> Pathname.t -> Pathname.t -> Command.t
+-val ocamljava_link_lib  : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+-val ocamljava_link_prog : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+-val ocamljava_p : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+ val ocamlmklib : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+ val ocamlmktop : Tags.t -> Pathname.t list -> Pathname.t -> Command.t
+ val prepare_compile : Rule.builder -> Pathname.t -> unit
+@@ -36,7 +32,6 @@
+   Pathname.t -> Pathname.t ->
+   string list -> Rule.builder -> unit
+ val native_compile_ocaml_implem : ?tag:string -> ?cmx_ext:string -> string -> Rule.action
+-val java_compile_ocaml_implem : ?tag:string -> ?cmj_ext:string -> string -> Rule.action
+ val prepare_libs :
+   string -> string -> Pathname.t ->
+   Rule.builder -> Pathname.t list
+@@ -56,8 +51,6 @@
+ val native_shared_library_link : ?tags:(string list) -> string -> string -> Rule.action
+ val native_profile_link : string -> string -> Rule.action
+ val native_profile_library_link : string -> string -> Rule.action
+-val java_link : string -> string -> Rule.action
+-val java_library_link : string -> string -> Rule.action
+ val link_modules :
+   (Pathname.t * string list) list ->
+   string -> string ->
+@@ -92,10 +85,6 @@
+ val native_profile_library_link_mllib : string -> string -> Rule.action
+ val native_profile_shared_library_link_modules : string list -> string -> Rule.action
+ val native_profile_shared_library_link_mldylib : string -> string -> Rule.action
+-val java_library_link_modules : string list -> string -> Rule.action
+-val java_library_link_mllib : string -> string -> Rule.action
+-val java_pack_modules : string list -> string -> Rule.action
+-val java_pack_mlpack : string -> string -> Rule.action
+ 
+ (** [hide_package_contents pack_name]
+     Don't treat the given package as an open package.
+diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
+--- patched/ocaml_specific.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/ocaml_specific.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -51,17 +51,12 @@
+ let ext_lib = !Options.ext_lib;;
+ let ext_obj = !Options.ext_obj;;
+ let ext_dll = !Options.ext_dll;;
+-let ext_java_lib = !Options.ext_java_lib;;
+-let ext_java_obj = !Options.ext_java_obj;;
+-let ext_java_dll = !Options.ext_java_dll;;
+ let x_o = "%"-.-ext_obj;;
+ let x_a = "%"-.-ext_lib;;
+ let x_dll = "%"-.-ext_dll;;
+ let x_p_o = "%.p"-.-ext_obj;;
+ let x_p_a = "%.p"-.-ext_lib;;
+ let x_p_dll = "%.p"-.-ext_dll;;
+-let x_jo = "%"-.-ext_java_obj;;
+-let x_ja = "%"-.-ext_java_lib;;
+ 
+ rule "target files"
+   ~dep:"%.itarget"
+@@ -103,12 +98,6 @@
+   ~dep:"%.mlpack"
+   (Ocaml_compiler.byte_pack_mlpack "%.mlpack" "%.cmo");;
+ 
+-rule "ocaml: mlpack & cmi & cmj* & jo* -> cmj & jo"
+-  ~tags:["ocaml"; "java"]
+-  ~prods:["%.cmj"; x_jo(* no cmi here you must make the byte version to have it *)]
+-  ~deps:["%.mlpack"; "%.cmi"]
+-  (Ocaml_compiler.java_pack_mlpack "%.mlpack" "%.cmj");;
+-
+ rule "ocaml: ml & cmi -> d.cmo"
+   ~tags:["ocaml"; "byte"]
+   ~prod:"%.d.cmo"
+@@ -147,12 +136,6 @@
+   ~deps:["%.ml"; "%.ml.depends"; "%.cmi"]
+   (Ocaml_compiler.native_compile_ocaml_implem "%.ml");;
+ 
+-rule "ocaml: ml & cmi -> cmj & jo"
+-  ~tags:["ocaml"; "java"]
+-  ~prods:["%.cmj"; x_jo]
+-  ~deps:["%.ml"; "%.ml.depends"; "%.cmi"]
+-  (Ocaml_compiler.java_compile_ocaml_implem "%.ml");;
+-
+ rule "ocaml: ml -> d.cmo & cmi"
+   ~tags:["ocaml"; "debug"]
+   ~prods:["%.d.cmo"]
+@@ -207,18 +190,6 @@
+   ~deps:["%.cmx"; x_o]
+   (Ocaml_compiler.native_output_obj "%.cmx" "%.native.o");;
+ 
+-rule "ocaml: cmj* & jo* -> jar"
+-  ~tags:["ocaml"; "java"; "program"]
+-  ~prod:"%.jar"
+-  ~deps:["%.cmj"; x_jo]
+-  (Ocaml_compiler.java_link "%.cmj" "%.jar");;
+-
+-rule "ocaml: cmj* & jo* -> war"
+-  ~tags:["ocaml"; "java"; "program"]
+-  ~prod:"%.war"
+-  ~deps:["%.cmj"; x_jo]
+-  (Ocaml_compiler.java_link "%.cmj" "%.war");;
+-
+ rule "ocaml: mllib & d.cmo* -> d.cma"
+   ~tags:["ocaml"; "byte"; "debug"; "library"]
+   ~prod:"%.d.cma"
+@@ -252,12 +223,6 @@
+   ~dep:"%(path)lib%(libname).clib"
+   (C_tools.link_C_library "%(path)lib%(libname).clib" ("%(path)lib%(libname)"-.-ext_lib) "%(path)%(libname)");;
+ 
+-rule "ocaml: mllib & cmj* & jo* -> cmja & ja"
+-  ~tags:["ocaml"; "java"; "library"]
+-  ~prods:["%.cmja"; x_ja]
+-  ~dep:"%.mllib"
+-  (Ocaml_compiler.java_library_link_mllib "%.mllib" "%.cmja");;
+-
+ rule "ocaml: mllib & p.cmx* & p.o* -> p.cmxa & p.a"
+   ~tags:["ocaml"; "native"; "profile"; "library"]
+   ~prods:["%.p.cmxa"; x_p_a]
+@@ -270,12 +235,6 @@
+   ~dep:"%.mllib"
+   (Ocaml_compiler.native_library_link_mllib "%.mllib" "%.cmxa");;
+ 
+-rule "ocaml: cmj* & jo* -> cmja & ja"
+-  ~tags:["ocaml"; "java"; "library"]
+-  ~prods:["%.cmja"; x_ja]
+-  ~deps:["%.cmj"; x_jo]
+-  (Ocaml_compiler.java_library_link "%.cmj" "%.cmja");;
+-
+ rule "ocaml: p.cmx & p.o -> p.cmxa & p.a"
+   ~tags:["ocaml"; "native"; "profile"; "library"]
+   ~prods:["%.p.cmxa"; x_p_a]
+@@ -477,10 +436,6 @@
+   S (List.map (fun x -> A (x^".cmxa")) !Options.ocaml_libs)
+ end;;
+ 
+-flag ["ocaml"; "java"; "link"] begin
+-  S (List.map (fun x -> A (x^".cmja")) !Options.ocaml_libs)
+-end;;
+-
+ flag ["ocaml"; "byte"; "link"] begin
+   S (List.map (fun x -> A (x^".cmo")) !Options.ocaml_mods)
+ end;;
+@@ -489,10 +444,6 @@
+   S (List.map (fun x -> A (x^".cmx")) !Options.ocaml_mods)
+ end;;
+ 
+-flag ["ocaml"; "java"; "link"] begin
+-  S (List.map (fun x -> A (x^".cmj")) !Options.ocaml_mods)
+-end;;
+-
+ (* findlib *)
+ let () =
+   if !Options.use_ocamlfind then begin
+@@ -539,36 +490,6 @@
+     (fun param -> S [A "-inline"; A param]);
+   pflag ["ocaml"; "compile"] "pp"
+     (fun param -> S [A "-pp"; A param]);
+-  pflag ["ocaml"; "java"; "compile"] "for-pack"
+-    (fun param -> S [A "-for-pack"; A param]);
+-  pflag ["ocaml"; "java"; "pack"] "for-pack"
+-    (fun param -> S [A "-for-pack"; A param]);
+-  pflag ["ocaml"; "java"; "compile"] "inline"
+-    (fun param -> S [A "-inline"; A param]);
+-  let java_pflag compile link pack name =
+-    if compile then
+-      pflag ["ocaml"; "java"; "compile"] name
+-        (fun param -> S [A ("-" ^ name); A param]);
+-    if link then
+-      pflag ["ocaml"; "java"; "link"] name
+-        (fun param -> S [A ("-" ^ name); A param]);
+-    if pack then
+-      pflag ["ocaml"; "java"; "pack"] name
+-        (fun param -> S [A ("-" ^ name); A param]) in
+-  java_pflag false true false "additional-class";
+-  java_pflag false true false "additional-file";
+-  java_pflag false true false "additional-jar";
+-  java_pflag false true false "additional-jar-ref";
+-  java_pflag false true false "applet";
+-  java_pflag true true false "classpath";
+-  java_pflag true true false "cp";
+-  java_pflag true true true "java-package";
+-  java_pflag true true false "javac";
+-  java_pflag true true false "jopt";
+-  java_pflag true true false "provider";
+-  java_pflag false true false "runtime-parameter";
+-  java_pflag true false false "servlet";
+-  java_pflag false true false "war";
+   pflag ["ocaml"; "ocamldep"] "pp"
+     (fun param -> S [A "-pp"; A param]);
+   pflag ["ocaml"; "doc"] "pp"
+@@ -611,9 +532,6 @@
+ ocaml_lib ~extern:true ~dir:"+ocamldoc" "ocamldoc";;
+ ocaml_lib ~extern:true ~dir:"+ocamlbuild" ~tag_name:"use_ocamlbuild" "ocamlbuildlib";;
+ 
+-ocaml_lib ~extern:true ~byte:false ~native:false "javalib";;
+-ocaml_lib ~extern:true ~byte:false ~native:false "concurrent";;
+-
+ ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4" "camlp4lib";;
+ ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_old_camlp4" "camlp4";;
+ ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4_full" "camlp4fulllib";;
+@@ -623,7 +541,6 @@
+         A"-I"; A"+camlp4/Camlp4Filters"]);;
+ flag ["ocaml"; "use_camlp4_bin"; "link"; "byte"] (A"+camlp4/Camlp4Bin.cmo");;
+ flag ["ocaml"; "use_camlp4_bin"; "link"; "native"] (A"+camlp4/Camlp4Bin.cmx");;
+-flag ["ocaml"; "use_camlp4_bin"; "link"; "java"] (A"+camlp4/Camlp4Bin.cmj");;
+ 
+ flag ["ocaml"; "debug"; "compile"; "byte"] (A "-g");;
+ flag ["ocaml"; "debug"; "link"; "byte"; "program"] (A "-g");;
+@@ -657,7 +574,6 @@
+   flag ["ocaml"; "doc"; "thread"] (S[A"-I"; A"+threads"]);
+   flag ["ocaml"; "link"; "thread"; "native"; "program"] (A "threads.cmxa");
+   flag ["ocaml"; "link"; "thread"; "byte"; "program"] (A "threads.cma");
+-  flag ["ocaml"; "link"; "thread"; "java"; "program"] (A "threads.cmja");
+   flag ["ocaml"; "link"; "thread"; "native"; "toplevel"] (A "threads.cmxa");
+   flag ["ocaml"; "link"; "thread"; "byte"; "toplevel"] (A "threads.cma");
+ end;;
+@@ -693,13 +609,4 @@
+ ocaml_lib "ocamlbuildlib";;
+ ocaml_lib "ocamlbuildlightlib";;
+ 
+-(* can be used for both implementation and interface files *)
+-List.iter
+-(fun x ->
+-  let switch = "-" ^ x in
+-  flag ["ocaml"; "compile"; "byte"; x] (A switch);
+-  flag ["ocaml"; "compile"; "java"; x] (A switch);
+-  flag ["ocaml"; "doc"; x] (A switch))
+-  [ "java-extensions"; "java-generics"; "java-internal-types" ];;
+-
+ end in ()
+diff -aur patched/ocaml_utils.ml original/ocaml_utils.ml
+--- patched/ocaml_utils.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/ocaml_utils.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -102,7 +102,7 @@
+   try Hashtbl.find libraries m with Not_found -> []
+ let use_lib m lib = Hashtbl.replace libraries m (lib :: libraries_of m)
+ 
+-let ocaml_lib ?(extern=false) ?(byte=true) ?(native=true) ?(java=true) ?dir ?tag_name libpath =
++let ocaml_lib ?(extern=false) ?(byte=true) ?(native=true) ?dir ?tag_name libpath =
+   let add_dir x =
+     match dir with
+     | Some dir -> S[A"-I"; P dir; x]
+@@ -123,11 +123,9 @@
+       flag_and_dep ["ocaml"; tag_name; "link"; "byte"] (libpath^".cma");
+     if native then
+       flag_and_dep ["ocaml"; tag_name; "link"; "native"] (libpath^".cmxa");
+-    if java then
+-      flag_and_dep ["ocaml"; tag_name; "link"; "java"] (libpath^".cmja");
+   end else begin
+-    if not byte && not native && not java then
+-      invalid_arg "ocaml_lib: ~byte:false or ~native:false or ~java:false only works with ~extern:true";
++    if not byte && not native then
++      invalid_arg "ocaml_lib: ~byte:false or ~native:false only works with ~extern:true";
+   end;
+   match dir with
+   | None -> ()
+diff -aur patched/ocaml_utils.mli original/ocaml_utils.mli
+--- patched/ocaml_utils.mli	2014-04-13 09:05:24.000000000 +0200
++++ original/ocaml_utils.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -41,7 +41,6 @@
+   ?extern:bool ->
+   ?byte:bool ->
+   ?native:bool ->
+-  ?java:bool ->
+   ?dir:Pathname.t ->
+   ?tag_name:string ->
+   Pathname.t -> unit
+diff -aur patched/ocamlbuild.ml original/ocamlbuild.ml
+--- patched/ocamlbuild.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/ocamlbuild.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -12,6 +12,5 @@
+ 
+ 
+ (* Original author: Nicolas Pouillard *)
+-if not (Filename.check_suffix Sys.executable_name ".jar") then
+-  Ocamlbuild_unix_plugin.setup ();
++Ocamlbuild_unix_plugin.setup ();
+ Ocamlbuild_pack.Main.main ()
+diff -aur patched/options.ml original/options.ml
+--- patched/options.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/options.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -13,7 +13,7 @@
+ 
+ (* Original author: Nicolas Pouillard *)
+ 
+-let version = "ocamlbuild "^(Sys.ocaml_version)^" [ocamljava version]";;
++let version = "ocamlbuild "^(Sys.ocaml_version);;
+ 
+ type command_spec = Command.spec
+ 
+@@ -34,8 +34,7 @@
+ let plugin = ref true
+ let just_plugin = ref false
+ let native_plugin = ref true
+-let java_plugin = ref (Filename.check_suffix Sys.executable_name ".jar")
+-let make_links = ref (try ignore (Sys.getenv "OCAMLJAVA_VERSION"); false with Not_found -> true)
++let make_links = ref true
+ let nostdlib = ref false
+ let use_menhir = ref false
+ let catch_errors = ref true
+@@ -53,12 +52,10 @@
+   if sys_file_exists !dir then
+     let long = filename_concat !dir cmd in
+     let long_opt = long ^ ".opt" in
+-    let long_jar = long ^ ".jar" in
+       (* This defines how the command will be found *)
+     let choices =
+       [(fun () -> if file_or_exe_exists long_opt then Some long_opt else None);
+-       (fun () -> if file_or_exe_exists long then Some long else None);
+-       (fun () -> if file_or_exe_exists long_jar then Some long_jar else None)] in
++       (fun () -> if file_or_exe_exists long then Some long else None)] in
+       (* For non core tool the preference is too look at PATH first *)
+     let choices' =
+       [fun () ->
+@@ -75,26 +72,19 @@
+     try let _ = search_in_path opt in opt
+     with Not_found -> cmd
+ 
+-let java = ref "java"
+-
+ let mk_virtual_solvers =
+   List.iter begin fun cmd ->
+     let solver () =
+-      let tool = find_tool cmd in
+-      if Filename.check_suffix cmd ".jar" then
+-        S[A(!java); A"-jar"; A tool]
+-      else
+-        A tool
++      A (find_tool cmd)
+     in Command.setup_virtual_command_solver (String.uppercase cmd) solver
+   end
+ 
+ let () =
+   mk_virtual_solvers
+-    ["ocamlc"; "ocamlopt"; "ocamljava"; "ocamldep"; "ocamldoc";
++    ["ocamlc"; "ocamlopt"; "ocamldep"; "ocamldoc";
+     "ocamlyacc"; "menhir"; "ocamllex"; "ocamlmklib"; "ocamlmktop"; "ocamlfind"]
+ let ocamlc = ref (V"OCAMLC")
+ let ocamlopt = ref (V"OCAMLOPT")
+-let ocamljava = ref (V"OCAMLJAVA")
+ let ocamldep = ref (V"OCAMLDEP")
+ let ocamldoc = ref (V"OCAMLDOC")
+ let ocamlyacc = ref N
+@@ -111,9 +101,6 @@
+ let ext_obj = ref Ocamlbuild_Myocamlbuild_config.o
+ let ext_dll = ref Ocamlbuild_Myocamlbuild_config.so
+ let exe = ref Ocamlbuild_Myocamlbuild_config.exe
+-let ext_java_lib = ref "ja"
+-let ext_java_obj = ref "jo"
+-let ext_java_dll = ref "ja"
+ 
+ let targets_internal = ref []
+ let ocaml_libs_internal = ref []
+@@ -221,8 +208,7 @@
+    "-no-stdlib", Set nostdlib, " Don't ignore stdlib modules";
+    "-dont-catch-errors", Clear catch_errors, " Don't catch and display exceptions (useful to display the call stack)";
+    "-just-plugin", Set just_plugin, " Just build myocamlbuild.ml";
+-   "-byte-plugin", Unit (fun () -> native_plugin := false; java_plugin := false), " Don't use a native/java plugin but bytecode";
+-   "-native-plugin", Clear java_plugin, " Don't use a java plugin but native";
++   "-byte-plugin", Clear native_plugin, " Don't use a native plugin but bytecode";
+    "-plugin-option", String ignore, " Use the option only when plugin is run";
+    "-sanitization-script", Set_string sanitization_script, " Change the file name for the generated sanitization script";
+    "-no-sanitize", Clear sanitize, " Do not generate sanitization script";
+@@ -241,7 +227,6 @@
+    "-which", String (fun cmd -> print_endline (find_tool cmd); raise Exit_OK), "<command> Display path to the tool command";
+    "-ocamlc", set_cmd ocamlc, "<command> Set the OCaml bytecode compiler";
+    "-ocamlopt", set_cmd ocamlopt, "<command> Set the OCaml native compiler";
+-   "-ocamljava", set_cmd ocamljava, "<command> Set the OCaml java compiler";
+    "-ocamldep", set_cmd ocamldep, "<command> Set the OCaml dependency tool";
+    "-ocamldoc", set_cmd ocamldoc, "<command> Set the OCaml documentation generator";
+    "-ocamlyacc", set_cmd ocamlyacc, "<command> Set the ocamlyacc tool";
+@@ -251,7 +236,6 @@
+    (* "-ocamlmklib", set_cmd ocamlmklib, "<command> Set the ocamlmklib tool"; *)
+    "-ocamlmktop", set_cmd ocamlmktop, "<command> Set the ocamlmktop tool";
+    "-ocamlrun", set_cmd ocamlrun, "<command> Set the ocamlrun tool";
+-   "-java", Set_string java, "<command> Set the java tool";
+ 
+    "--", Rest (fun x -> program_to_execute := true; add_to' program_args_internal x),
+    " Stop argument processing, remaining arguments are given to the user program";
+diff -aur patched/plugin.ml original/plugin.ml
+--- patched/plugin.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/plugin.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -24,12 +24,11 @@
+ 
+ 
+ let plugin                = "myocamlbuild"
+-let plugin_suffix         = if !Options.java_plugin then ".jar" else !Options.exe
+ let plugin_file           = plugin^".ml"
+ let plugin_config_file    = plugin^"_config.ml"
+ let plugin_config_file_interface = plugin^"_config.mli"
+ let we_need_a_plugin ()      = !Options.plugin && sys_file_exists plugin_file
+-let we_have_a_plugin ()      = sys_file_exists ((!Options.build_dir/plugin)^plugin_suffix)
++let we_have_a_plugin ()      = sys_file_exists ((!Options.build_dir/plugin)^(!Options.exe))
+ let we_have_a_config_file () = sys_file_exists plugin_config_file
+ let we_have_a_config_file_interface () = sys_file_exists plugin_config_file_interface
+ 
+@@ -71,18 +70,16 @@
+             else P plugin_config_file
+           else N in
+ 
+-        let cma, cmo, compiler, byte_or_native_or_java, compiler_options =
+-          if !Options.java_plugin then
+-            "cmja", "cmj", !Options.ocamljava, "java",
+-            S[A"-java-package"; A"ocaml.tools.ocamlbuild.plugin"]
+-          else if !Options.native_plugin then
+-            "cmxa", "cmx", !Options.ocamlopt, "native", N
++        let cma, cmo, compiler, byte_or_native =
++          if !Options.native_plugin then
++            "cmxa", "cmx", !Options.ocamlopt, "native"
+           else
+-            "cma", "cmo", !Options.ocamlc, "byte", N
++            "cma", "cmo", !Options.ocamlc, "byte"
+         in
+ 
+ 
+         let (unix_spec, ocamlbuild_lib_spec, ocamlbuild_module_spec) =
++
+           let use_light_mode =
+             not !Options.native_plugin && !*My_unix.is_degraded in
+           let use_ocamlfind_pkgs =
+@@ -197,7 +194,7 @@
+ 
+         let plugin_tags =
+           Tags.of_list !Options.plugin_tags
+-          ++ "ocaml" ++ "program" ++ "link" ++ byte_or_native_or_java in
++          ++ "ocaml" ++ "program" ++ "link" ++ byte_or_native in
+ 
+         (* The plugin is compiled before [Param_tags.init()] is called
+            globally, which means that parametrized tags have not been
+@@ -222,15 +219,14 @@
+              a .cmo that also relies on them), but before the main
+              plugin source file and ocamlbuild's initialization. *)
+           Cmd(S[compiler;
+-                compiler_options;
+                 unix_spec; ocamlbuild_lib_spec;
+                 T plugin_tags;
+                 plugin_config; P plugin_file;
+                 ocamlbuild_module_spec;
+-                A"-o"; Px (plugin^plugin_suffix)])
++                A"-o"; Px (plugin^(!Options.exe))])
+         in
+         Shell.chdir !Options.build_dir;
+-        Shell.rm_f (plugin^plugin_suffix);
++        Shell.rm_f (plugin^(!Options.exe));
+         Command.execute cmd;
+         if !Options.just_plugin then begin
+           Log.finish ();
+@@ -246,13 +242,8 @@
+           let runner = if !Options.native_plugin then N else !Options.ocamlrun in
+           let argv = List.tl (Array.to_list Sys.argv) in
+           let passed_argv = List.filter (fun s -> s <> "-plugin-option") argv in
+-          let spec =
+-              if !Options.java_plugin then
+-                S[A(!Options.java); A"-jar"; P(!Options.build_dir/(plugin ^ plugin_suffix));
+-                  A"-no-plugin"; atomize passed_argv]
+-                  else
+-                S[runner; P(!Options.build_dir/plugin^plugin_suffix);
+-                  A"-no-plugin"; atomize passed_argv] in
++          let spec = S[runner; P(!Options.build_dir/plugin^(!Options.exe));
++                       A"-no-plugin"; atomize passed_argv] in
+           Log.finish ();
+           let rc = sys_command (Command.string_of_command_spec spec) in
+           raise (Exit_silently_with_code rc);
+diff -aur patched/report.ml original/report.ml
+--- patched/report.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/report.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -19,7 +19,7 @@
+ open Format
+ open Solver
+ 
+-let sources_glob = Glob.parse "<*.ml> or <*.mli> or <*.c> or <*.h> or <*.java>";;
++let sources_glob = Glob.parse "<*.ml> or <*.mli> or <*.c> or <*.h>";;
+ 
+ let rec analyze f bt =
+   match bt with
+diff -aur patched/shell.ml original/shell.ml
+--- patched/shell.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/shell.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -21,7 +21,6 @@
+     if pos >= ls then true else
+     match s.[pos] with
+     | 'a'..'z' | 'A'..'Z' | '0'..'9' | '.' | '-' | '/' | '_' | ':' | '@' | '+' | ',' -> loop (pos + 1)
+-    | '\\' -> if Sys.os_type = "Win32" then loop (pos + 1) else false
+     | _ -> false in
+   loop 0
+ let quote_filename_if_needed s =
+diff -aur patched/signatures.mli original/signatures.mli
+--- patched/signatures.mli	2014-04-13 09:05:24.000000000 +0200
++++ original/signatures.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -375,13 +375,11 @@
+   val nothing_should_be_rebuilt : bool ref
+   val ocamlc : command_spec ref
+   val ocamlopt : command_spec ref
+-  val ocamljava : command_spec ref
+   val ocamldep : command_spec ref
+   val ocamldoc : command_spec ref
+   val ocamlyacc : command_spec ref
+   val ocamllex : command_spec ref
+   val ocamlrun : command_spec ref
+-  val java : string ref
+   val ocamlmklib : command_spec ref
+   val ocamlmktop : command_spec ref
+   val hygiene : bool ref
+@@ -391,7 +389,6 @@
+   val plugin : bool ref
+   val just_plugin : bool ref
+   val native_plugin : bool ref
+-  val java_plugin : bool ref
+   val make_links : bool ref
+   val nostdlib : bool ref
+   val program_to_execute : bool ref
+@@ -423,9 +420,6 @@
+   val ext_lib : string ref
+   val ext_dll : string ref
+   val exe : string ref
+-  val ext_java_obj : string ref
+-  val ext_java_lib : string ref
+-  val ext_java_dll : string ref
+ 
+   val add : string * Arg.spec * string -> unit
+ end
+@@ -698,7 +692,6 @@
+     ?extern:bool ->
+     ?byte:bool ->
+     ?native:bool ->
+-    ?java:bool ->
+     ?dir:Pathname.t ->
+     ?tag_name:string ->
+     Pathname.t -> unit

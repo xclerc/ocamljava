@@ -1,0 +1,346 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+# Original file (ocamldoc/Makefile in the OCaml source
+# distribution) is Copyright (C) INRIA.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../config/Makefile
+
+# Various commands and dir
+##########################
+OCAMLJAVA=../ocamljava.opt -nostdlib -I ../stdlib -java-package 'ocaml.tools.ocamldoc'
+OCAMLDEP = ../tools/ocamldep.opt
+OCAMLLEX = ../lex/ocamllex.opt
+OCAMLYACC= ../boot/ocamlyacc
+OCAMLLIB = $(LIBDIR)
+OCAMLBIN = $(BINDIR)
+
+OCAMLPP=-pp './remove_DEBUG'
+
+# For installation
+##############
+MKDIR=mkdir -p
+CP=cp -f
+OCAMLDOC=ocamldoc.jar
+OCAMLDOC_LIBCMI=odoc_info.cmi
+OCAMLDOC_LIBCMJA=odoc_info.cmja
+INSTALL_LIBDIR=$(OCAMLLIB)/ocamldoc
+INSTALL_CUSTOMDIR=$(INSTALL_LIBDIR)/custom
+INSTALL_BINDIR=$(OCAMLBIN)
+
+INSTALL_MLIS=odoc_info.mli
+INSTALL_CMIS=$(INSTALL_MLIS:.mli=.cmi)
+
+ODOC_TEST=odoc_test.cmj
+
+GENERATORS_CMOS= \
+	generators/odoc_todo.cmo \
+	generators/odoc_literate.cmo
+GENERATORS_CMJS=$(GENERATORS_CMOS:.cmo=.cmjs)
+
+
+# Compilation
+#############
+OCAMLSRCDIR=..
+INCLUDES_DEP=-I $(OCAMLSRCDIR)/parsing \
+	-I $(OCAMLSRCDIR)/utils \
+	-I $(OCAMLSRCDIR)/typing \
+	-I +barista \
+	-I $(OCAMLSRCDIR)/javatyping \
+	-I $(OCAMLSRCDIR)/javacomp \
+	-I $(OCAMLSRCDIR)/driver \
+	-I $(OCAMLSRCDIR)/bytecomp \
+	-I $(OCAMLSRCDIR)/tools \
+	-I $(OCAMLSRCDIR)/toplevel/
+
+INCLUDES_NODEP=	-I $(OCAMLSRCDIR)/stdlib \
+	-I $(OCAMLSRCDIR)/otherlibs/str \
+	-I $(OCAMLSRCDIR)/otherlibs/dynlink \
+	-I $(OCAMLSRCDIR)/otherlibs/unix \
+	-I $(OCAMLSRCDIR)/otherlibs/num \
+	-I $(OCAMLSRCDIR)/otherlibs/graph
+
+INCLUDES=$(INCLUDES_DEP) $(INCLUDES_NODEP)
+
+COMPFLAGS=$(INCLUDES) -warn-error A
+LINKFLAGS=$(INCLUDES)
+
+CMJFILES= odoc_config.cmj \
+	odoc_messages.cmj\
+	odoc_global.cmj\
+	odoc_types.cmj\
+	odoc_misc.cmj\
+	odoc_text_parser.cmj\
+	odoc_text_lexer.cmj\
+	odoc_text.cmj\
+	odoc_name.cmj\
+	odoc_parameter.cmj\
+	odoc_value.cmj\
+	odoc_type.cmj\
+	odoc_exception.cmj\
+	odoc_class.cmj\
+	odoc_module.cmj\
+	odoc_print.cmj \
+	odoc_str.cmj\
+	odoc_comments_global.cmj\
+	odoc_parser.cmj\
+	odoc_lexer.cmj\
+	odoc_see_lexer.cmj\
+	odoc_env.cmj\
+	odoc_merge.cmj\
+	odoc_sig.cmj\
+	odoc_ast.cmj\
+	odoc_control.cmj\
+	odoc_inherit.cmj\
+	odoc_search.cmj\
+	odoc_scan.cmj\
+	odoc_cross.cmj\
+	odoc_comments.cmj\
+	odoc_dep.cmj\
+	odoc_analyse.cmj\
+	odoc_info.cmj
+
+
+CMIFILES= $(CMJFILES:.cmj=.cmi)
+
+EXECMJFILES=$(CMJFILES) \
+	odoc_dag2html.cmj \
+	odoc_to_text.cmj \
+	odoc_ocamlhtml.cmj \
+	odoc_html.cmj \
+	odoc_man.cmj \
+	odoc_latex_style.cmj \
+	odoc_latex.cmj \
+	odoc_texi.cmj \
+	odoc_dot.cmj \
+	odoc_gen.cmj \
+	odoc_args.cmj \
+	odoc.cmj
+
+EXECMIFILES= $(EXECMJFILES:.cmj=.cmi)
+
+LIBCMJFILES=$(CMJFILES)
+LIBCMIFILES= $(LIBCMJFILES:.cmj=.cmi)
+
+OCAMLCMJFILES=$(OCAMLSRCDIR)/parsing/printast.cmj \
+	$(OCAMLSRCDIR)/typing/ident.cmj \
+	$(OCAMLSRCDIR)/utils/tbl.cmj \
+	$(OCAMLSRCDIR)/utils/misc.cmj \
+	$(OCAMLSRCDIR)/utils/config.cmj \
+	$(OCAMLSRCDIR)/utils/clflags.cmj \
+	$(OCAMLSRCDIR)/utils/warnings.cmj \
+	$(OCAMLSRCDIR)/utils/ccomp.cmj \
+	$(OCAMLSRCDIR)/utils/consistbl.cmj \
+	$(OCAMLSRCDIR)/parsing/location.cmj \
+	$(OCAMLSRCDIR)/parsing/longident.cmj \
+	$(OCAMLSRCDIR)/parsing/syntaxerr.cmj \
+	$(OCAMLSRCDIR)/parsing/parser.cmj \
+	$(OCAMLSRCDIR)/parsing/lexer.cmj \
+	$(OCAMLSRCDIR)/parsing/parse.cmj \
+	$(OCAMLSRCDIR)/typing/types.cmj \
+	$(OCAMLSRCDIR)/typing/path.cmj \
+	$(OCAMLSRCDIR)/typing/btype.cmj \
+	$(OCAMLSRCDIR)/typing/predef.cmj \
+	$(OCAMLSRCDIR)/typing/datarepr.cmj \
+	$(OCAMLSRCDIR)/typing/subst.cmj \
+	$(OCAMLSRCDIR)/typing/cmi_format.cmj \
+	$(OCAMLSRCDIR)/utils/jclflags.cmj \
+	$(OCAMLSRCDIR)/typing/env.cmj \
+	$(OCAMLSRCDIR)/typing/primitive.cmj \
+	$(OCAMLSRCDIR)/utils/jconfig.cmj \
+	$(OCAMLSRCDIR)/javatyping/jutils.cmj \
+	$(OCAMLSRCDIR)/javatyping/jtypes.cmj \
+	$(OCAMLSRCDIR)/typing/ctype.cmj \
+	$(OCAMLSRCDIR)/typing/oprint.cmj \
+	$(OCAMLSRCDIR)/typing/printtyp.cmj \
+	$(OCAMLSRCDIR)/typing/includeclass.cmj \
+	$(OCAMLSRCDIR)/typing/mtype.cmj \
+	$(OCAMLSRCDIR)/typing/includecore.cmj \
+	$(OCAMLSRCDIR)/typing/includemod.cmj \
+	$(OCAMLSRCDIR)/javacomp/jcompilenv.cmj \
+	$(OCAMLSRCDIR)/typing/typetexp.cmj \
+	$(OCAMLSRCDIR)/typing/typedtree.cmj \
+	$(OCAMLSRCDIR)/typing/parmatch.cmj \
+	$(OCAMLSRCDIR)/typing/stypes.cmj \
+	$(OCAMLSRCDIR)/typing/typedtreeMap.cmj \
+	$(OCAMLSRCDIR)/typing/cmt_format.cmj \
+	$(OCAMLSRCDIR)/typing/typecore.cmj \
+	$(OCAMLSRCDIR)/typing/typedecl.cmj \
+	$(OCAMLSRCDIR)/typing/typeclass.cmj \
+	$(OCAMLSRCDIR)/typing/typemod.cmj \
+	$(OCAMLSRCDIR)/bytecomp/lambda.cmj \
+	$(OCAMLSRCDIR)/bytecomp/typeopt.cmj \
+	$(OCAMLSRCDIR)/bytecomp/printlambda.cmj \
+	$(OCAMLSRCDIR)/bytecomp/switch.cmj \
+	$(OCAMLSRCDIR)/bytecomp/matching.cmj \
+	$(OCAMLSRCDIR)/bytecomp/translobj.cmj \
+	$(OCAMLSRCDIR)/bytecomp/translcore.cmj \
+	$(OCAMLSRCDIR)/bytecomp/translclass.cmj \
+	$(OCAMLSRCDIR)/driver/pparse.cmj \
+	$(OCAMLSRCDIR)/tools/depend.cmj
+
+STDLIB_MLIS=../stdlib/*.mli \
+	../otherlibs/unix/unix.mli \
+	../otherlibs/str/str.mli \
+	../otherlibs/bigarray/bigarray.mli \
+	../otherlibs/num/num.mli
+
+all: exe lib generators
+
+exe: $(OCAMLDOC)
+lib: $(OCAMLDOC_LIBCMJA) $(OCAMLDOC_LIBCMI) $(ODOC_TEST)
+generators: $(GENERATORS_CMJS)
+
+debug:
+	$(MAKE) OCAMLPP=""
+
+$(OCAMLDOC): $(OCAMLCMJFILES) $(EXECMJFILES)
+	$(OCAMLJAVA) -I +barista -o ocamldoc.jar -linkall -runtime-parameter embedded=on -runtime-parameter embedded-base=FileAnchor -additional-jar-ref ocaml-lib-files.jar unix.cmja str.cmja dynlink.cmja baristaLibrary.cmja $(LINKFLAGS) $(OCAMLCMJFILES) $(EXECMJFILES)
+
+$(OCAMLDOC_LIBCMJA): $(LIBCMJFILES)
+	$(OCAMLJAVA) -I +barista -o $@ $(LINKFLAGS) unix.cmja str.cmja baristaLibrary.cmja $(OCAMLCMJFILES) $(LIBCMJFILES)
+
+manpages: stdlib_man/Pervasives.3o
+
+dot: $(EXECMJFILES)
+	$(OCAMLDOC_RUN) -dot -dot-reduce -o ocamldoc.dot $(INCLUDES) \
+	odoc*.ml
+
+odoc_dep.cmj: ../tools/depend.cmi ../tools/depend.cmj
+
+# Parsers and lexers dependencies :
+###################################
+odoc_text_parser.ml: odoc_text_parser.mly
+odoc_text_parser.mli: odoc_text_parser.mly
+
+odoc_parser.ml:	odoc_parser.mly
+odoc_parser.mli:odoc_parser.mly
+
+odoc_text_lexer.ml: odoc_text_lexer.mll
+
+odoc_lexer.ml:odoc_lexer.mll
+
+odoc_ocamlhtml.ml: odoc_ocamlhtml.mll
+
+odoc_see_lexer.ml: odoc_see_lexer.mll
+
+
+# generic rules :
+#################
+
+.SUFFIXES: .mll .mly .ml .mli .cmj .cmi .cmjs
+
+.ml.cmj:
+	$(OCAMLJAVA) $(OCAMLPP) $(COMPFLAGS) -c $<
+
+.mli.cmi:
+	$(OCAMLJAVA) $(OCAMLPP) $(COMPFLAGS) -c $<
+
+.ml.cmjs:
+	$(OCAMLJAVA) -shared -o $@ $(OCAMLPP) $(COMPFLAGS) $<
+
+.mll.ml:
+	$(OCAMLLEX) $<
+
+.mly.ml:
+	$(OCAMLYACC) -v $<
+
+.mly.mli:
+	$(OCAMLYACC) -v $<
+
+# Installation targets
+######################
+install: dummy
+	$(CP) ocamldoc.jar $(INSTALL_BINDIR)
+	$(CP) $(OCAMLDOC_LIBCMJA) $(INSTALL_LIBDIR)
+
+# Testing :
+###########
+test: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -html -colorize-code -sort -d $@ $(INCLUDES) -dump $@/ocamldoc.odoc odoc*.ml odoc*.mli -v
+
+test_stdlib: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -html -colorize-code -sort -d $@ $(INCLUDES) -dump $@/stdlib.odoc -keep-code \
+	../stdlib/pervasives.ml ../stdlib/*.mli \
+	../otherlibs/unix/unix.mli \
+	../otherlibs/str/str.mli
+
+test_framed: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -g odoc_fhtml.cmo -sort -colorize-code -d $@ $(INCLUDES) odoc*.ml odoc*.mli
+
+test_latex: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -latex -sort -o $@/test.tex -d $@ $(INCLUDES) odoc*.ml odoc*.mli test2.txt ../stdlib/*.mli ../otherlibs/unix/unix.mli
+
+test_latex_simple: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -latex -sort -o $@/test.tex -d $@ $(INCLUDES) \
+	-latextitle 6,subsection -latextitle 7,subsubection \
+	../stdlib/hashtbl.mli \
+	../stdlib/arg.mli \
+	../otherlibs/unix/unix.mli \
+	../stdlib/map.mli
+
+test_man: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -man -sort -d $@ $(INCLUDES) odoc*.ml odoc*.mli
+
+test_texi: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -texi -sort -d $@ $(INCLUDES) odoc*.ml odoc*.mli
+
+stdlib_man/Pervasives.3o: $(STDLIB_MLIS)
+	$(MKDIR) stdlib_man
+	$(OCAMLDOC_RUN) -man -d stdlib_man $(INCLUDES) \
+	-t "OCaml library" -man-mini \
+	$(STDLIB_MLIS)
+
+autotest_stdlib: dummy
+	$(MKDIR) $@
+	$(OCAMLDOC_RUN) -g autotest/odoc_test.cmo\
+	$(INCLUDES) -keep-code \
+	../stdlib/pervasives.ml ../stdlib/*.mli \
+	../otherlibs/unix/unix.mli \
+	../otherlibs/str/str.mli
+
+# backup, clean and depend :
+############################
+
+clean:: dummy
+	@rm -f *~ \#*\#
+	@rm -f $(OCAMLDOC) $(OCAMLDOC_OPT) *.cmja *.cmj *.cmi *.jo *.ja *.jar
+	@rm -f odoc_parser.output odoc_text_parser.output
+	@rm -f odoc_lexer.ml odoc_text_lexer.ml odoc_see_lexer.ml odoc_ocamlhtml.ml
+	@rm -f odoc_parser.ml odoc_parser.mli odoc_text_parser.ml odoc_text_parser.mli
+	@rm -rf stdlib_man
+	@rm -f generators/*.cm* generators/*.j*
+
+depend::
+	$(OCAMLYACC) odoc_text_parser.mly
+	$(OCAMLYACC) odoc_parser.mly
+	$(OCAMLLEX) odoc_text_lexer.mll
+	$(OCAMLLEX) odoc_lexer.mll
+	$(OCAMLLEX) odoc_ocamlhtml.mll
+	$(OCAMLLEX) odoc_see_lexer.mll
+	$(OCAMLDEP) $(INCLUDES_DEP) *.mll *.mly *.ml *.mli > .depend
+
+dummy:
+
+include .depend

@@ -1,0 +1,12 @@
+Version 2.0-alpha1 (2014-07-14):
+--------------------------------
+  - revamped project organization (only one code base)
+  - large (almost total) rewrite of version 1.4
+  - numerous bugfixes
+  - huge performance improvement
+  - reduced memory footprint
+  - typer extension for manipulation of Java entities
+  - wrapper tool to access compiled code from Java
+  - post-compilation optimizer
+  - library for multicore programming
+  - upgrade to OCaml 4.01.0

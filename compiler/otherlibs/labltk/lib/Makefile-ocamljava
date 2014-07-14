@@ -1,0 +1,65 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+TOPDIR=../../..
+LIBNAME=labltk
+include $(TOPDIR)/config/Makefile
+INSTALLDIR=$(LIBDIR)/$(LIBNAME)
+
+OCAMLJAVA=$(TOPDIR)/ocamljava.opt
+COMPFLAGS=-I ../support -g -java-package 'ocaml.otherlibs.labltk'
+
+default: all
+
+include ../labltk/modules
+LABLTKOBJS=tk.cmj $(WIDGETOBJS:.cmo=.cmj)
+
+include ../camltk/modules
+CAMLTKOBJS=cTk.cmj $(CWIDGETOBJS:.cmo=.cmj) labltk.cmj camltk.cmj
+
+SUPPORTOBJS=../support/support.cmj ../support/rawwidget.cmj ../support/widget.cmj \
+	../support/protocol.cmj ../support/textvariable.cmj ../support/timer.cmj \
+	../support/fileevent.cmj ../support/camltkwrap.cmj
+
+TKOBJS=$(SUPPORTOBJS) $(LABLTKOBJS) $(CAMLTKOBJS)
+
+all: $(LIBNAME).cmja
+
+clean:
+	rm -f $(LIBNAME).cmja *.cm* *.jo *.ja
+
+superclean:
+	if [ -f tk.cmj ]; then \
+	  rm -f *.cm* *.jo; \
+	fi
+
+$(LIBNAME).cmja:
+	$(MAKE) superclean
+	$(OCAMLJAVA) -a -o $(LIBNAME).cmja -I ../labltk -I ../camltk $(TKOBJS)
+
+install:
+	cp $(LIBNAME).cmja $(LIBNAME).ja $(INSTALLDIR)
+
+.SUFFIXES:
+.SUFFIXES: .mli .ml .cmi .cmj
+
+.mli.cmi:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+.ml.cmj:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<

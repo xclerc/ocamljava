@@ -1,0 +1,77 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+# Original file (otherlibs/Makefile.shared in the OCaml source
+# distribution) is Copyright (C) INRIA.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+# Base definitions
+
+ROOTDIR=../..
+include $(ROOTDIR)/config/Makefile
+COMPILER=$(ROOTDIR)/ocamljava.opt -nostdlib -I ../../stdlib
+OCAMLJAVA=$(COMPILER)
+COMPFLAGS=-w +33..39 -warn-error A -g -java-package $(JAVA_PACKAGE) $(EXTRAFLAGS)
+
+
+# Variables that should be defined by per-library Makefiles:
+# - LIBRARY: library name;
+# - JAVA_PACKAGE: name of Java package;
+# - MODULES:  list of modules;
+# - EXTRAFLAGS: extra flags to compiler.
+
+
+# Derived definitions
+
+CMJA_FILE=$(LIBRARY).cmja
+JA_FILE=$(LIBRARY).ja
+MLI_FILES=$(patsubst %,%.mli,$(MODULES))
+CMI_FILES=$(patsubst %,%.cmi,$(MODULES))
+CMJ_FILES=$(patsubst %,%.cmj,$(MODULES))
+
+
+# Common targets
+
+all: $(CMI_FILES) $(CMJ_FILES)
+	$(OCAMLJAVA) -a -o $(CMJA_FILE) -linkall $(CMJ_FILES)
+
+install:
+	cp $(MLI_FILES) $(CMI_FILES) $(CMJ_FILES) $(CMJA_FILE) $(JA_FILE) $(LIBDIR)
+
+partialclean::
+	rm -f *.cm*
+
+clean:: partialclean
+	rm -f *.jo *.ja
+
+
+# Generic targets
+
+.SUFFIXES: .ml .mli .cmi .cmj
+
+.mli.cmi:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+.ml.cmj:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+depend:
+	$(ROOTDIR)/tools/ocamldep.opt *.mli *.ml > .depend
+
+ifeq ($(findstring '.depend',$(wildcard '.depend')),'.depend')
+include .depend
+else
+endif

@@ -1,0 +1,169 @@
+<html>
+<head>
+<title>OCaml-Java: developing servlets</title>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+
+<br/>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span1"></div>
+<div class="span2">
+<ul class="well nav nav-list">
+  <li class="nav-header">Page contents</li>
+  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
+  <li class="divider"></li>
+  <li><a href="#compilation"><i class="icon-tag"></i>Compilation</a></li>
+  <li><a href="#link"><i class="icon-tag"></i>Link</a></li>
+  <li><a href="#deployment"><i class="icon-tag"></i>Deployment</a></li>
+  <li><a href="#example"><i class="icon-tag"></i>Example</a></li>
+</ul>
+</div>
+<div class="span8">
+
+  
+<section id="top"><div class="page-header"><h1>OCaml-Java: developing servlets</h1></div>
+<p>
+This page contains the information explaining how to develop Java servlets using OCaml-Java. The first sections describe how to compile and link servlets, as well as listeners. Then, a section explains how to deploy compiled servlets. Finally, the last section consists in a complete example of a simple HTTP servlet.
+</p>
+</section>
+
+
+<section id="compilation"><div class="page-header"><h1>Compilation</h1></div>
+<p>
+Servlets and related listeners are Java classes that extend or implement a given Java type. However, when <code>ocamljava</code> is used to compile OCaml modules, its default behavior is to generate Java with only <em>static</em> methods, for the various OCaml functions. As such, <code>ocamljava</code>-compiled modules cannot be used as servlets by a servlet container. This is why a dedicated compilation mode, triggered by the <code>-servlet</code> command-line switch, is introduced.
+</p>
+<p>
+The <code>-servlet</code> command-line switch informs the compiler that a proper Java class should be generated for latter use by a servlet container. The command-line switch takes a parameter used to indicate the kind of servlet or listener the user is interested in. Of course, the different servlet/listener kinds requires differents sets of functions to define their behaviour. The following table indicates the module type that a module should implement in order to be successfully compiled.
+</p>
+<table class="table table-condensed table-striped table-bordered">
+<thead>
+<tr><th>Java type</th><th><tt>-servlet</tt> parameter</th><th>OCaml module type</th></tr>
+<tr><td><tt>javax.servlet.GenericServlet</tt></td><td><tt>generic</tt></td><td><tt>JavaServlet.Generic</tt></td>
+<tr><td><tt>javax.servlet.http.HttpServlet</tt></td><td><tt>http</tt></td><td><tt>JavaServlet.HTTP</tt></td>
+<tr><td><tt>javax.servlet.ServletContextListener</tt></td><td><tt>context-listener</tt></td><td><tt>JavaServlet.ServletContextListener</tt></td>
+<tr><td><tt>javax.servlet.ServletContextAttributeListener</tt></td><td><tt>context-attribute-listener</tt></td><td><tt>JavaServlet.ServletContextAttributeListener</tt></td>
+<tr><td><tt>javax.servlet.http.HttpSessionListener</tt></td><td><tt>session-listener</tt></td><td><tt>JavaServlet.HTTPSessionListener</tt></td>
+<tr><td><tt>javax.servlet.http.HttpSessionActivationListener</tt></td><td><tt>session-activation-listener</tt></td><td><tt>JavaServlet.HTTPSessionActivationListener</tt></td>
+<tr><td><tt>javax.servlet.http.HttpSessionAttributeListener</tt></td><td><tt>session-attribute-listener</tt></td><td><tt>JavaServlet.HTTPSessionAttributeListener</tt></td>
+<tr><td><tt>javax.servlet.http.HttpSessionBindingListener</tt></td><td><tt>session-binding-listener</tt></td><td><tt>JavaServlet.HTTPSessionBindingListener</tt></td>
+<tr><td><tt>javax.servlet.http.HttpSessionIdListener</tt></td><td><tt>session-id-listener</tt></td><td><tt>JavaServlet.HTTPSessionIdListener</tt></td>
+</thead>
+<tbody>
+</tbody>
+</table>
+<p>
+When an OCaml module <code><em>M</em></code> is compiled with the <code>-servlet</code> command-line switch, a class named <code><em>M</em>Impl</code> is generated, in the package set by the <code>-java-package</code> command-line switch (defaulting to <code>pack</code>).
+</p>
+</section>
+
+
+<section id="link"><div class="page-header"><h1>Link</h1></div>
+<p>
+When linking the application in order to produce an archive to be deployed to a servlet container, the developer has to use the <code>-war</code> command-line switch in order to requested the creation of an archive abiding the <em>war</em> structure. The <code>-war</code> command-line switch takes a parameter that is the path to a file to be included in the archive as its descriptor file (<code>web.xml</code>).
+</p>
+</section>
+
+
+<section id="deployment"><div class="page-header"><h1>Deployment</h1></div>
+<p>
+The actual deployment depends on the actual servlet container used to run the web application. Any container able to handle <code>war</code> files running on an 1.7+ JVM can be used. Deployment has been successfully tested with Apache Tomcat and Jetty. Cloud facilities based on such containers can then be used to host the servlets (Heroku and CloudBees have been successfully used to host servlets).
+</p>
+</section>
+
+
+<section id="example"><div class="page-header"><h1>Example</h1></div>
+<p>
+This example shows how to compile and link a simple servlet greeting a user whose name is passed to the servlet as a <em>GET</em> parameter. We first define the signature of our module in the <code>hello.mli</code>; as it is an HTTP servlet, the file is simply:
+<pre>
+include JavaServlet.HTTP
+</pre>
+As we are only interested in answering to <em>GET</em> requests, we only redefine the <code>do_get</code> function (note that the type <code>t</code> of the module is used to store data in the servlet instance), leading to the following contents for <code>hello.ml</code>:
+<pre>
+type t = unit
+
+let init _ = ()
+
+include JavaServlet.Default_HTTP
+
+let print out s =
+  Java.call "javax.servlet.ServletOutputStream.println(String)"
+    out
+    (JavaString.of_string s)
+
+let get req s =
+  Java.call "javax.servlet.ServletRequest.getParameter(String)"
+    req
+    (JavaString.of_string s)
+  |> Java.wrap
+
+let do_get _ _ req resp =
+  Java.call "javax.servlet.http.HttpServletResponse.setContentType(_)"
+    resp
+    (JavaString.of_string "text/html");
+  let out = Java.call "javax.servlet.http.HttpServletResponse.getOutputStream()" resp in
+  print out "&lt;html&gt;";
+  print out "  &lt;body&gt;";
+  begin match get req "name" with
+  | Some name -&gt; already_seen := name :: !already_seen;
+                 print out (Printf.sprintf "    Hi %s!&lt;br&gt;" (JavaString.to_string name))
+  | None      -&gt; print out "    Hi!&lt;br&gt;"
+  end;
+  print out "    &lt;form action=\"hello\" method=\"get\"&gt;";
+  print out "      &lt;input type=\"text\" name=\"name\"&gt;";
+  print out "      &lt;input type=\"submit\" value=\"go\"&gt;&lt;br&gt;";
+  print out "    &lt;/form&gt;";
+  print out "  &lt;/body&gt;";
+  print out "&lt;/html&gt;"
+
+let do_options _ _ _ resp =
+  JavaServlet.options resp [`GET; `OPTIONS]
+</pre>
+The code of the servlet heavily relies on the Java extensions that are presented <a href="javaext.html">here</a>.
+</p>
+<p>
+In order to deploy this code, a <code>web.xml</code> file is also necessary, with a contents akin to:
+<pre>
+&lt;web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1"&gt;
+
+  &lt;display-name&gt;Hello Application&lt;/display-name&gt;
+  &lt;description&gt;...&lt;/description&gt;
+
+  &lt;servlet&gt;
+    &lt;servlet-name&gt;HelloImpl&lt;/servlet-name&gt;
+    &lt;servlet-class&gt;pack.HelloImpl&lt;/servlet-class&gt;
+  &lt;/servlet&gt;
+
+  &lt;servlet-mapping&gt;
+    &lt;servlet-name&gt;HelloImpl&lt;/servlet-name&gt;
+    &lt;url-pattern&gt;/hello&lt;/url-pattern&gt;
+  &lt;/servlet-mapping&gt;
+
+&lt;/web-app&gt;
+</pre>
+</p>
+<p>
+The following commands are then used to build the archive:
+<pre>
+ocamljava -c hello.mli
+ocamljava -c -java-extensions hello.ml
+ocamljava -o hello.war -war web.xml javalib.cmja hello.cmj
+</pre>
+</p>
+<p>
+The <code>hello.war</code> is finally ready to be deployed to a servlet container. For example, if copied to the <code>webapps</code> directory of an Apache Tomcat instance, the servlet can be tested at an URL such as <code>http://localhost:8080/hello/hello?name=xyz</code>.
+</p>
+</section>
+
+
+</div>
+</div>
+</div>
+</body>
+</html>
+

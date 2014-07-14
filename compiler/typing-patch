@@ -1,0 +1,3209 @@
+diff -aur original/bytecomp/bytegen.ml patched/bytecomp/bytegen.ml
+--- original/bytecomp/bytegen.ml	2012-11-29 10:55:00.000000000 +0100
++++ patched/bytecomp/bytegen.ml	2012-11-29 10:55:00.000000000 +0100
+@@ -132,14 +132,14 @@
+ 
+ let rec check_recordwith_updates id e =
+   match e with
+-  | Lsequence (Lprim ((Psetfield _ | Psetfloatfield _), [Lvar id2; _]), cont)
++  | Lsequence (Lprim ((Psetfield _ | Psetfloatfield _), [Lvar id2, _; _]), cont)
+       -> id2 = id && check_recordwith_updates id cont
+   | Lvar id2 -> id2 = id
+   | _ -> false
+ ;;
+ 
+ let rec size_of_lambda = function
+-  | Lfunction(kind, params, body) as funct ->
++  | Lfunction(kind, params, _, body) as funct ->
+       RHS_block (1 + IdentSet.cardinal(free_variables funct))
+   | Llet (Strict, id, Lprim (Pduprecord (kind, size), _), body)
+     when check_recordwith_updates id body ->
+@@ -434,17 +434,17 @@
+   | Lapply(func, args, loc) ->
+       let nargs = List.length args in
+       if is_tailcall cont then begin
+-        comp_args env args sz
++        comp_args env (List.map fst args) sz
+           (Kpush :: comp_expr env func (sz + nargs)
+             (Kappterm(nargs, sz + nargs) :: discard_dead_code cont))
+       end else begin
+         if nargs < 4 then
+-          comp_args env args sz
++          comp_args env (List.map fst args) sz
+             (Kpush :: comp_expr env func (sz + nargs) (Kapply nargs :: cont))
+         else begin
+           let (lbl, cont1) = label_code cont in
+           Kpush_retaddr lbl ::
+-          comp_args env args (sz + 3)
++          comp_args env (List.map fst args) (sz + 3)
+             (Kpush :: comp_expr env func (sz + 3 + nargs)
+                       (Kapply nargs :: cont1))
+         end
+@@ -471,11 +471,11 @@
+           comp_args env args' (sz + 3)
+             (getmethod :: Kapply nargs :: cont1)
+         end
+-  | Lfunction(kind, params, body) -> (* assume kind = Curried *)
++  | Lfunction(kind, params, _, body) -> (* assume kind = Curried *)
+       let lbl = new_label() in
+       let fv = IdentSet.elements(free_variables exp) in
+       let to_compile =
+-        { params = params; body = body; label = lbl;
++        { params = List.map fst params; body = body; label = lbl;
+           free_vars = fv; num_defs = 1; rec_vars = []; rec_pos = 0 } in
+       Stack.push to_compile functions_to_compile;
+       comp_args env (List.map (fun n -> Lvar n) fv) sz
+@@ -486,7 +486,7 @@
+           (add_pop 1 cont))
+   | Lletrec(decl, body) ->
+       let ndecl = List.length decl in
+-      if List.for_all (function (_, Lfunction(_,_,_)) -> true | _ -> false)
++      if List.for_all (function (_, Lfunction(_,_,_,_)) -> true | _ -> false)
+                       decl then begin
+         (* let rec of functions *)
+         let fv =
+@@ -494,10 +494,10 @@
+         let rec_idents = List.map (fun (id, lam) -> id) decl in
+         let rec comp_fun pos = function
+             [] -> []
+-          | (id, Lfunction(kind, params, body)) :: rem ->
++          | (id, Lfunction(kind, params, _, body)) :: rem ->
+               let lbl = new_label() in
+               let to_compile =
+-                { params = params; body = body; label = lbl; free_vars = fv;
++                { params = List.map fst params; body = body; label = lbl; free_vars = fv;
+                   num_defs = ndecl; rec_vars = rec_idents; rec_pos = pos} in
+               Stack.push to_compile functions_to_compile;
+               lbl :: comp_fun (pos + 1) rem
+@@ -541,22 +541,22 @@
+         in
+         comp_init env sz decl_size
+       end
+-  | Lprim(Pidentity, [arg]) ->
++  | Lprim(Pidentity, [arg, _]) ->
+       comp_expr env arg sz cont
+-  | Lprim(Pignore, [arg]) ->
++  | Lprim(Pignore, [arg, _]) ->
+       comp_expr env arg sz (add_const_unit cont)
+-  | Lprim(Pdirapply loc, [func;arg])
+-  | Lprim(Prevapply loc, [arg;func]) ->
++  | Lprim(Pdirapply loc, [func, _;arg])
++  | Lprim(Prevapply loc, [arg;func, _]) ->
+       let exp = Lapply(func, [arg], loc) in
+       comp_expr env exp sz cont
+-  | Lprim(Pnot, [arg]) ->
++  | Lprim(Pnot, [arg, _]) ->
+       let newcont =
+         match cont with
+           Kbranchif lbl :: cont1 -> Kbranchifnot lbl :: cont1
+         | Kbranchifnot lbl :: cont1 -> Kbranchif lbl :: cont1
+         | _ -> Kboolnot :: cont in
+       comp_expr env arg sz newcont
+-  | Lprim(Psequand, [exp1; exp2]) ->
++  | Lprim(Psequand, [exp1, _; exp2, _]) ->
+       begin match cont with
+         Kbranchifnot lbl :: _ ->
+           comp_expr env exp1 sz (Kbranchifnot lbl ::
+@@ -570,7 +570,7 @@
+           comp_expr env exp1 sz (Kstrictbranchifnot lbl ::
+             comp_expr env exp2 sz cont1)
+       end
+-  | Lprim(Psequor, [exp1; exp2]) ->
++  | Lprim(Psequor, [exp1, _; exp2, _]) ->
+       begin match cont with
+         Kbranchif lbl :: _ ->
+           comp_expr env exp1 sz (Kbranchif lbl ::
+@@ -584,21 +584,22 @@
+           comp_expr env exp1 sz (Kstrictbranchif lbl ::
+             comp_expr env exp2 sz cont1)
+       end
+-  | Lprim(Praise, [arg]) ->
++  | Lprim(Praise, [arg, _]) ->
+       comp_expr env arg sz (Kraise :: discard_dead_code cont)
+-  | Lprim(Paddint, [arg; Lconst(Const_base(Const_int n))])
++  | Lprim(Paddint, [arg, _; Lconst(Const_base(Const_int n)), _])
+     when is_immed n ->
+       comp_expr env arg sz (Koffsetint n :: cont)
+-  | Lprim(Psubint, [arg; Lconst(Const_base(Const_int n))])
++  | Lprim(Psubint, [arg, _; Lconst(Const_base(Const_int n)), _])
+     when is_immed (-n) ->
+       comp_expr env arg sz (Koffsetint (-n) :: cont)
+-  | Lprim (Poffsetint n, [arg])
++  | Lprim (Poffsetint n, [arg, _])
+     when not (is_immed n) ->
+       comp_expr env arg sz
+         (Kpush::
+          Kconst (Const_base (Const_int n))::
+          Kaddint::cont)
+   | Lprim(Pmakearray kind, args) ->
++      let args = List.map fst args in
+       begin match kind with
+         Pintarray | Paddrarray ->
+           comp_args env args sz (Kmakeblock(List.length args, 0) :: cont)
+@@ -612,11 +613,12 @@
+                   Kccall("caml_make_array", 1) :: cont)
+       end
+ (* Integer first for enabling futher optimization (cf. emitcode.ml)  *)
+-  | Lprim (Pintcomp c, [arg ; (Lconst _ as k)]) ->
++  | Lprim (Pintcomp c, [arg, _ ; (Lconst _ as k), _]) ->
+       let p = Pintcomp (commute_comparison c)
+       and args = [k ; arg] in
+       comp_args env args sz (comp_primitive p args :: cont)
+   | Lprim(p, args) ->
++      let args = List.map fst args in
+       comp_args env args sz (comp_primitive p args :: cont)
+    | Lstaticcatch (body, (i, vars) , handler) ->
+       let nvars = List.length vars in
+diff -aur original/bytecomp/lambda.ml patched/bytecomp/lambda.ml
+--- original/bytecomp/lambda.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/lambda.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -152,14 +152,43 @@
+ 
+ type shared_code = (int * int) list
+ 
++type repr =
++    LR_value
++  | LR_int
++  | LR_char
++  | LR_string
++  | LR_float
++  | LR_bool
++  | LR_unit
++  | LR_exn
++  | LR_array of repr
++  | LR_list of repr
++  | LR_option of repr
++  | LR_nativeint
++  | LR_int32
++  | LR_int64
++  | LR_lazy of repr
++  | LR_java_instance of string
++  | LR_java_extends of string
++  | LR_java_boolean_array
++  | LR_java_byte_array
++  | LR_java_char_array
++  | LR_java_double_array
++  | LR_java_float_array
++  | LR_java_int_array
++  | LR_java_long_array
++  | LR_java_reference_array of repr
++  | LR_java_short_array
++  | LR_none
++
+ type lambda =
+     Lvar of Ident.t
+   | Lconst of structured_constant
+-  | Lapply of lambda * lambda list * Location.t
+-  | Lfunction of function_kind * Ident.t list * lambda
++  | Lapply of lambda * (lambda * (Types.type_expr option)) list * Location.t
++  | Lfunction of function_kind * (Ident.t * repr) list * repr * lambda
+   | Llet of let_kind * Ident.t * lambda * lambda
+   | Lletrec of (Ident.t * lambda) list * lambda
+-  | Lprim of primitive * lambda list
++  | Lprim of primitive * (lambda * (Types.type_expr option)) list
+   | Lswitch of lambda * lambda_switch
+   | Lstaticraise of int * lambda list
+   | Lstaticcatch of lambda * (int * Ident.t list) * lambda
+@@ -202,15 +231,18 @@
+   | Lconst c1, Lconst c2 ->
+       c1 = c2
+   | Lapply(a1, bl1, _), Lapply(a2, bl2, _) ->
+-      same a1 a2 && samelist same bl1 bl2
+-  | Lfunction(k1, idl1, a1), Lfunction(k2, idl2, a2) ->
+-      k1 = k2 && samelist Ident.same idl1 idl2 && same a1 a2
++      same a1 a2 && samelist same (List.map fst bl1) (List.map fst bl2)
++  | Lfunction(k1, pl1, r1, l1), Lfunction(k2, pl2, r2, l2) ->
++      k1 = k2
++        && samelist same_id_repr_pair pl1 pl2
++        && r1 = r2
++        && same l1 l2
+   | Llet(k1, id1, a1, b1), Llet(k2, id2, a2, b2) ->
+       k1 = k2 && Ident.same id1 id2 && same a1 a2 && same b1 b2
+   | Lletrec (bl1, a1), Lletrec (bl2, a2) ->
+       samelist samebinding bl1 bl2 && same a1 a2
+   | Lprim(p1, al1), Lprim(p2, al2) ->
+-      p1 = p2 && samelist same al1 al2
++      p1 = p2 && samelist same_lambda_repr_option_pair al1 al2
+   | Lswitch(a1, s1), Lswitch(a2, s2) ->
+       same a1 a2 && sameswitch s1 s2
+   | Lstaticraise(n1, al1), Lstaticraise(n2, al2) ->
+@@ -239,6 +271,12 @@
+   | _, _ ->
+       false
+ 
++and same_lambda_repr_option_pair (l1, r1) (l2, r2) =
++  same l1 l2 && r1 = r2
++
++and same_id_repr_pair (id1, r1) (id2, r2) =
++  Ident.same id1 id2 && r1 = r2
++
+ and samebinding (id1, c1) (id2, c2) =
+   Ident.same id1 id2 && same c1 c2
+ 
+@@ -272,8 +310,8 @@
+     Lvar _
+   | Lconst _ -> ()
+   | Lapply(fn, args, _) ->
+-      f fn; List.iter f args
+-  | Lfunction(kind, params, body) ->
++      f fn; List.iter f (List.map fst args)
++  | Lfunction(kind, params, repr, body) ->
+       f body
+   | Llet(str, id, arg, body) ->
+       f arg; f body
+@@ -281,7 +319,7 @@
+       f body;
+       List.iter (fun (id, exp) -> f exp) decl
+   | Lprim(p, args) ->
+-      List.iter f args
++      List.iter f (List.map fst args)
+   | Lswitch(arg, sw) ->
+       f arg;
+       List.iter (fun (key, case) -> f case) sw.sw_consts;
+@@ -325,8 +363,8 @@
+     iter free l;
+     fv := List.fold_right IdentSet.add (get l) !fv;
+     match l with
+-      Lfunction(kind, params, body) ->
+-        List.iter (fun param -> fv := IdentSet.remove param !fv) params
++      Lfunction(kind, params, repr, body) ->
++        List.iter (fun (param_id, _) -> fv := IdentSet.remove param_id !fv) params
+     | Llet(str, id, arg, body) ->
+         fv := IdentSet.remove id !fv
+     | Lletrec(decl, body) ->
+@@ -382,7 +420,7 @@
+     Pident id ->
+       if Ident.global id then Lprim(Pgetglobal id, []) else Lvar id
+   | Pdot(p, s, pos) ->
+-      Lprim(Pfield pos, [transl_path p])
++      Lprim(Pfield pos, [transl_path p, None])
+   | Papply(p1, p2) ->
+       fatal_error "Lambda.transl_path"
+ 
+@@ -405,11 +443,11 @@
+     Lvar id as l ->
+       begin try Ident.find_same id s with Not_found -> l end
+   | Lconst sc as l -> l
+-  | Lapply(fn, args, loc) -> Lapply(subst fn, List.map subst args, loc)
+-  | Lfunction(kind, params, body) -> Lfunction(kind, params, subst body)
++  | Lapply(fn, args, loc) -> Lapply(subst fn, List.map (fun (x, y) -> subst x, y) args, loc)
++  | Lfunction(kind, params, repr, body) -> Lfunction(kind, params, repr, subst body)
+   | Llet(str, id, arg, body) -> Llet(str, id, subst arg, subst body)
+   | Lletrec(decl, body) -> Lletrec(List.map subst_decl decl, subst body)
+-  | Lprim(p, args) -> Lprim(p, List.map subst args)
++  | Lprim(p, args) -> Lprim(p, List.map (fun (x, y) -> subst x, y) args)
+   | Lswitch(arg, sw) ->
+       Lswitch(subst arg,
+               {sw with sw_consts = List.map subst_case sw.sw_consts;
+diff -aur original/bytecomp/lambda.mli patched/bytecomp/lambda.mli
+--- original/bytecomp/lambda.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/lambda.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -161,14 +161,54 @@
+ 
+ type shared_code = (int * int) list     (* stack size -> code label *)
+ 
++type repr =
++    LR_value                         (* constant 0 *)
++  | LR_int                           (* constant 1 *)
++  | LR_char                          (* constant 2 *)
++  | LR_string                        (* constant 3 *)
++  | LR_float                         (* constant 4 *)
++  | LR_bool                          (* constant 5 *)
++  | LR_unit                          (* constant 6 *)
++  | LR_exn                           (* constant 7 *)
++  | LR_array of repr                 (* tag 0 *)
++  | LR_list of repr                  (* tag 1 *)
++  | LR_option of repr                (* tag 2 *)
++  | LR_nativeint                     (* constant 8 *)
++  | LR_int32                         (* constant 9 *)
++  | LR_int64                         (* constant 10 *)
++  | LR_lazy of repr                  (* tag 3 *)
++  | LR_java_instance of string       (* tag 4 *)
++  | LR_java_extends of string        (* tag 5 *)
++  | LR_java_boolean_array            (* constant 11 *)
++  | LR_java_byte_array               (* constant 12 *)
++  | LR_java_char_array               (* constant 13 *)
++  | LR_java_double_array             (* constant 14 *)
++  | LR_java_float_array              (* constant 15 *)
++  | LR_java_int_array                (* constant 16 *)
++  | LR_java_long_array               (* constant 17 *)
++  | LR_java_reference_array of repr  (* tag 6 *)
++  | LR_java_short_array              (* constant 18 *)
++  | LR_none                          (* constant 19 *)
++
++(* OCaml-Java stores additional elements related to types of parameter
++   and return values, to allow some optimizations such as unboxing. The
++   information is stored for both function definitions (Lfunction) and
++   function calls (Lprim and Lapply) because some type-driven
++   optimizations are based on passed values. For example, a specialized
++   version of 'Array.init' can be implemented according to the actual
++   type of its second parameter. This example also shows why in the case
++   of calls the full type is stored rather than an approximation through
++   the 'repr' type. Indeed, the type of the second parameter of 'Array.init'
++   is of type "int -> 'a" which cannot be adequately represented by a
++   'repr' value. *)
+ type lambda =
+     Lvar of Ident.t
+   | Lconst of structured_constant
+-  | Lapply of lambda * lambda list * Location.t
+-  | Lfunction of function_kind * Ident.t list * lambda
++  | Lapply of lambda * (lambda * (Types.type_expr option)) list * Location.t
++  | Lfunction of function_kind * (Ident.t * repr) list * repr * lambda
+   | Llet of let_kind * Ident.t * lambda * lambda
+   | Lletrec of (Ident.t * lambda) list * lambda
+-  | Lprim of primitive * lambda list
++  | Lprim of primitive * (lambda * (Types.type_expr option)) list
+   | Lswitch of lambda * lambda_switch
+   | Lstaticraise of int * lambda list
+   | Lstaticcatch of lambda * (int * Ident.t list) * lambda
+diff -aur original/bytecomp/matching.ml patched/bytecomp/matching.ml
+--- original/bytecomp/matching.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/matching.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -438,7 +438,7 @@
+       | Not_found -> l
+       end
+   | Lprim (Pfield i,args) ->
+-      Lprim (Pfield i, List.map (raw_rec env) args)
++      Lprim (Pfield i, List.map (fun (x, y) -> raw_rec env x, y) args)
+   | Lconst _ as l -> l
+   | Lstaticraise (i,args) ->
+         Lstaticraise (i, List.map (raw_rec env) args)
+@@ -1125,7 +1125,7 @@
+   let rec make_args pos =
+     if pos > last_pos
+     then argl
+-    else (Lprim(Pfield pos, [arg]), binding_kind) :: make_args (pos + 1)
++    else (Lprim(Pfield pos, [arg, None]), binding_kind) :: make_args (pos + 1)
+   in make_args first_pos
+ 
+ let get_key_constr = function
+@@ -1245,7 +1245,7 @@
+       let def = make_default (matcher_variant_nonconst lab) def
+       and ctx = filter_ctx p ctx in
+       {pm=
+-        {cases = []; args = (Lprim(Pfield 1, [arg]), Alias) :: argl;
++        {cases = []; args = (Lprim(Pfield 1, [arg, None]), Alias) :: argl;
+           default=def} ;
+         ctx=ctx ;
+         pat = normalize_pat p}
+@@ -1332,7 +1332,7 @@
+       with Not_found ->
+         fatal_error ("Primitive "^modname^"."^field^" not found.")
+       in
+-      Lprim(Pfield p, [Lprim(Pgetglobal mod_ident, [])])
++      Lprim(Pfield p, [Lprim(Pgetglobal mod_ident, []), None])
+     with Not_found -> fatal_error ("Module "^modname^" unavailable.")
+   )
+ 
+@@ -1356,17 +1356,19 @@
+   let tag = Ident.create "tag" in
+   let force_fun = Lazy.force code_force_lazy_block in
+   Llet(Strict, idarg, arg,
+-       Llet(Alias, tag, Lprim(Pccall prim_obj_tag, [varg]),
++       Llet(Alias, tag, Lprim(Pccall prim_obj_tag, [varg, None]),
+             Lifthenelse(
+               (* if (tag == Obj.forward_tag) then varg.(0) else ... *)
+               Lprim(Pintcomp Ceq,
+-                    [Lvar tag; Lconst(Const_base(Const_int Obj.forward_tag))]),
+-              Lprim(Pfield 0, [varg]),
++                    [Lvar tag, Some Predef.type_int;
++                     Lconst(Const_base(Const_int Obj.forward_tag)), Some Predef.type_int]),
++              Lprim(Pfield 0, [varg, None]),
+               Lifthenelse(
+                 (* ... if (tag == Obj.lazy_tag) then Lazy.force varg else ... *)
+                 Lprim(Pintcomp Ceq,
+-                      [Lvar tag; Lconst(Const_base(Const_int Obj.lazy_tag))]),
+-                Lapply(force_fun, [varg], loc),
++                      [Lvar tag, Some Predef.type_int;
++                       Lconst(Const_base(Const_int Obj.lazy_tag)), Some Predef.type_int]),
++                Lapply(force_fun, [varg, None], loc),
+                 (* ... arg *)
+                   varg))))
+ 
+@@ -1376,15 +1378,15 @@
+   let force_fun = Lazy.force code_force_lazy_block in
+   Llet(Strict, idarg, arg,
+        Lifthenelse(
+-         Lprim(Pisint, [varg]), varg,
++         Lprim(Pisint, [varg, None]), varg,
+          (Lswitch
+             (varg,
+              { sw_numconsts = 0; sw_consts = [];
+                sw_numblocks = 256;  (* PR#6033 - tag ranges from 0 to 255 *)
+                sw_blocks =
+-                 [ (Obj.forward_tag, Lprim(Pfield 0, [varg]));
++                 [ (Obj.forward_tag, Lprim(Pfield 0, [varg, None]));
+                    (Obj.lazy_tag,
+-                    Lapply(force_fun, [varg], loc)) ];
++                    Lapply(force_fun, [varg, None], loc)) ];
+                sw_failaction = Some varg } ))))
+ 
+ let inline_lazy_force arg loc =
+@@ -1431,7 +1433,7 @@
+       let rec make_args pos =
+         if pos >= arity
+         then argl
+-        else (Lprim(Pfield pos, [arg]), Alias) :: make_args (pos + 1) in
++        else (Lprim(Pfield pos, [arg, None]), Alias) :: make_args (pos + 1) in
+       {cases = []; args = make_args 0 ;
+         default=make_default (matcher_tuple arity) def}
+ 
+@@ -1476,7 +1478,7 @@
+             match lbl.lbl_mut with
+               Immutable -> Alias
+             | Mutable -> StrictOpt in
+-          (Lprim(access, [arg]), str) :: make_args(pos + 1)
++          (Lprim(access, [arg, None]), str) :: make_args(pos + 1)
+         end in
+       let nfields = Array.length all_labels in
+       let def= make_default (matcher_record nfields) def in
+@@ -1514,7 +1516,8 @@
+       let rec make_args pos =
+         if pos >= len
+         then argl
+-        else (Lprim(Parrayrefu kind, [arg; Lconst(Const_base(Const_int pos))]),
++        else (Lprim(Parrayrefu kind, [arg, None;
++                                      Lconst(Const_base(Const_int pos)), Some Predef.type_int]),
+               StrictOpt) :: make_args (pos + 1) in
+       let def = make_default (matcher_array len) def
+       and ctx = filter_ctx p ctx in
+@@ -1542,7 +1545,7 @@
+   | [] -> fail
+   | (c, act)::rem ->
+       Lifthenelse
+-        (Lprim (tst, [arg ; Lconst (Const_base c)]),
++        (Lprim (tst, [arg, None ; Lconst (Const_base c), None]),
+          do_tests_fail fail tst arg rem,
+          act)
+ 
+@@ -1551,7 +1554,7 @@
+   | [_,act] -> act
+   | (c,act)::rem ->
+       Lifthenelse
+-        (Lprim (tst, [arg ; Lconst (Const_base c)]),
++        (Lprim (tst, [arg, None ; Lconst (Const_base c), None]),
+          do_tests_nofail tst arg rem,
+          act)
+ 
+@@ -1566,12 +1569,12 @@
+   and split_sequence const_lambda_list =
+     let list1, list2 =
+       cut (List.length const_lambda_list / 2) const_lambda_list in
+-    Lifthenelse(Lprim(lt_tst,[arg; Lconst(Const_base (fst(List.hd list2)))]),
++    Lifthenelse(Lprim(lt_tst,[arg, None; Lconst(Const_base (fst(List.hd list2))), None]),
+                 make_test_sequence list1, make_test_sequence list2)
+   in make_test_sequence (sort_lambda_list const_lambda_list)
+ 
+ 
+-let make_offset x arg = if x=0 then arg else Lprim(Poffsetint(x), [arg])
++let make_offset x arg = if x=0 then arg else Lprim(Poffsetint(x), [arg, None])
+ 
+ 
+ 
+@@ -1691,10 +1694,10 @@
+ 
+   type act = Lambda.lambda
+ 
+-  let make_prim p args = Lprim (p,args)
++  let make_prim p args = Lprim (p,List.map (fun x -> x, None) args)
+   let make_offset arg n = match n with
+   | 0 -> arg
+-  | _ -> Lprim (Poffsetint n,[arg])
++  | _ -> Lprim (Poffsetint n,[arg, None])
+   let bind arg body =
+     let newvar,newarg = match arg with
+     | Lvar v -> v,arg
+@@ -1703,8 +1706,8 @@
+         newvar,Lvar newvar in
+     bind Alias newvar arg (body newarg)
+ 
+-  let make_isout h arg = Lprim (Pisout, [h ; arg])
+-  let make_isin h arg = Lprim (Pnot,[make_isout h arg])
++  let make_isout h arg = Lprim (Pisout, [h, None ; arg, None])
++  let make_isin h arg = Lprim (Pnot,[make_isout h arg, None])
+   let make_if cond ifso ifnot = Lifthenelse (cond, ifso, ifnot)
+   let make_switch = make_switch_switcher
+ end
+@@ -2032,7 +2035,8 @@
+           match ex with
+           | Cstr_exception (path, _) ->
+               Lifthenelse(Lprim(Pintcomp Ceq,
+-                                [Lprim(Pfield 0, [arg]); transl_path path]),
++                                [Lprim(Pfield 0, [arg, None]), None;
++                                 transl_path path, None]),
+                           act, rem)
+           | _ -> assert false)
+         tests default in
+@@ -2072,7 +2076,7 @@
+                                      sw_failaction = None})
+               | Some act ->
+                   Lifthenelse
+-                    (Lprim (Pisint, [arg]),
++                    (Lprim (Pisint, [arg, None]),
+                      call_switcher
+                        (fun i -> Lconst (Const_base (Const_int i)))
+                        None arg
+@@ -2132,7 +2136,7 @@
+       | ([n, act1], [m, act2]) when fail=None ->
+           test_int_or_block arg act1 act2
+       | (_, []) -> (* One can compare integers and pointers *)
+-          make_test_sequence_variant_constant fail arg consts
++          make_test_sequence_variant_constant fail (fst arg) consts
+       | ([], _) ->
+           let lam = call_switcher_variant_constr
+               fail arg nonconsts in
+@@ -2144,7 +2148,7 @@
+       | (_, _) ->
+           let lam_const =
+             call_switcher_variant_constant
+-              fail arg consts
++              fail (fst arg) consts
+           and lam_nonconst =
+             call_switcher_variant_constr
+               fail arg nonconsts in
+@@ -2274,7 +2278,7 @@
+   | Lstaticraise (_,args) ->
+       List.exists (fun lam -> approx_present v lam) args
+   | Lprim (_,args) ->
+-      List.exists (fun lam -> approx_present v lam) args
++      List.exists (fun (lam, _) -> approx_present v lam) args
+   | Llet (Alias, _, l1, l2) ->
+       approx_present v l1 || approx_present v l2
+   | Lvar vv -> Ident.same v vv
+@@ -2452,7 +2456,7 @@
+   | Tpat_array _ ->
+       let kind = Typeopt.array_pattern_kind pat in
+       compile_test (compile_match repr partial) partial
+-        (divide_array kind) (combine_array arg kind partial)
++        (divide_array kind) (combine_array (arg, None) kind partial)
+         ctx pm
+   | Tpat_lazy _ ->
+       compile_no_test
+@@ -2461,7 +2465,7 @@
+   | Tpat_variant(lab, _, row) ->
+       compile_test (compile_match repr partial) partial
+         (divide_variant !row)
+-        (combine_variant !row arg partial)
++        (combine_variant !row (arg, None) partial)
+         ctx pm
+   | _ -> assert false
+   end
+@@ -2605,18 +2609,18 @@
+   (* [Location.get_pos_info] is too expensive *)
+   let (fname, line, char) = Location.get_pos_info loc.Location.loc_start in
+   Lprim(Praise, [Lprim(Pmakeblock(0, Immutable),
+-          [transl_path Predef.path_match_failure;
++          [transl_path Predef.path_match_failure, None;
+            Lconst(Const_block(0,
+               [Const_base(Const_string fname);
+                Const_base(Const_int line);
+-               Const_base(Const_int char)]))])])
++               Const_base(Const_int char)])), None]), None])
+ 
+ let for_function loc repr param pat_act_list partial =
+   compile_matching loc repr (partial_function loc) param pat_act_list partial
+ 
+ (* In the following two cases, exhaustiveness info is not available! *)
+ let for_trywith param pat_act_list =
+-  compile_matching Location.none None (fun () -> Lprim(Praise, [param]))
++  compile_matching Location.none None (fun () -> Lprim(Praise, [param, None]))
+     param pat_act_list Partial
+ 
+ let for_let loc param pat body =
+@@ -2741,7 +2745,7 @@
+         comp_match_handlers
+           (compile_flattened repr)
+           partial (start_ctx size) () flat_next flat_nexts in
+-      List.fold_right2 (bind Strict) idl paraml
++      List.fold_right2 (bind Strict) idl (List.map fst paraml)
+         (match partial with
+         | Partial ->
+             check_total total lam raise_num (partial_function loc)
+@@ -2782,4 +2786,4 @@
+   let v_paraml = List.map param_to_var paraml in
+   let paraml = List.map (fun (v,_) -> Lvar v) v_paraml in
+   List.fold_right bind_opt v_paraml
+-    (do_for_multiple_match loc paraml pat_act_list partial)
++    (do_for_multiple_match loc (List.map (fun x -> x, None) paraml) pat_act_list partial)
+diff -aur original/bytecomp/printlambda.ml patched/bytecomp/printlambda.ml
+--- original/bytecomp/printlambda.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/printlambda.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -87,6 +87,35 @@
+   | Record_float -> fprintf ppf "float"
+ ;;
+ 
++let rec repr ppf = function
++  | LR_value -> fprintf ppf "LR_value"
++  | LR_int -> fprintf ppf "LR_int"
++  | LR_char -> fprintf ppf "LR_char"
++  | LR_string -> fprintf ppf "LR_string"
++  | LR_float -> fprintf ppf "LR_float"
++  | LR_bool -> fprintf ppf "LR_bool"
++  | LR_unit -> fprintf ppf "LR_unit"
++  | LR_exn -> fprintf ppf "LR_exn"
++  | LR_array r -> fprintf ppf "LR_array(%a)" repr r
++  | LR_list r -> fprintf ppf "LR_list(%a)" repr r
++  | LR_option r -> fprintf ppf "LR_option(%a)" repr r
++  | LR_nativeint -> fprintf ppf "LR_nativeint"
++  | LR_int32 -> fprintf ppf "LR_int32"
++  | LR_int64 -> fprintf ppf "LR_int64"
++  | LR_lazy r -> fprintf ppf "LR_lazy(%a)" repr r
++  | LR_java_instance s -> fprintf ppf "LR_java_instance(%s)" s
++  | LR_java_extends s -> fprintf ppf "LR_java_extends(%s)" s
++  | LR_java_boolean_array -> fprintf ppf "LR_java_boolean_array"
++  | LR_java_byte_array -> fprintf ppf "LR_java_byte_array"
++  | LR_java_char_array -> fprintf ppf "LR_java_char_array"
++  | LR_java_double_array -> fprintf ppf "LR_java_double_array"
++  | LR_java_float_array -> fprintf ppf "LR_java_float_array"
++  | LR_java_int_array -> fprintf ppf "LR_java_int_array"
++  | LR_java_long_array -> fprintf ppf "LR_java_long_array"
++  | LR_java_reference_array r -> fprintf ppf "LR_java_reference_array(%a)" repr r
++  | LR_java_short_array -> fprintf ppf "LR_java_short_array"
++  | LR_none -> fprintf ppf "LR_none"
++
+ let primitive ppf = function
+   | Pidentity -> fprintf ppf "id"
+   | Pignore -> fprintf ppf "ignore"
+@@ -237,23 +266,26 @@
+       struct_const ppf cst
+   | Lapply(lfun, largs, _) ->
+       let lams ppf largs =
+-        List.iter (fun l -> fprintf ppf "@ %a" lam l) largs in
++        List.iter (fun (l, _) -> fprintf ppf "@ %a" lam l) largs in
+       fprintf ppf "@[<2>(apply@ %a%a)@]" lam lfun lams largs
+-  | Lfunction(kind, params, body) ->
++  | Lfunction(kind, params, ret_repr, body) ->
+       let pr_params ppf params =
+         match kind with
+         | Curried ->
+-            List.iter (fun param -> fprintf ppf "@ %a" Ident.print param) params
++            List.iter
++              (fun (param_id, param_repr) ->
++                fprintf ppf "@ %a/%a" Ident.print param_id repr param_repr)
++              params
+         | Tupled ->
+             fprintf ppf " (";
+             let first = ref true in
+             List.iter
+-              (fun param ->
++              (fun (param_id, _) ->
+                 if !first then first := false else fprintf ppf ",@ ";
+-                Ident.print ppf param)
++                fprintf ppf "%a" Ident.print param_id)
+               params;
+             fprintf ppf ")" in
+-      fprintf ppf "@[<2>(function%a@ %a)@]" pr_params params lam body
++      fprintf ppf "@[<2>(function %a%a@ %a)@]" repr ret_repr pr_params params lam body
+   | Llet(str, id, arg, body) ->
+       let rec letbody = function
+         | Llet(str, id, arg, body) ->
+@@ -275,7 +307,7 @@
+         "@[<2>(letrec@ (@[<hv 1>%a@])@ %a)@]" bindings id_arg_list lam body
+   | Lprim(prim, largs) ->
+       let lams ppf largs =
+-        List.iter (fun l -> fprintf ppf "@ %a" lam l) largs in
++        List.iter (fun (l, _) -> fprintf ppf "@ %a" lam l) largs in
+       fprintf ppf "@[<2>(%a%a)@]" primitive prim lams largs
+   | Lswitch(larg, sw) ->
+       let switch ppf sw =
+diff -aur original/bytecomp/printlambda.mli patched/bytecomp/printlambda.mli
+--- original/bytecomp/printlambda.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/printlambda.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -17,3 +17,4 @@
+ val structured_constant: formatter -> structured_constant -> unit
+ val lambda: formatter -> lambda -> unit
+ val primitive: formatter -> primitive -> unit
++val repr: formatter -> repr -> unit
+diff -aur original/bytecomp/runtimedef.ml patched/bytecomp/runtimedef.ml
+--- original/bytecomp/runtimedef.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/runtimedef.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -10,7 +10,9 @@
+   "Stack_overflow";
+   "Sys_blocked_io";
+   "Assert_failure";
+-  "Undefined_recursive_module"
++  "Undefined_recursive_module";
++  "Java_exception";
++  "Java_error"
+ |]
+ let builtin_primitives = [|
+   "caml_abs_float";
+diff -aur original/bytecomp/simplif.ml patched/bytecomp/simplif.ml
+--- original/bytecomp/simplif.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/simplif.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -25,8 +25,10 @@
+       if Ident.same v id then raise Real_reference else lam
+   | Lconst cst as lam -> lam
+   | Lapply(e1, el, loc) ->
+-      Lapply(eliminate_ref id e1, List.map (eliminate_ref id) el, loc)
+-  | Lfunction(kind, params, body) as lam ->
++      Lapply(eliminate_ref id e1,
++             List.map (fun (x, y) -> eliminate_ref id x, y) el,
++             loc)
++  | Lfunction(kind, params, repr, body) as lam ->
+       if IdentSet.mem id (free_variables lam)
+       then raise Real_reference
+       else lam
+@@ -35,14 +37,14 @@
+   | Lletrec(idel, e2) ->
+       Lletrec(List.map (fun (v, e) -> (v, eliminate_ref id e)) idel,
+               eliminate_ref id e2)
+-  | Lprim(Pfield 0, [Lvar v]) when Ident.same v id ->
++  | Lprim(Pfield 0, [Lvar v, _]) when Ident.same v id ->
+       Lvar id
+-  | Lprim(Psetfield(0, _), [Lvar v; e]) when Ident.same v id ->
++  | Lprim(Psetfield(0, _), [Lvar v, _; e, _]) when Ident.same v id ->
+       Lassign(id, eliminate_ref id e)
+-  | Lprim(Poffsetref delta, [Lvar v]) when Ident.same v id ->
+-      Lassign(id, Lprim(Poffsetint delta, [Lvar id]))
++  | Lprim(Poffsetref delta, [Lvar v, t]) when Ident.same v id ->
++      Lassign(id, Lprim(Poffsetint delta, [Lvar id, t]))
+   | Lprim(p, el) ->
+-      Lprim(p, List.map (eliminate_ref id) el)
++      Lprim(p, List.map (fun (x, t) -> eliminate_ref id x, t) el)
+   | Lswitch(e, sw) ->
+       Lswitch(eliminate_ref id e,
+         {sw_numconsts = sw.sw_numconsts;
+@@ -102,14 +104,14 @@
+ 
+   let rec count = function
+   | (Lvar _| Lconst _) -> ()
+-  | Lapply(l1, ll, _) -> count l1; List.iter count ll
+-  | Lfunction(kind, params, l) -> count l
++  | Lapply(l1, ll, _) -> count l1; List.iter (fun (l, _) -> count l) ll
++  | Lfunction(kind, params, repr, l) -> count l
+   | Llet(str, v, l1, l2) ->
+       count l2; count l1
+   | Lletrec(bindings, body) ->
+       List.iter (fun (v, l) -> count l) bindings;
+       count body
+-  | Lprim(p, ll) -> List.iter count ll
++  | Lprim(p, ll) -> List.iter (fun (l, _) -> count l) ll
+   | Lswitch(l, sw) ->
+       count_default sw ;
+       count l;
+@@ -183,25 +185,25 @@
+ 
+   let rec simplif = function
+   | (Lvar _|Lconst _) as l -> l
+-  | Lapply(l1, ll, loc) -> Lapply(simplif l1, List.map simplif ll, loc)
+-  | Lfunction(kind, params, l) -> Lfunction(kind, params, simplif l)
++  | Lapply(l1, ll, loc) -> Lapply(simplif l1, List.map (fun (x, y) -> simplif x, y) ll, loc)
++  | Lfunction(kind, params, repr, l) -> Lfunction(kind, params, repr, simplif l)
+   | Llet(kind, v, l1, l2) -> Llet(kind, v, simplif l1, simplif l2)
+   | Lletrec(bindings, body) ->
+       Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+   | Lprim(p, ll) -> begin
+-    let ll = List.map simplif ll in
++    let ll = List.map (fun (l, r) -> simplif l, r) ll in
+     match p, ll with
+         (* Simplify %revapply, for n-ary functions with n > 1 *)
+-      | Prevapply loc, [x; Lapply(f, args, _)]
+-      | Prevapply loc, [x; Levent (Lapply(f, args, _),_)] ->
+-        Lapply(f, args@[x], loc)
+-      | Prevapply loc, [x; f] -> Lapply(f, [x], loc)
++      | Prevapply loc, [x, t; Lapply(f, args, _), _]
++      | Prevapply loc, [x, t; Levent (Lapply(f, args, _),_), _] ->
++        Lapply(f, args@[x, t], loc)
++      | Prevapply loc, [x, t; f, _] -> Lapply(f, [x, t], loc)
+ 
+         (* Simplify %apply, for n-ary functions with n > 1 *)
+-      | Pdirapply loc, [Lapply(f, args, _); x]
+-      | Pdirapply loc, [Levent (Lapply(f, args, _),_); x] ->
+-        Lapply(f, args@[x], loc)
+-      | Pdirapply loc, [f; x] -> Lapply(f, [x], loc)
++      | Pdirapply loc, [Lapply(f, args, _), _; x, t]
++      | Pdirapply loc, [Levent (Lapply(f, args, _),_), _; x, t] ->
++        Lapply(f, args@[x, t], loc)
++      | Pdirapply loc, [f, _; x, t] -> Lapply(f, [x, t], loc)
+ 
+       | _ -> Lprim(p, ll)
+      end
+@@ -333,15 +335,15 @@
+   | Lconst cst -> ()
+   | Lvar v ->
+       use_var bv v 1
+-  | Lapply(Lfunction(Curried, params, body), args, _)
++  | Lapply(Lfunction(Curried, params, _, body), args, _)
+     when optimize && List.length params = List.length args ->
+-      count bv (beta_reduce params body args)
+-  | Lapply(Lfunction(Tupled, params, body), [Lprim(Pmakeblock _, args)], _)
++      count bv (beta_reduce (List.map fst params) body (List.map fst args))
++  | Lapply(Lfunction(Tupled, params, _, body), [Lprim(Pmakeblock _, args), _], _)
+     when optimize && List.length params = List.length args ->
+-      count bv (beta_reduce params body args)
++      count bv (beta_reduce (List.map fst params) body (List.map fst args))
+   | Lapply(l1, ll, _) ->
+-      count bv l1; List.iter (count bv) ll
+-  | Lfunction(kind, params, l) ->
++      count bv l1; List.iter (fun (l, _) -> count bv l) ll
++  | Lfunction(kind, params, _, l) ->
+       count Tbl.empty l
+   | Llet(str, v, Lvar w, l2) when optimize ->
+       (* v will be replaced by w in l2, so each occurrence of v in l2
+@@ -355,7 +357,7 @@
+   | Lletrec(bindings, body) ->
+       List.iter (fun (v, l) -> count bv l) bindings;
+       count bv body
+-  | Lprim(p, ll) -> List.iter (count bv) ll
++  | Lprim(p, ll) -> List.iter (fun (l, _) -> count bv l) ll
+   | Lswitch(l, sw) ->
+       count_default bv sw ;
+       count bv l;
+@@ -414,25 +416,25 @@
+         l
+       end
+   | Lconst cst as l -> l
+-  | Lapply(Lfunction(Curried, params, body), args, _)
++  | Lapply(Lfunction(Curried, params, _, body), args, _)
+     when optimize && List.length params = List.length args ->
+-      simplif (beta_reduce params body args)
+-  | Lapply(Lfunction(Tupled, params, body), [Lprim(Pmakeblock _, args)], _)
++      simplif (beta_reduce (List.map fst params) body (List.map fst args))
++  | Lapply(Lfunction(Tupled, params, _, body), [Lprim(Pmakeblock _, args), _], _)
+     when optimize && List.length params = List.length args ->
+-      simplif (beta_reduce params body args)
+-  | Lapply(l1, ll, loc) -> Lapply(simplif l1, List.map simplif ll, loc)
+-  | Lfunction(kind, params, l) -> Lfunction(kind, params, simplif l)
++      simplif (beta_reduce (List.map fst params) body (List.map fst args))
++  | Lapply(l1, ll, loc) -> Lapply(simplif l1, List.map (fun (x, y) -> simplif x, y) ll, loc)
++  | Lfunction(kind, params, repr, l) -> Lfunction(kind, params, repr, simplif l)
+   | Llet(str, v, Lvar w, l2) when optimize ->
+       Hashtbl.add subst v (simplif (Lvar w));
+       simplif l2
+-  | Llet(Strict, v, Lprim(Pmakeblock(0, Mutable), [linit]), lbody)
++  | Llet(Strict, v, Lprim(Pmakeblock(0, Mutable), [linit, t]), lbody)
+     when optimize ->
+       let slinit = simplif linit in
+       let slbody = simplif lbody in
+       begin try
+        mklet (Variable, v, slinit, eliminate_ref v slbody)
+       with Real_reference ->
+-        mklet(Strict, v, Lprim(Pmakeblock(0, Mutable), [slinit]), slbody)
++        mklet(Strict, v, Lprim(Pmakeblock(0, Mutable), [slinit, t]), slbody)
+       end
+   | Llet(Alias, v, l1, l2) ->
+       begin match count_var v with
+@@ -448,7 +450,7 @@
+   | Llet(kind, v, l1, l2) -> mklet(kind, v, simplif l1, simplif l2)
+   | Lletrec(bindings, body) ->
+       Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+-  | Lprim(p, ll) -> Lprim(p, List.map simplif ll)
++  | Lprim(p, ll) -> Lprim(p, List.map (fun (x, t) -> simplif x, t) ll)
+   | Lswitch(l, sw) ->
+       let new_l = simplif l
+       and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
+@@ -499,9 +501,9 @@
+   | Lvar _ -> ()
+   | Lconst _ -> ()
+   | Lapply (func, l, loc) ->
+-      list_emit_tail_infos false l;
++      list_emit_tail_infos false (List.map fst l);
+       Stypes.record (Stypes.An_call (loc, call_kind l))
+-  | Lfunction (_, _, lam) ->
++  | Lfunction (_, _, _, lam) ->
+       emit_tail_infos true lam
+   | Llet (_, _, lam, body) ->
+       emit_tail_infos false lam;
+@@ -509,14 +511,14 @@
+   | Lletrec (bindings, body) ->
+       List.iter (fun (_, lam) -> emit_tail_infos false lam) bindings;
+       emit_tail_infos is_tail body
+-  | Lprim (Pidentity, [arg]) ->
++  | Lprim (Pidentity, [arg, _]) ->
+       emit_tail_infos is_tail arg
+-  | Lprim (Psequand, [arg1; arg2])
+-  | Lprim (Psequor, [arg1; arg2]) ->
++  | Lprim (Psequand, [arg1, _; arg2, _])
++  | Lprim (Psequor, [arg1, _; arg2, _]) ->
+       emit_tail_infos false arg1;
+       emit_tail_infos is_tail arg2
+   | Lprim (_, l) ->
+-      list_emit_tail_infos false l
++      list_emit_tail_infos false (List.map fst l)
+   | Lswitch (lam, sw) ->
+       emit_tail_infos false lam;
+       list_emit_tail_infos_fun snd is_tail sw.sw_consts;
+diff -aur original/bytecomp/translclass.ml patched/bytecomp/translclass.ml
+--- original/bytecomp/translclass.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/translclass.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -25,11 +25,12 @@
+ 
+ let lfunction params body =
+   if params = [] then body else
++  let params = List.map (fun id -> id, LR_value) params in
+   match body with
+-    Lfunction (Curried, params', body') ->
+-      Lfunction (Curried, params @ params', body')
++    Lfunction (Curried, params', repr, body') ->
++      Lfunction (Curried, params @ params', repr, body')
+   |  _ ->
+-      Lfunction (Curried, params, body)
++      Lfunction (Curried, params, LR_value, body)
+ 
+ let lapply func args loc =
+   match func with
+@@ -43,7 +44,7 @@
+ let lsequence l1 l2 =
+   if l2 = lambda_unit then l1 else Lsequence(l1, l2)
+ 
+-let lfield v i = Lprim(Pfield i, [Lvar v])
++let lfield v i = Lprim(Pfield i, [Lvar v, None])
+ 
+ let transl_label l = share (Const_immstring l)
+ 
+@@ -54,21 +55,23 @@
+ 
+ let set_inst_var obj id expr =
+   let kind = if Typeopt.maybe_pointer expr then Paddrarray else Pintarray in
+-  Lprim(Parraysetu kind, [Lvar obj; Lvar id; transl_exp expr])
++  Lprim(Parraysetu kind, [Lvar obj, None; Lvar id, None; transl_exp expr, None])
+ 
+ let copy_inst_var obj id expr templ offset =
+   let kind = if Typeopt.maybe_pointer expr then Paddrarray else Pintarray in
+   let id' = Ident.create (Ident.name id) in
+-  Llet(Strict, id', Lprim (Pidentity, [Lvar id]),
++  Llet(Strict, id', Lprim (Pidentity, [Lvar id, None]),
+   Lprim(Parraysetu kind,
+-        [Lvar obj; Lvar id';
+-         Lprim(Parrayrefu kind, [Lvar templ; Lprim(Paddint,
+-                                                   [Lvar id';
+-                                                    Lvar offset])])]))
++        [Lvar obj, None;
++         Lvar id', None;
++         Lprim(Parrayrefu kind, [Lvar templ, None;
++                                 Lprim(Paddint,
++                                       [Lvar id', Some Predef.type_int;
++                                        Lvar offset, Some Predef.type_int]), Some Predef.type_int]), None]))
+ 
+ let transl_val tbl create name =
+   mkappl (oo_prim (if create then "new_variable" else "get_variable"),
+-          [Lvar tbl; transl_label name])
++          [Lvar tbl, None; transl_label name, None])
+ 
+ let transl_vals tbl create strict vals rem =
+   List.fold_right
+@@ -81,7 +84,8 @@
+     (fun (nm, id) rem ->
+        try
+          (nm, id,
+-          mkappl(oo_prim "get_method", [Lvar tbl; Lvar (Meths.find nm meths)]))
++          mkappl(oo_prim "get_method", [Lvar tbl, None;
++                                        Lvar (Meths.find nm meths), None]))
+          :: rem
+        with Not_found -> rem)
+     inh_meths []
+@@ -98,15 +102,15 @@
+     (inh_init,
+      mkappl (oo_prim (if has_init then "create_object_and_run_initializers"
+                       else"create_object_opt"),
+-             [obj; Lvar cl]))
++             [obj; Lvar cl, None]))
+   else begin
+    (inh_init,
+     Llet(Strict, obj',
+-            mkappl (oo_prim "create_object_opt", [obj; Lvar cl]),
++            mkappl (oo_prim "create_object_opt", [obj; Lvar cl, None]),
+          Lsequence(obj_init,
+                    if not has_init then Lvar obj' else
+                    mkappl (oo_prim "run_initializers_opt",
+-                           [obj; Lvar obj'; Lvar cl]))))
++                           [obj; Lvar obj', None; Lvar cl, None]))))
+   end
+ 
+ let rec build_object_init cl_table obj params inh_init obj_init cl =
+@@ -116,12 +120,12 @@
+       let envs, inh_init = inh_init in
+       let env =
+         match envs with None -> []
+-        | Some envs -> [Lprim(Pfield (List.length inh_init + 1), [Lvar envs])]
++        | Some envs -> [Lprim(Pfield (List.length inh_init + 1), [Lvar envs, None]), None]
+       in
+       ((envs, (obj_init, path)::inh_init),
+-       mkappl(Lvar obj_init, env @ [obj]))
++       mkappl(Lvar obj_init, env @ [obj, None]))
+   | Tcl_structure str ->
+-      create_object cl_table obj (fun obj ->
++      create_object cl_table (obj, None) (fun obj ->
+         let (inh_init, obj_init, has_init) =
+           List.fold_right
+             (fun field (inh_init, obj_init, has_init) ->
+@@ -157,13 +161,15 @@
+       (inh_init,
+        let build params rem =
+          let param = name_pattern "param" [pat, ()] in
+-         Lfunction (Curried, param::params,
++         Lfunction (Curried,
++                    List.map (fun id -> id, LR_value) (param::params),
++                    LR_value,
+                     Matching.for_function
+                       pat.pat_loc None (Lvar param) [pat, rem] partial)
+        in
+        begin match obj_init with
+-         Lfunction (Curried, params, rem) -> build params rem
+-       | rem                              -> build [] rem
++         Lfunction (Curried, params, _, rem) -> build (List.map fst params) rem
++       | rem                                 -> build [] rem
+        end)
+   | Tcl_apply (cl, oexprs) ->
+       let (inh_init, obj_init) =
+@@ -198,7 +204,7 @@
+ 
+ let bind_method tbl lab id cl_init =
+   Llet(Strict, id, mkappl (oo_prim "get_method_label",
+-                           [Lvar tbl; transl_label lab]),
++                           [Lvar tbl, None; transl_label lab, None]),
+        cl_init)
+ 
+ let bind_methods tbl meths vals cl_init =
+@@ -214,7 +220,9 @@
+   in
+   Llet(Strict, ids,
+        mkappl (oo_prim getter,
+-               [Lvar tbl; transl_meth_list (List.map fst methl)] @ names),
++               [Lvar tbl, None;
++                transl_meth_list (List.map fst methl), None]
++               @ (List.map (fun x -> x, None) names)),
+        List.fold_right
+          (fun (lab,id) lam -> decr i; Llet(StrictOpt, id, lfield ids !i, lam))
+          (methl @ vals) cl_init)
+@@ -223,10 +231,13 @@
+   match methods with
+     [] -> lam
+   | [lab; code] ->
+-      lsequence (mkappl(oo_prim "set_method", [Lvar tbl; lab; code])) lam
++      lsequence (mkappl(oo_prim "set_method", [Lvar tbl, None;
++                                               lab, None;
++                                               code, None])) lam
+   | _ ->
+       lsequence (mkappl(oo_prim "set_methods",
+-                        [Lvar tbl; Lprim(Pmakeblock(0,Immutable), methods)]))
++                        [Lvar tbl, None;
++                         Lprim(Pmakeblock(0,Immutable), List.map (fun x -> x, None) methods), None]))
+         lam
+ 
+ let rec ignore_cstrs cl =
+@@ -250,8 +261,8 @@
+           let lpath = transl_path path in
+           (inh_init,
+            Llet (Strict, obj_init,
+-                 mkappl(Lprim(Pfield 1, [lpath]), Lvar cla ::
+-                        if top then [Lprim(Pfield 3, [lpath])] else []),
++                 mkappl(Lprim(Pfield 1, [lpath, None]), (Lvar cla, None) ::
++                        if top then [Lprim(Pfield 3, [lpath, None]), None] else []),
+                  bind_super cla super cl_init))
+       | _ ->
+           assert false
+@@ -291,7 +302,8 @@
+             | Tcf_init exp ->
+                 (inh_init,
+                  Lsequence(mkappl (oo_prim "add_initializer",
+-                                   Lvar cla :: msubst false (transl_exp exp)),
++                                   (Lvar cla, None)
++                                   :: (List.map (fun x -> x, None) (msubst false (transl_exp exp)))),
+                            cl_init),
+                  methods, values))
+           str.cstr_fields
+@@ -343,8 +355,10 @@
+               cl_init valids in
+           (inh_init,
+            Llet (Strict, inh,
+-                 mkappl(oo_prim "inherits", narrow_args @
+-                        [lpath; Lconst(Const_pointer(if top then 1 else 0))]),
++                 mkappl(oo_prim "inherits",
++                        List.map (fun x -> x, None)
++                        (narrow_args @
++                        [lpath; Lconst(Const_pointer(if top then 1 else 0))])),
+                  Llet(StrictOpt, obj_init, lfield inh 0, cl_init)))
+       | _ ->
+           let core cl_init =
+@@ -352,10 +366,10 @@
+           in
+           if cstr then core cl_init else
+           let (inh_init, cl_init) =
+-            core (Lsequence (mkappl (oo_prim "widen", [Lvar cla]), cl_init))
++            core (Lsequence (mkappl (oo_prim "widen", [Lvar cla, None]), cl_init))
+           in
+           (inh_init,
+-           Lsequence(mkappl (oo_prim "narrow", narrow_args),
++           Lsequence(mkappl (oo_prim "narrow", List.map (fun x -> x, None) narrow_args),
+                      cl_init))
+       end
+ 
+@@ -397,14 +411,16 @@
+       let path, obj_init = transl_class_rebind obj_init cl vf in
+       let build params rem =
+         let param = name_pattern "param" [pat, ()] in
+-        Lfunction (Curried, param::params,
++        Lfunction (Curried,
++                   List.map (fun id -> id, LR_value) (param::params),
++                   LR_value,
+                    Matching.for_function
+                      pat.pat_loc None (Lvar param) [pat, rem] partial)
+       in
+       (path,
+        match obj_init with
+-         Lfunction (Curried, params, rem) -> build params rem
+-       | rem                              -> build [] rem)
++         Lfunction (Curried, params, _, rem) -> build (List.map fst params) rem
++       | rem                                 -> build [] rem)
+   | Tcl_apply (cl, oexprs) ->
+       let path, obj_init = transl_class_rebind obj_init cl vf in
+       (path, transl_apply obj_init oexprs Location.none)
+@@ -435,7 +451,7 @@
+   try
+     let obj_init = Ident.create "obj_init"
+     and self = Ident.create "self" in
+-    let obj_init0 = lapply (Lvar obj_init) [Lvar self] Location.none in
++    let obj_init0 = lapply (Lvar obj_init) [Lvar self, None] Location.none in
+     let path, obj_init' = transl_class_rebind_0 self obj_init0 cl vf in
+     if not (Translcore.check_recursive_lambda ids obj_init') then
+       raise(Error(cl.cl_loc, Illegal_class_expr));
+@@ -452,15 +468,15 @@
+     Llet(
+     Alias, cla, transl_path path,
+     Lprim(Pmakeblock(0, Immutable),
+-          [mkappl(Lvar new_init, [lfield cla 0]);
++          [mkappl(Lvar new_init, [lfield cla 0, None]), None;
+            lfunction [table]
+              (Llet(Strict, env_init,
+-                   mkappl(lfield cla 1, [Lvar table]),
++                   mkappl(lfield cla 1, [Lvar table, None]),
+                    lfunction [envs]
+                      (mkappl(Lvar new_init,
+-                             [mkappl(Lvar env_init, [Lvar envs])]))));
+-           lfield cla 2;
+-           lfield cla 3])))
++                             [mkappl(Lvar env_init, [Lvar envs, None]), None])))), None;
++           lfield cla 2, None;
++           lfield cla 3, None])))
+   with Exit ->
+     lambda_unit
+ 
+@@ -469,14 +485,14 @@
+ let rec module_path = function
+     Lvar id ->
+       let s = Ident.name id in s <> "" && s.[0] >= 'A' && s.[0] <= 'Z'
+-  | Lprim(Pfield _, [p])    -> module_path p
++  | Lprim(Pfield _, [p, _]) -> module_path p
+   | Lprim(Pgetglobal _, []) -> true
+   | _                       -> false
+ 
+ let const_path local = function
+     Lvar id -> not (List.mem id local)
+   | Lconst _ -> true
+-  | Lfunction (Curried, _, body) ->
++  | Lfunction (Curried, _, _, body) ->
+       let fv = free_variables body in
+       List.for_all (fun x -> not (IdentSet.mem x fv)) local
+   | p -> module_path p
+@@ -486,9 +502,9 @@
+   let conv = function
+     (* Lvar s when List.mem s self ->  "_self", [] *)
+     | p when const_path p -> "const", [p]
+-    | Lprim(Parrayrefu _, [Lvar s; Lvar n]) when List.mem s self ->
++    | Lprim(Parrayrefu _, [Lvar s, _; Lvar n, _]) when List.mem s self ->
+         "var", [Lvar n]
+-    | Lprim(Pfield n, [Lvar e]) when Ident.same e env ->
++    | Lprim(Pfield n, [Lvar e, _]) when Ident.same e env ->
+         "env", [Lvar env2; Lconst(Const_pointer n)]
+     | Lsend(Self, met, Lvar s, [], _) when List.mem s self ->
+         "meth", [met]
+@@ -497,12 +513,12 @@
+   match body with
+   | Llet(_, s', Lvar s, body) when List.mem s self ->
+       builtin_meths (s'::self) env env2 body
+-  | Lapply(f, [arg], _) when const_path f ->
++  | Lapply(f, [(arg, _)], _) when const_path f ->
+       let s, args = conv arg in ("app_"^s, f :: args)
+-  | Lapply(f, [arg; p], _) when const_path f && const_path p ->
++  | Lapply(f, [(arg, _); (p, _)], _) when const_path f && const_path p ->
+       let s, args = conv arg in
+       ("app_"^s^"_const", f :: args @ [p])
+-  | Lapply(f, [p; arg], _) when const_path f && const_path p ->
++  | Lapply(f, [(p, _); (arg, _)], _) when const_path f && const_path p ->
+       let s, args = conv arg in
+       ("app_const_"^s, f :: p :: args)
+   | Lsend(Self, Lvar n, Lvar s, [arg], _) when List.mem s self ->
+@@ -516,9 +532,9 @@
+   | Lsend(Cached, met, arg, [_;_], _) ->
+       let s, args = conv arg in
+       ("send_"^s, met :: args)
+-  | Lfunction (Curried, [x], body) ->
++  | Lfunction (Curried, [x, _], _, body) ->
+       let rec enter self = function
+-        | Lprim(Parraysetu _, [Lvar s; Lvar n; Lvar x'])
++        | Lprim(Parraysetu _, [Lvar s, _; Lvar n, _; Lvar x', _])
+           when Ident.same x x' && List.mem s self ->
+             ("set_var", [Lvar n])
+         | Llet(_, s', Lvar s, body) when List.mem s self ->
+@@ -624,7 +640,8 @@
+   in
+   let new_ids_meths = ref [] in
+   let msubst arr = function
+-      Lfunction (Curried, self :: args, body) ->
++      Lfunction (Curried, (self, _) :: args, _, body) ->
++        let args = List.map fst args in
+         let env = Ident.create "env" in
+         let body' =
+           if new_ids = [] then body else
+@@ -639,7 +656,8 @@
+              (if not (IdentSet.mem env (free_variables body')) then body' else
+               Llet(Alias, env,
+                    Lprim(Parrayrefu Paddrarray,
+-                         [Lvar self; Lvar env2]), body'))]
++                         [Lvar self, None;
++                          Lvar env2, None]), body'))]
+         end
+       | _ -> assert false
+   in
+@@ -648,7 +666,9 @@
+   let copy_env envs self =
+     if top then lambda_unit else
+     Lifused(env2, Lprim(Parraysetu Paddrarray,
+-                        [Lvar self; Lvar env2; Lvar env1']))
++                        [Lvar self, None;
++                         Lvar env2, None;
++                         Lvar env1', None]))
+   and subst_env envs l lam =
+     if top then lam else
+     (* must be called only once! *)
+@@ -685,35 +705,40 @@
+     tags pub_meths;
+   let ltable table lam =
+     Llet(Strict, table,
+-         mkappl (oo_prim "create_table", [transl_meth_list pub_meths]), lam)
++         mkappl (oo_prim "create_table", [transl_meth_list pub_meths, None]), lam)
+   and ldirect obj_init =
+     Llet(Strict, obj_init, cl_init,
+-         Lsequence(mkappl (oo_prim "init_class", [Lvar cla]),
+-                   mkappl (Lvar obj_init, [lambda_unit])))
++         Lsequence(mkappl (oo_prim "init_class", [Lvar cla, None]),
++                   mkappl (Lvar obj_init, [lambda_unit, None])))
+   in
+   (* Simplest case: an object defined at toplevel (ids=[]) *)
+   if top && ids = [] then llets (ltable cla (ldirect obj_init)) else
+ 
+   let concrete = (vflag = Concrete)
+   and lclass lam =
+-    let cl_init = llets (Lfunction(Curried, [cla], cl_init)) in
++    let cl_init = llets (Lfunction(Curried, [cla, LR_value], LR_value, cl_init)) in
+     Llet(Strict, class_init, cl_init, lam (free_variables cl_init))
+   and lbody fv =
+     if List.for_all (fun id -> not (IdentSet.mem id fv)) ids then
+-      mkappl (oo_prim "make_class",[transl_meth_list pub_meths;
+-                                    Lvar class_init])
++      mkappl (oo_prim "make_class",[transl_meth_list pub_meths, None;
++                                    Lvar class_init, None])
+     else
+       ltable table (
+       Llet(
+-      Strict, env_init, mkappl (Lvar class_init, [Lvar table]),
++      Strict, env_init, mkappl (Lvar class_init, [Lvar table, None]),
+       Lsequence(
+-      mkappl (oo_prim "init_class", [Lvar table]),
++      mkappl (oo_prim "init_class", [Lvar table, None]),
+       Lprim(Pmakeblock(0, Immutable),
+-            [mkappl (Lvar env_init, [lambda_unit]);
+-             Lvar class_init; Lvar env_init; lambda_unit]))))
++            [mkappl (Lvar env_init, [lambda_unit, None]), None;
++             Lvar class_init, None;
++             Lvar env_init, None;
++             lambda_unit, None]))))
+   and lbody_virt lenvs =
+     Lprim(Pmakeblock(0, Immutable),
+-          [lambda_unit; Lfunction(Curried,[cla], cl_init); lambda_unit; lenvs])
++          [lambda_unit, None;
++           Lfunction(Curried,[cla, LR_value], LR_value, cl_init), None;
++           lambda_unit, None;
++           lenvs, None])
+   in
+   (* Still easy: a class defined at toplevel *)
+   if top && concrete then lclass lbody else
+@@ -730,48 +755,48 @@
+     let menv =
+       if !new_ids_meths = [] then lambda_unit else
+       Lprim(Pmakeblock(0, Immutable),
+-            List.map (fun id -> Lvar id) !new_ids_meths) in
++            List.map (fun id -> Lvar id, None) !new_ids_meths) in
+     if !new_ids_init = [] then menv else
+     Lprim(Pmakeblock(0, Immutable),
+-          menv :: List.map (fun id -> Lvar id) !new_ids_init)
++          (menv, None) :: List.map (fun id -> Lvar id, None) !new_ids_init)
+   and linh_envs =
+-    List.map (fun (_, p) -> Lprim(Pfield 3, [transl_path p]))
++    List.map (fun (_, p) -> Lprim(Pfield 3, [transl_path p, None]))
+       (List.rev inh_init)
+   in
+   let make_envs lam =
+     Llet(StrictOpt, envs,
+          (if linh_envs = [] then lenv else
+-         Lprim(Pmakeblock(0, Immutable), lenv :: linh_envs)),
++         Lprim(Pmakeblock(0, Immutable), List.map (fun x -> x, None) (lenv :: linh_envs))),
+          lam)
+   and def_ids cla lam =
+     Llet(StrictOpt, env2,
+-         mkappl (oo_prim "new_variable", [Lvar cla; transl_label ""]),
++         mkappl (oo_prim "new_variable", [Lvar cla, None; transl_label "", None]),
+          lam)
+   in
+   let inh_paths =
+     List.filter
+       (fun (_,path) -> List.mem (Path.head path) new_ids) inh_init in
+   let inh_keys =
+-    List.map (fun (_,p) -> Lprim(Pfield 1, [transl_path p])) inh_paths in
++    List.map (fun (_,p) -> Lprim(Pfield 1, [transl_path p, None])) inh_paths in
+   let lclass lam =
+     Llet(Strict, class_init,
+-         Lfunction(Curried, [cla], def_ids cla cl_init), lam)
++         Lfunction(Curried, [cla, LR_value], LR_value, def_ids cla cl_init), lam)
+   and lcache lam =
+     if inh_keys = [] then Llet(Alias, cached, Lvar tables, lam) else
+     Llet(Strict, cached,
+          mkappl (oo_prim "lookup_tables",
+-                [Lvar tables; Lprim(Pmakeblock(0, Immutable), inh_keys)]),
++                [Lvar tables, None; Lprim(Pmakeblock(0, Immutable), List.map (fun x -> x, None) inh_keys), None]),
+          lam)
+   and lset cached i lam =
+-    Lprim(Psetfield(i, true), [Lvar cached; lam])
++    Lprim(Psetfield(i, true), [Lvar cached, None; lam, None])
+   in
+   let ldirect () =
+     ltable cla
+       (Llet(Strict, env_init, def_ids cla cl_init,
+-            Lsequence(mkappl (oo_prim "init_class", [Lvar cla]),
++            Lsequence(mkappl (oo_prim "init_class", [Lvar cla, None]),
+                       lset cached 0 (Lvar env_init))))
+   and lclass_virt () =
+-    lset cached 0 (Lfunction(Curried, [cla], def_ids cla cl_init))
++    lset cached 0 (Lfunction(Curried, [cla, LR_value], LR_value, def_ids cla cl_init))
+   in
+   llets (
+   lcache (
+@@ -781,17 +806,21 @@
+               if not concrete then lclass_virt () else
+               lclass (
+               mkappl (oo_prim "make_class_store",
+-                      [transl_meth_list pub_meths;
+-                       Lvar class_init; Lvar cached]))),
++                      [transl_meth_list pub_meths, None;
++                       Lvar class_init, None;
++                       Lvar cached, None]))),
+   make_envs (
+-  if ids = [] then mkappl (lfield cached 0, [lenvs]) else
++  if ids = [] then mkappl (lfield cached 0, [lenvs, None]) else
+   Lprim(Pmakeblock(0, Immutable),
+         if concrete then
+-          [mkappl (lfield cached 0, [lenvs]);
+-           lfield cached 1;
+-           lfield cached 0;
+-           lenvs]
+-        else [lambda_unit; lfield cached 0; lambda_unit; lenvs]
++          [mkappl (lfield cached 0, [lenvs, None]), None;
++           lfield cached 1, None;
++           lfield cached 0, None;
++           lenvs, None]
++        else [lambda_unit, None;
++              lfield cached 0, None;
++              lambda_unit, None;
++              lenvs, None]
+        )))))
+ 
+ (* Wrapper for class compilation *)
+diff -aur original/bytecomp/translcore.ml patched/bytecomp/translcore.ml
+--- original/bytecomp/translcore.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/translcore.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -26,6 +26,7 @@
+   | Illegal_letrec_expr
+   | Free_super_var
+   | Unknown_builtin_primitive of string
++  | Java_special_primitives_cannot_be_partially_applied
+ 
+ exception Error of Location.t * error
+ 
+@@ -404,14 +405,32 @@
+   match prim with
+     Plazyforce ->
+       let parm = Ident.create "prim" in
+-      Lfunction(Curried, [parm],
++      Lfunction(Curried,
++                [parm, LR_value],
++                LR_value,
+                 Matching.inline_lazy_force (Lvar parm) Location.none)
+   | _ ->
+       let rec make_params n =
+         if n <= 0 then [] else Ident.create "prim" :: make_params (n-1) in
+       let params = make_params p.prim_arity in
+-      Lfunction(Curried, params,
+-                Lprim(prim, List.map (fun id -> Lvar id) params))
++      Lfunction(Curried,
++                List.map (fun x -> x, LR_value) params,
++                LR_value,
++                Lprim(prim, List.map (fun id -> Lvar id, None) params))
++
++(* Eta-expansion except that the first parameter is preserved, as it is
++   used to store the information of a 'special' (i.e. OCaml-Java-specific
++   primitive). *)
++
++let transl_special_primitive prim arg0 arity =
++  let rec make_params n =
++    if n <= 0 then [] else (Ident.create "prim", LR_value) :: make_params (pred n) in
++  let params = make_params arity in
++  let body =
++    Lprim(prim,
++          (arg0, Some Predef.type_int) ::
++          (List.map (fun (id, _) -> Lvar id, None) params)) in
++  Lfunction(Curried, params, LR_value, body)
+ 
+ (* To check the well-formedness of r.h.s. of "let rec" definitions *)
+ 
+@@ -433,7 +452,7 @@
+ 
+   and check idlist = function
+     | Lvar _ -> true
+-    | Lfunction(kind, params, body) -> true
++    | Lfunction(kind, params, repr, body) -> true
+     | Llet (_, _, _, _) as lam when check_recursive_recordwith idlist lam ->
+         true
+     | Llet(str, id, arg, body) ->
+@@ -443,9 +462,9 @@
+         List.for_all (fun (id, arg) -> check idlist' arg) bindings &&
+         check idlist' body
+     | Lprim(Pmakeblock(tag, mut), args) ->
+-        List.for_all (check idlist) args
++        List.for_all (check idlist) (List.map fst args)
+     | Lprim(Pmakearray(_), args) ->
+-        List.for_all (check idlist) args
++        List.for_all (check idlist) (List.map fst args)
+     | Lsequence (lam1, lam2) -> check idlist lam1 && check idlist lam2
+     | Levent (lam, _) -> check idlist lam
+     | lam ->
+@@ -465,13 +484,13 @@
+   (* reverse-engineering the code generated by transl_record case 2 *)
+   (* If you change this, you probably need to change Bytegen.size_of_lambda. *)
+   and check_recursive_recordwith idlist = function
+-    | Llet (Strict, id1, Lprim (Pduprecord _, [e1]), body) ->
++    | Llet (Strict, id1, Lprim (Pduprecord _, [e1, _]), body) ->
+        check_top idlist e1
+        && check_recordwith_updates idlist id1 body
+     | _ -> false
+ 
+   and check_recordwith_updates idlist id1 = function
+-    | Lsequence (Lprim ((Psetfield _ | Psetfloatfield _), [Lvar id2; e1]), cont)
++    | Lsequence (Lprim ((Psetfield _ | Psetfloatfield _), [Lvar id2, _; e1, _]), cont)
+         -> id2 = id1 && check idlist e1
+            && check_recordwith_updates idlist id1 cont
+     | Lvar id2 -> id2 = id1
+@@ -583,11 +602,11 @@
+     Location.get_pos_info exp.exp_loc.Location.loc_start in
+   Lprim(Praise, [event_after exp
+     (Lprim(Pmakeblock(0, Immutable),
+-          [transl_path Predef.path_assert_failure;
++          [transl_path Predef.path_assert_failure, None;
+            Lconst(Const_block(0,
+               [Const_base(Const_string fname);
+                Const_base(Const_int line);
+-               Const_base(Const_int char)]))]))])
++               Const_base(Const_int char)])), None])), None])
+ ;;
+ 
+ let rec cut n l =
+@@ -614,16 +633,23 @@
+       if public_send || p.prim_name = "%sendself" then
+         let kind = if public_send then Public else Self in
+         let obj = Ident.create "obj" and meth = Ident.create "meth" in
+-        Lfunction(Curried, [obj; meth], Lsend(kind, Lvar meth, Lvar obj, [],
+-                                              e.exp_loc))
++        Lfunction(Curried,
++                  [obj, LR_value; meth, LR_value],
++                  LR_value,
++                  Lsend(kind, Lvar meth, Lvar obj, [], e.exp_loc))
+       else if p.prim_name = "%sendcache" then
+         let obj = Ident.create "obj" and meth = Ident.create "meth" in
+         let cache = Ident.create "cache" and pos = Ident.create "pos" in
+-        Lfunction(Curried, [obj; meth; cache; pos],
+-                  Lsend(Cached, Lvar meth, Lvar obj, [Lvar cache; Lvar pos],
+-                        e.exp_loc))
+-      else
+-        transl_primitive e.exp_loc p
++        Lfunction(Curried,
++                  [obj, LR_value; meth, LR_value; cache, LR_value; pos, LR_value],
++                  LR_value,
++                  Lsend(Cached, Lvar meth, Lvar obj, [Lvar cache; Lvar pos], e.exp_loc))
++      else begin
++        if Jtypes.is_special_primitive p.prim_name then
++          raise(Error(e.exp_loc, Java_special_primitives_cannot_be_partially_applied))
++        else
++          transl_primitive e.exp_loc p
++      end
+   | Texp_ident(path, _, {val_kind = Val_anc _}) ->
+       raise(Error(e.exp_loc, Free_super_var))
+   | Texp_ident(path, _, {val_kind = Val_reg | Val_self _}) ->
+@@ -634,13 +660,83 @@
+   | Texp_let(rec_flag, pat_expr_list, body) ->
+       transl_let rec_flag pat_expr_list (event_before body (transl_exp body))
+   | Texp_function (_, pat_expr_list, partial) ->
+-      let ((kind, params), body) =
++      let ((kind, params, return), body) =
+         event_function e
+           (function repr ->
+             let pl = push_defaults e.exp_loc [] pat_expr_list partial in
+-            transl_function e.exp_loc !Clflags.native_code repr partial pl)
++            transl_function e.exp_loc !Clflags.native_code repr partial e.exp_type pl)
+       in
+-      Lfunction(kind, params, body)
++      let rec class_of_desc = function
++        | Tlink te -> class_of_desc te.desc
++        | Tsubst te -> class_of_desc te.desc
++        | Tvariant rd ->
++            let labels = List.map fst rd.row_fields in
++            let classes = Jtypes.classes_of_tags labels in
++            (match classes with
++            | [cn] -> cn
++            | _ -> raise Not_found)
++        | _ -> raise Not_found in
++      let rec repr_of_desc = function
++        | Tconstr (path, [], _) when Path.same Predef.path_int path ->
++            LR_int
++        | Tconstr (path, [], _) when Path.same Predef.path_char path ->
++            LR_char
++        | Tconstr (path, [], _) when Path.same Predef.path_string path ->
++            LR_string
++        | Tconstr (path, [], _) when Path.same Predef.path_float path ->
++            LR_float
++        | Tconstr (path, [], _) when Path.same Predef.path_bool path ->
++            LR_bool
++        | Tconstr (path, [], _) when Path.same Predef.path_unit path ->
++            LR_unit
++        | Tconstr (path, [te], _) when Path.same Predef.path_array path ->
++            LR_array (repr_of_desc te.desc)
++        | Tconstr (path, [te], _) when Path.same Predef.path_list path ->
++            LR_list (repr_of_desc te.desc)
++        | Tconstr (path, [te], _) when Path.same Predef.path_option path ->
++            LR_option (repr_of_desc te.desc)
++        | Tconstr (path, [], _) when Path.same Predef.path_nativeint path ->
++            LR_nativeint
++        | Tconstr (path, [], _) when Path.same Predef.path_int32 path ->
++            LR_int32
++        | Tconstr (path, [], _) when Path.same Predef.path_int64 path ->
++            LR_int64
++        | Tconstr (path, [te], _) when Path.same Predef.path_lazy_t path ->
++            LR_lazy (repr_of_desc te.desc)
++        | Tconstr (path, [te], _) when Path.same Predef.path_java_instance path ->
++            (try LR_java_instance (class_of_desc te.desc) with Not_found -> LR_value)
++        | Tconstr (path, [te], _) when Path.same Predef.path_java_extends path ->
++            (try LR_java_extends (class_of_desc te.desc) with Not_found -> LR_value)
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_boolean_array path ->
++            LR_java_boolean_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_byte_array path ->
++            LR_java_byte_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_char_array path ->
++            LR_java_char_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_double_array path ->
++            LR_java_double_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_float_array path ->
++            LR_java_float_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_int_array path ->
++            LR_java_int_array
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_long_array path ->
++            LR_java_long_array
++        | Tconstr (path, [te], _) when Path.same Predef.path_java_reference_array path ->
++            LR_java_reference_array (repr_of_desc te.desc)
++        | Tconstr (path, [_], _) when Path.same Predef.path_java_short_array path ->
++            LR_java_short_array
++        | Tlink te ->
++            repr_of_desc te.desc
++        | Tsubst te ->
++            repr_of_desc te.desc
++        | _ ->
++            LR_value in
++      let repr_of_type ty =
++        match ty with
++        | Some ty -> repr_of_desc (Btype.repr ty).desc
++        | None -> LR_value in
++      let params = List.map (fun (id, typ) -> id, repr_of_type typ) params in
++      Lfunction(kind, params, repr_of_type return, body)
+   | Texp_apply({exp_desc = Texp_ident(path, _, {val_kind = Val_prim p})} as fn,
+                oargs)
+     when List.length oargs >= p.prim_arity
+@@ -676,16 +772,34 @@
+         let prim = transl_prim e.exp_loc p args in
+         match (prim, args) with
+           (Praise, [arg1]) ->
+-            wrap0 (Lprim(Praise, [event_after arg1 (List.hd argl)]))
++            wrap0 (Lprim(Praise, [event_after arg1 (List.hd argl), None]))
+         | (_, _) ->
+             begin match (prim, argl) with
+             | (Plazyforce, [a]) ->
+                 wrap (Matching.inline_lazy_force a e.exp_loc)
+             | (Plazyforce, _) -> assert false
+-            |_ -> let p = Lprim(prim, argl) in
++            | _ ->
++               let types = List.map (fun x -> Some x.exp_type) args in
++               let p = Lprim(prim, List.combine argl types) in
+                if primitive_is_ccall prim then wrap p else wrap0 p
+             end
+       end
++  | Texp_apply({exp_desc = Texp_ident(path, _, {val_kind = Val_prim ({ prim_name = pname; _ } as prim) })}, oargs) when (List.length oargs > 0) && (Jtypes.is_special_primitive pname) ->
++  (* not "enough" parameters, special eta-expansion preserving the first parameter *)
++    (match oargs with
++    | (_, Some { exp_desc = Texp_constant (Const_int id); _}, _) :: tl ->
++      let arity = Jtypes.get_arity pname id in
++      let funct =
++        transl_special_primitive
++          (Pccall prim)
++          (Lconst (Const_base (Const_int id)))
++          arity in
++      (match tl with
++      | _ :: _ ->
++        event_after e (transl_apply funct tl e.exp_loc)
++      | [] ->
++        event_after e funct)
++    | _ -> assert false)
+   | Texp_apply(funct, oargs) ->
+       event_after e (transl_apply (transl_exp funct) oargs e.exp_loc)
+   | Texp_match({exp_desc = Texp_tuple argl}, pat_expr_list, partial) ->
+@@ -703,7 +817,7 @@
+       begin try
+         Lconst(Const_block(0, List.map extract_constant ll))
+       with Not_constant ->
+-        Lprim(Pmakeblock(0, Immutable), ll)
++        Lprim(Pmakeblock(0, Immutable), (List.map (fun x -> x, None) ll))
+       end
+   | Texp_construct(_, cstr, args, _) ->
+       let ll = transl_list args in
+@@ -714,10 +828,10 @@
+           begin try
+             Lconst(Const_block(n, List.map extract_constant ll))
+           with Not_constant ->
+-            Lprim(Pmakeblock(n, Immutable), ll)
++            Lprim(Pmakeblock(n, Immutable), List.map (fun x -> x, None) ll)
+           end
+       | Cstr_exception (path, _) ->
+-          Lprim(Pmakeblock(0, Immutable), transl_path path :: ll)
++          Lprim(Pmakeblock(0, Immutable), (transl_path path, None) :: (List.map (fun x -> x, None) ll))
+       end
+   | Texp_variant(l, arg) ->
+       let tag = Btype.hash_variant l in
+@@ -730,7 +844,7 @@
+                                    extract_constant lam]))
+           with Not_constant ->
+             Lprim(Pmakeblock(0, Immutable),
+-                  [Lconst(Const_base(Const_int tag)); lam])
++                  [Lconst(Const_base(Const_int tag)), Some Predef.type_int; lam, None])
+       end
+   | Texp_record ((_, lbl1, _) :: _ as lbl_expr_list, opt_init_expr) ->
+       transl_record lbl1.lbl_all lbl1.lbl_repres lbl_expr_list opt_init_expr
+@@ -741,13 +855,13 @@
+         match lbl.lbl_repres with
+           Record_regular -> Pfield lbl.lbl_pos
+         | Record_float -> Pfloatfield lbl.lbl_pos in
+-      Lprim(access, [transl_exp arg])
++      Lprim(access, [transl_exp arg, None])
+   | Texp_setfield(arg, _, lbl, newval) ->
+       let access =
+         match lbl.lbl_repres with
+           Record_regular -> Psetfield(lbl.lbl_pos, maybe_pointer newval)
+         | Record_float -> Psetfloatfield lbl.lbl_pos in
+-      Lprim(access, [transl_exp arg; transl_exp newval])
++      Lprim(access, [transl_exp arg, None; transl_exp newval, None])
+   | Texp_array expr_list ->
+       let kind = array_kind e in
+       let ll = transl_list expr_list in
+@@ -763,9 +877,9 @@
+               Lconst(Const_float_array(List.map extract_float cl))
+           | Pgenarray ->
+               raise Not_constant in             (* can this really happen? *)
+-        Lprim(Pccall prim_obj_dup, [master])
++        Lprim(Pccall prim_obj_dup, [master, None])
+       with Not_constant ->
+-        Lprim(Pmakearray kind, ll)
++        Lprim(Pmakearray kind, List.map (fun x -> x, None) ll)
+       end
+   | Texp_ifthenelse(cond, ifso, Some ifnot) ->
+       Lifthenelse(transl_exp cond,
+@@ -799,15 +913,15 @@
+       in
+       event_after e lam
+   | Texp_new (cl, _, _) ->
+-      Lapply(Lprim(Pfield 0, [transl_path cl]), [lambda_unit], Location.none)
++      Lapply(Lprim(Pfield 0, [transl_path cl, None]), [lambda_unit, None], Location.none)
+   | Texp_instvar(path_self, path, _) ->
+-      Lprim(Parrayrefu Paddrarray, [transl_path path_self; transl_path path])
++      Lprim(Parrayrefu Paddrarray, [transl_path path_self, None; transl_path path, None])
+   | Texp_setinstvar(path_self, path, _, expr) ->
+       transl_setinstvar (transl_path path_self) path expr
+   | Texp_override(path_self, modifs) ->
+       let cpy = Ident.create "copy" in
+       Llet(Strict, cpy,
+-           Lapply(Translobj.oo_prim "copy", [transl_path path_self],
++           Lapply(Translobj.oo_prim "copy", [transl_path path_self, None],
+                   Location.none),
+            List.fold_right
+              (fun (path, _, expr) rem ->
+@@ -836,14 +950,14 @@
+       | Texp_construct (_, {cstr_arity = 0}, _, _)
+         -> transl_exp e
+       | Texp_constant(Const_float _) ->
+-          Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e])
++          Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e, None])
+       | Texp_ident(_, _, _) -> (* according to the type *)
+           begin match e.exp_type.desc with
+           (* the following may represent a float/forward/lazy: need a
+              forward_tag *)
+           | Tvar _ | Tlink _ | Tsubst _ | Tunivar _
+           | Tpoly(_,_) | Tfield(_,_,_,_) ->
+-              Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e])
++              Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e, None])
+           (* the following cannot be represented as float/forward/lazy:
+              optimize *)
+           | Tarrow(_,_,_,_) | Ttuple _ | Tpackage _ | Tobject(_,_) | Tnil
+@@ -866,12 +980,12 @@
+                 || has_base_type e Predef.path_int64
+               then transl_exp e
+               else
+-                Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e])
++                Lprim(Pmakeblock(Obj.forward_tag, Immutable), [transl_exp e, None])
+           end
+       (* other cases compile to a lazy block holding a function *)
+       | _ ->
+-          let fn = Lfunction (Curried, [Ident.create "param"], transl_exp e) in
+-          Lprim(Pmakeblock(Config.lazy_tag, Immutable), [fn])
++          let fn = Lfunction (Curried, [Ident.create "param", LR_value], LR_value, transl_exp e) in
++          Lprim(Pmakeblock(Config.lazy_tag, Immutable), [fn, None])
+       end
+   | Texp_object (cs, meths) ->
+       let cty = cs.cstr_type in
+@@ -897,9 +1011,9 @@
+   let lapply funct args =
+     match funct with
+       Lsend(k, lmet, lobj, largs, loc) ->
+-        Lsend(k, lmet, lobj, largs @ args, loc)
++        Lsend(k, lmet, lobj, largs @ (List.map fst args), loc)
+     | Levent(Lsend(k, lmet, lobj, largs, loc), _) ->
+-        Lsend(k, lmet, lobj, largs @ args, loc)
++        Lsend(k, lmet, lobj, largs @ (List.map fst args), loc)
+     | Lapply(lexp, largs, _) ->
+         Lapply(lexp, largs @ args, loc)
+     | lexp ->
+@@ -922,16 +1036,16 @@
+         let lam =
+           if args = [] then lam else lapply lam (List.rev_map fst args) in
+         let handle = protect "func" lam
+-        and l = List.map (fun (arg, opt) -> may_map (protect "arg") arg, opt) l
++        and l = List.map (fun (arg, opt) -> may_map (fun (a, t) -> protect "arg" a, t) arg, opt) l
+         and id_arg = Ident.create "param" in
+         let body =
+-          match build_apply handle ((Lvar id_arg, optional)::args') l with
+-            Lfunction(Curried, ids, lam) ->
+-              Lfunction(Curried, id_arg::ids, lam)
+-          | Levent(Lfunction(Curried, ids, lam), _) ->
+-              Lfunction(Curried, id_arg::ids, lam)
++          match build_apply handle (((Lvar id_arg, None), optional)::args') l with
++            Lfunction(Curried, params, repr, lam) ->
++              Lfunction(Curried, (id_arg, LR_value) :: params, repr, lam)
++          | Levent(Lfunction(Curried, params, repr, lam), _) ->
++              Lfunction(Curried, (id_arg, LR_value) :: params, repr, lam)
+           | lam ->
+-              Lfunction(Curried, [id_arg], lam)
++              Lfunction(Curried, [id_arg, LR_value], LR_value, lam)
+         in
+         List.fold_left
+           (fun body (id, lam) -> Llet(Strict, id, lam, body))
+@@ -941,37 +1055,49 @@
+     | [] ->
+         lapply lam (List.rev_map fst args)
+   in
+-  build_apply lam [] (List.map (fun (l, x,o) -> may_map transl_exp x, o) sargs)
++  build_apply lam [] (List.map (fun (l, x,o) -> may_map (fun x -> transl_exp x, Some x.exp_type) x, o) sargs)
+ 
+-and transl_function loc untuplify_fn repr partial pat_expr_list =
++and transl_function loc untuplify_fn repr partial exp_type pat_expr_list =
++  let rec get_type d =
++    match d with
++    | Tarrow (_, _, x, _) -> Some x
++    | Tlink te -> get_type te.desc
++    | _ -> None in
++  let return_type = get_type (Btype.repr exp_type).desc in
+   match pat_expr_list with
+-    [pat, ({exp_desc = Texp_function(_, pl,partial')} as exp)]
++    [pat, ({exp_desc = Texp_function(_, pl,partial'); exp_type} as exp)]
+     when Parmatch.fluid pat ->
+       let param = name_pattern "param" pat_expr_list in
+-      let ((_, params), body) =
+-        transl_function exp.exp_loc false repr partial' pl in
+-      ((Curried, param :: params),
++      let param_type = pat.pat_type in
++      let ((_, params, return_type'), body) =
++        transl_function exp.exp_loc false repr partial' exp_type pl in
++      ((Curried, (param, Some param_type) :: params ,return_type'),
+        Matching.for_function loc None (Lvar param) [pat, body] partial)
+-  | ({pat_desc = Tpat_tuple pl}, _) :: _ when untuplify_fn ->
++  | ({pat_desc = Tpat_tuple pl} as pat, _) :: _ when untuplify_fn ->
+       begin try
+         let size = List.length pl in
+         let pats_expr_list =
+           List.map
+             (fun (pat, expr) -> (Matching.flatten_pattern size pat, expr))
+             pat_expr_list in
+-        let params = List.map (fun p -> Ident.create "param") pl in
+-        ((Tupled, params),
+-         Matching.for_tupled_function loc params
++        let params = List.map (fun p -> Ident.create "param", Some p.pat_type ) pl in
++        ((Tupled, params, return_type),
++         Matching.for_tupled_function loc (List.map fst params)
+            (transl_tupled_cases pats_expr_list) partial)
+       with Matching.Cannot_flatten ->
+         let param = name_pattern "param" pat_expr_list in
+-        ((Curried, [param]),
++       ((Curried, [param, Some pat.pat_type], return_type),
+          Matching.for_function loc repr (Lvar param)
+            (transl_cases pat_expr_list) partial)
+       end
+-  | _ ->
++  | (pat,_)::_ ->
+       let param = name_pattern "param" pat_expr_list in
+-      ((Curried, [param]),
++      ((Curried, [param, Some pat.pat_type], return_type),
++       Matching.for_function loc repr (Lvar param)
++         (transl_cases pat_expr_list) partial)
++  | [] ->
++      let param = name_pattern "param" pat_expr_list in
++      ((Curried, [param, None], None),
+        Matching.for_function loc repr (Lvar param)
+          (transl_cases pat_expr_list) partial)
+ 
+@@ -1001,7 +1127,9 @@
+ 
+ and transl_setinstvar self var expr =
+   Lprim(Parraysetu (if maybe_pointer expr then Paddrarray else Pintarray),
+-                    [self; transl_path var; transl_exp expr])
++                    [self, None;
++                     transl_path var, None;
++                     transl_exp expr, None])
+ 
+ and transl_record all_labels repres lbl_expr_list opt_init_expr =
+   let size = Array.length all_labels in
+@@ -1020,7 +1148,7 @@
+             match all_labels.(i).lbl_repres with
+               Record_regular -> Pfield i
+             | Record_float -> Pfloatfield i in
+-          lv.(i) <- Lprim(access, [Lvar init_id])
++          lv.(i) <- Lprim(access, [Lvar init_id, None])
+         done
+     end;
+     List.iter
+@@ -1041,8 +1169,8 @@
+             Lconst(Const_float_array(List.map extract_float cl))
+       with Not_constant ->
+         match repres with
+-          Record_regular -> Lprim(Pmakeblock(0, mut), ll)
+-        | Record_float -> Lprim(Pmakearray Pfloatarray, ll) in
++          Record_regular -> Lprim(Pmakeblock(0, mut), List.map (fun x -> x, None) ll)
++        | Record_float -> Lprim(Pmakearray Pfloatarray, List.map (fun x -> x, Some Predef.type_float) ll) in
+     begin match opt_init_expr with
+       None -> lam
+     | Some init_expr -> Llet(Strict, init_id, transl_exp init_expr, lam)
+@@ -1058,12 +1186,12 @@
+         match lbl.lbl_repres with
+           Record_regular -> Psetfield(lbl.lbl_pos, maybe_pointer expr)
+         | Record_float -> Psetfloatfield lbl.lbl_pos in
+-      Lsequence(Lprim(upd, [Lvar copy_id; transl_exp expr]), cont) in
++      Lsequence(Lprim(upd, [Lvar copy_id, None; transl_exp expr, None]), cont) in
+     begin match opt_init_expr with
+       None -> assert false
+     | Some init_expr ->
+         Llet(Strict, copy_id,
+-             Lprim(Pduprecord (repres, size), [transl_exp init_expr]),
++             Lprim(Pduprecord (repres, size), [transl_exp init_expr, None]),
+              List.fold_right update_field lbl_expr_list (Lvar copy_id))
+     end
+   end
+@@ -1088,7 +1216,7 @@
+     match path with
+       None -> Ident.name id
+     | Some p -> Path.name p in
+-  Lprim(Pmakeblock(0, Immutable), [Lconst(Const_base(Const_string name))])
++  Lprim(Pmakeblock(0, Immutable), [Lconst(Const_base(Const_string name)), Some Predef.type_string])
+ 
+ (* Error report *)
+ 
+@@ -1106,3 +1234,6 @@
+         "Ancestor names can only be used to select inherited methods"
+   | Unknown_builtin_primitive prim_name ->
+     fprintf ppf  "Unknown builtin primitive \"%s\"" prim_name
++  | Java_special_primitives_cannot_be_partially_applied ->
++      fprintf ppf
++        "Java special primitives cannot be partially applied"
+diff -aur original/bytecomp/translcore.mli patched/bytecomp/translcore.mli
+--- original/bytecomp/translcore.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/translcore.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -35,6 +35,7 @@
+   | Illegal_letrec_expr
+   | Free_super_var
+   | Unknown_builtin_primitive of string
++  | Java_special_primitives_cannot_be_partially_applied
+ 
+ exception Error of Location.t * error
+ 
+diff -aur original/bytecomp/translmod.ml patched/bytecomp/translmod.ml
+--- original/bytecomp/translmod.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/translmod.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -42,15 +42,17 @@
+   | Tcoerce_functor(cc_arg, cc_res) ->
+       let param = Ident.create "funarg" in
+       name_lambda arg (fun id ->
+-        Lfunction(Curried, [param],
+-          apply_coercion cc_res
+-            (Lapply(Lvar id, [apply_coercion cc_arg (Lvar param)],
+-                    Location.none))))
++        Lfunction(Curried,
++                  [param, LR_value],
++                  LR_value,
++                  apply_coercion cc_res
++                    (Lapply(Lvar id, [apply_coercion cc_arg (Lvar param), None],
++                            Location.none))))
+   | Tcoerce_primitive p ->
+       transl_primitive Location.none p
+ 
+ and apply_coercion_field id (pos, cc) =
+-  apply_coercion cc (Lprim(Pfield pos, [Lvar id]))
++  apply_coercion cc (Lprim(Pfield pos, [Lvar id, None])), None
+ 
+ (* Compose two coercions
+    apply_coercion c1 (apply_coercion c2 e) behaves like
+@@ -187,7 +189,12 @@
+     | Inprogress -> assert false
+     | Defined -> ()
+   done;
+-  List.rev !res
++  List.rev_map
++    (fun (x, y, z) ->
++      match y with
++      | Some (l1, l2) -> x, Some ((l1, None), (l2, None)), z
++      | None -> x, None, z)
++    !res
+ 
+ (* Generate lambda-code for a reordered list of bindings *)
+ 
+@@ -213,7 +220,7 @@
+   | (id, None, rhs) :: rem ->
+       patch_forwards rem
+   | (id, Some(loc, shape), rhs) :: rem ->
+-      Lsequence(Lapply(mod_prim "update_mod", [shape; Lvar id; rhs],
++      Lsequence(Lapply(mod_prim "update_mod", [shape; Lvar id, None; rhs, None],
+                        Location.none),
+                 patch_forwards rem)
+   in
+@@ -255,11 +262,15 @@
+       oo_wrap mexp.mod_env true
+         (function
+         | Tcoerce_none ->
+-            Lfunction(Curried, [param],
++            Lfunction(Curried,
++                      [param, LR_value],
++                      LR_value,
+                       transl_module Tcoerce_none bodypath body)
+         | Tcoerce_functor(ccarg, ccres) ->
+             let param' = Ident.create "funarg" in
+-            Lfunction(Curried, [param'],
++            Lfunction(Curried,
++                      [param', LR_value],
++                      LR_value,
+                       Llet(Alias, param, apply_coercion ccarg (Lvar param'),
+                            transl_module ccres bodypath body))
+         | _ ->
+@@ -269,7 +280,7 @@
+       oo_wrap mexp.mod_env true
+         (apply_coercion cc)
+         (Lapply(transl_module Tcoerce_none None funct,
+-                [transl_module ccarg None arg], mexp.mod_loc))
++                [transl_module ccarg None arg, None], mexp.mod_loc))
+   | Tmod_constraint(arg, mty, _, ccarg) ->
+       transl_module (compose_coercions cc ccarg) rootpath arg
+   | Tmod_unpack(arg, _) ->
+@@ -283,15 +294,15 @@
+       begin match cc with
+         Tcoerce_none ->
+           Lprim(Pmakeblock(0, Immutable),
+-                List.map (fun id -> Lvar id) (List.rev fields))
++                List.map (fun id -> Lvar id, None) (List.rev fields))
+       | Tcoerce_structure pos_cc_list ->
+           let v = Array.of_list (List.rev fields) in
+           Lprim(Pmakeblock(0, Immutable),
+                 List.map
+                   (fun (pos, cc) ->
+                     match cc with
+-                      Tcoerce_primitive p -> transl_primitive Location.none p
+-                    | _ -> apply_coercion cc (Lvar v.(pos)))
++                      Tcoerce_primitive p -> transl_primitive Location.none p, None
++                    | _ -> apply_coercion cc (Lvar v.(pos)), None)
+                   pos_cc_list)
+       | _ ->
+           fatal_error "Translmod.transl_structure"
+@@ -349,7 +360,7 @@
+         [] ->
+           transl_structure newfields cc rootpath rem
+       | id :: ids ->
+-          Llet(Alias, id, Lprim(Pfield pos, [Lvar mid]),
++          Llet(Alias, id, Lprim(Pfield pos, [Lvar mid, None]),
+                rebind_idents (pos + 1) (id :: newfields) ids) in
+       Llet(Strict, mid, transl_module Tcoerce_none None modl,
+            rebind_idents 0 fields ids)
+@@ -366,7 +377,7 @@
+   let module_id = Ident.create_persistent module_name in
+   Lprim(Psetglobal module_id,
+         [transl_label_init
+-            (transl_struct [] cc (global_path module_id) str)])
++            (transl_struct [] cc (global_path module_id) str), None])
+ 
+ 
+ (* Build the list of value identifiers defined by a toplevel structure
+@@ -454,7 +465,7 @@
+ 
+ let nat_toplevel_name id =
+   try match Ident.find_same id !transl_store_subst with
+-    | Lprim(Pfield pos, [Lprim(Pgetglobal glob, [])]) -> (glob,pos)
++    | Lprim(Pfield pos, [Lprim(Pgetglobal glob, []), _]) -> (glob,pos)
+     | _ -> raise Not_found
+   with Not_found ->
+     fatal_error("Translmod.nat_toplevel_name: " ^ Ident.unique_name id)
+@@ -495,7 +506,7 @@
+               Llet(Strict, id,
+                    subst_lambda subst
+                    (Lprim(Pmakeblock(0, Immutable),
+-                          List.map (fun id -> Lvar id)
++                          List.map (fun id -> Lvar id, None)
+                                    (defined_idents str.str_items))),
+                    Lsequence(store_ident id,
+                              transl_store rootpath (add_ident true id subst)
+@@ -546,7 +557,7 @@
+       let rec store_idents pos = function
+         [] -> transl_store rootpath (add_idents true ids subst) rem
+       | id :: idl ->
+-          Llet(Alias, id, Lprim(Pfield pos, [Lvar mid]),
++          Llet(Alias, id, Lprim(Pfield pos, [Lvar mid, None]),
+                Lsequence(store_ident id, store_idents (pos + 1) idl)) in
+       Llet(Strict, mid,
+            subst_lambda subst (transl_module Tcoerce_none None modl),
+@@ -556,7 +567,8 @@
+     try
+       let (pos, cc) = Ident.find_same id map in
+       let init_val = apply_coercion cc (Lvar id) in
+-      Lprim(Psetfield(pos, false), [Lprim(Pgetglobal glob, []); init_val])
++      Lprim(Psetfield(pos, false), [Lprim(Pgetglobal glob, []), None;
++                                    init_val, None])
+     with Not_found ->
+       fatal_error("Translmod.store_ident: " ^ Ident.unique_name id)
+ 
+@@ -568,7 +580,7 @@
+       let (pos, cc) = Ident.find_same id map in
+       match cc with
+         Tcoerce_none ->
+-          Ident.add id (Lprim(Pfield pos, [Lprim(Pgetglobal glob, [])])) subst
++          Ident.add id (Lprim(Pfield pos, [Lprim(Pgetglobal glob, []), None])) subst
+       | _ ->
+           if may_coerce then subst else assert false
+     with Not_found ->
+@@ -579,8 +591,8 @@
+ 
+   and store_primitive (pos, prim) cont =
+     Lsequence(Lprim(Psetfield(pos, false),
+-                    [Lprim(Pgetglobal glob, []);
+-                     transl_primitive Location.none prim]),
++                    [Lprim(Pgetglobal glob, []), None;
++                     transl_primitive Location.none prim, None]),
+               cont)
+ 
+   in List.fold_right store_primitive prims
+@@ -670,14 +682,15 @@
+ 
+ let toploop_getvalue id =
+   Lapply(Lprim(Pfield toploop_getvalue_pos,
+-                 [Lprim(Pgetglobal toploop_ident, [])]),
+-         [Lconst(Const_base(Const_string (toplevel_name id)))],
++                 [Lprim(Pgetglobal toploop_ident, []), None]),
++         [Lconst(Const_base(Const_string (toplevel_name id))), None],
+          Location.none)
+ 
+ let toploop_setvalue id lam =
+   Lapply(Lprim(Pfield toploop_setvalue_pos,
+-                 [Lprim(Pgetglobal toploop_ident, [])]),
+-         [Lconst(Const_base(Const_string (toplevel_name id))); lam],
++                 [Lprim(Pgetglobal toploop_ident, []), None]),
++         [Lconst(Const_base(Const_string (toplevel_name id))), None;
++          lam, None],
+          Location.none)
+ 
+ let toploop_setvalue_id id = toploop_setvalue id (Lvar id)
+@@ -741,7 +754,7 @@
+         [] ->
+           lambda_unit
+       | id :: ids ->
+-          Lsequence(toploop_setvalue id (Lprim(Pfield pos, [Lvar mid])),
++          Lsequence(toploop_setvalue id (Lprim(Pfield pos, [Lvar mid, None])),
+                     set_idents (pos + 1) ids) in
+       Llet(Strict, mid, transl_module Tcoerce_none None modl, set_idents 0 ids)
+ 
+@@ -770,7 +783,9 @@
+           pos_cc_list
+     | _ ->
+         assert false in
+-  Lprim(Psetglobal target_name, [Lprim(Pmakeblock(0, Immutable), components)])
++  Lprim(Psetglobal target_name, [Lprim(Pmakeblock(0, Immutable),
++                                       List.map (fun x -> x, None) components),
++                                 None])
+ 
+ let transl_store_package component_names target_name coercion =
+   let rec make_sequence fn pos arg =
+@@ -783,8 +798,8 @@
+        make_sequence
+          (fun pos id ->
+            Lprim(Psetfield(pos, false),
+-                 [Lprim(Pgetglobal target_name, []);
+-                  get_component id]))
++                 [Lprim(Pgetglobal target_name, []), None;
++                  get_component id, None]))
+          0 component_names)
+   | Tcoerce_structure pos_cc_list ->
+       let id = Array.of_list component_names in
+@@ -792,8 +807,8 @@
+        make_sequence
+          (fun dst (src, cc) ->
+            Lprim(Psetfield(dst, false),
+-                 [Lprim(Pgetglobal target_name, []);
+-                  apply_coercion cc (get_component id.(src))]))
++                 [Lprim(Pgetglobal target_name, []), None;
++                  apply_coercion cc (get_component id.(src)), None]))
+          0 pos_cc_list)
+   | _ -> assert false
+ 
+diff -aur original/bytecomp/translobj.ml patched/bytecomp/translobj.ml
+--- original/bytecomp/translobj.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/bytecomp/translobj.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -57,8 +57,8 @@
+ 
+ let rec is_path = function
+     Lvar _ | Lprim (Pgetglobal _, []) | Lconst _ -> true
+-  | Lprim (Pfield _, [lam]) -> is_path lam
+-  | Lprim ((Parrayrefu _ | Parrayrefs _), [lam1; lam2]) ->
++  | Lprim (Pfield _, [lam, _]) -> is_path lam
++  | Lprim ((Parrayrefu _ | Parrayrefs _), [lam1, _; lam2, _]) ->
+       is_path lam1 && is_path lam2
+   | _ -> false
+ 
+@@ -103,15 +103,16 @@
+   expr
+ 
+ let transl_store_label_init glob size f arg =
+-  method_cache := Lprim(Pfield size, [Lprim(Pgetglobal glob, [])]);
++  method_cache := Lprim(Pfield size, [Lprim(Pgetglobal glob, []), None]);
+   let expr = f arg in
+   let (size, expr) =
+     if !method_count = 0 then (size, expr) else
+     (size+1,
+      Lsequence(
+      Lprim(Psetfield(size, false),
+-           [Lprim(Pgetglobal glob, []);
+-            Lprim (Pccall prim_makearray, [int !method_count; int 0])]),
++           [Lprim(Pgetglobal glob, []), None;
++            Lprim (Pccall prim_makearray, [int !method_count, Some Predef.type_int;
++                                           int 0, Some Predef.type_int]), None]),
+      expr))
+   in
+   (size, transl_label_init expr)
+@@ -144,7 +145,9 @@
+         (fun lambda id ->
+           Llet(StrictOpt, id,
+                Lprim(Pmakeblock(0, Mutable),
+-                     [lambda_unit; lambda_unit; lambda_unit]),
++                     [lambda_unit, Some Predef.type_unit;
++                      lambda_unit, Some Predef.type_unit;
++                      lambda_unit, Some Predef.type_unit]),
+                lambda))
+         lambda !classes
+     in
+diff -aur original/ocamldoc/Makefile patched/ocamldoc/Makefile
+--- original/ocamldoc/Makefile	2014-04-13 09:05:24.000000000 +0200
++++ patched/ocamldoc/Makefile	2014-04-13 09:05:24.000000000 +0200
+@@ -60,6 +60,9 @@
+ INCLUDES_DEP=-I $(OCAMLSRCDIR)/parsing \
+ 	-I $(OCAMLSRCDIR)/utils \
+ 	-I $(OCAMLSRCDIR)/typing \
++	-I +barista \
++	-I $(OCAMLSRCDIR)/javatyping \
++	-I $(OCAMLSRCDIR)/javacomp \
+ 	-I $(OCAMLSRCDIR)/driver \
+ 	-I $(OCAMLSRCDIR)/bytecomp \
+ 	-I $(OCAMLSRCDIR)/tools \
+@@ -137,6 +140,20 @@
+ LIBCMXFILES= $(LIBCMOFILES:.cmo=.cmx)
+ LIBCMIFILES= $(LIBCMOFILES:.cmo=.cmi)
+ 
++OCAMLJAVA_CMO_FILES=$(OCAMLSRCDIR)/utils/jclflags.cmo \
++	$(OCAMLSRCDIR)/typing/primitive.cmo \
++	$(OCAMLSRCDIR)/utils/jconfig.cmo \
++	$(OCAMLSRCDIR)/javatyping/jutils.cmo \
++	$(OCAMLSRCDIR)/javatyping/jtypes.cmo \
++	$(OCAMLSRCDIR)/typing/ctype.cmo \
++	$(OCAMLSRCDIR)/typing/oprint.cmo \
++	$(OCAMLSRCDIR)/typing/printtyp.cmo \
++	$(OCAMLSRCDIR)/typing/includeclass.cmo \
++	$(OCAMLSRCDIR)/typing/mtype.cmo \
++	$(OCAMLSRCDIR)/typing/includecore.cmo \
++	$(OCAMLSRCDIR)/typing/includemod.cmo \
++	$(OCAMLSRCDIR)/javacomp/jcompilenv.cmo
++
+ # Les cmo et cmx de la distrib OCAML
+ OCAMLCMOFILES=$(OCAMLSRCDIR)/parsing/printast.cmo \
+ 	$(OCAMLSRCDIR)/typing/ident.cmo \
+@@ -161,11 +178,7 @@
+ 	$(OCAMLSRCDIR)/typing/subst.cmo \
+ 	$(OCAMLSRCDIR)/typing/cmi_format.cmo \
+ 	$(OCAMLSRCDIR)/typing/env.cmo \
+-	$(OCAMLSRCDIR)/typing/ctype.cmo \
+-	$(OCAMLSRCDIR)/typing/primitive.cmo \
+-	$(OCAMLSRCDIR)/typing/oprint.cmo \
+-	$(OCAMLSRCDIR)/typing/printtyp.cmo \
+-	$(OCAMLSRCDIR)/typing/includecore.cmo \
++	$(OCAMLJAVA_CMO_FILES) \
+ 	$(OCAMLSRCDIR)/typing/typetexp.cmo \
+ 	$(OCAMLSRCDIR)/typing/typedtree.cmo \
+ 	$(OCAMLSRCDIR)/typing/parmatch.cmo \
+@@ -173,11 +186,8 @@
+ 	$(OCAMLSRCDIR)/typing/typedtreeMap.cmo \
+ 	$(OCAMLSRCDIR)/typing/cmt_format.cmo \
+ 	$(OCAMLSRCDIR)/typing/typecore.cmo \
+-	$(OCAMLSRCDIR)/typing/includeclass.cmo \
+ 	$(OCAMLSRCDIR)/typing/typedecl.cmo \
+ 	$(OCAMLSRCDIR)/typing/typeclass.cmo \
+-	$(OCAMLSRCDIR)/typing/mtype.cmo \
+-	$(OCAMLSRCDIR)/typing/includemod.cmo \
+ 	$(OCAMLSRCDIR)/typing/typemod.cmo \
+ 	$(OCAMLSRCDIR)/bytecomp/lambda.cmo \
+ 	$(OCAMLSRCDIR)/bytecomp/typeopt.cmo \
+@@ -212,10 +222,14 @@
+ debug:
+ 	$(MAKE) OCAMLPP=""
+ 
+-$(OCAMLDOC): $(EXECMOFILES)
+-	$(OCAMLC) -o $@ -linkall unix.cma str.cma dynlink.cma $(LINKFLAGS) $(OCAMLCMOFILES) $(EXECMOFILES)
+-$(OCAMLDOC_OPT): $(EXECMXFILES)
+-	$(OCAMLOPT) -o $@ -linkall unix.cmxa str.cmxa dynlink.cmxa $(LINKFLAGS) $(OCAMLCMXFILES) $(EXECMXFILES)
++OCAMLJAVA_INCLUDES=-I $(OCAMLSRCDIR)/otherlibs/bigarray -I $(LIBDIR)/barista -I $(LIBDIR)/zip
++OCAMLJAVA_CMA_FILES=bigarray.cma $(LIBDIR)/camomile.cma zip.cma baristaLibrary.cma
++OCAMLJAVA_CMXA_FILES=bigarray.cmxa $(LIBDIR)/camomile.cmxa zip.cmxa baristaLibrary.cmxa
++
++$(OCAMLDOC): $(OCAMLCMOFILES) $(EXECMOFILES)
++	$(OCAMLC) $(OCAMLJAVA_INCLUDES) -o $@ -linkall unix.cma str.cma $(OCAMLSRCDIR)/otherlibs/dynlink/dynlink.cma $(OCAMLJAVA_CMA_FILES) $(LINKFLAGS) $(OCAMLCMOFILES) $(EXECMOFILES)
++$(OCAMLDOC_OPT): $(OCAMLCMXFILES) $(EXECMXFILES)
++	$(OCAMLOPT) $(OCAMLJAVA_INCLUDES) -o $@ -linkall unix.cmxa str.cmxa $(OCAMLSRCDIR)/otherlibs/dynlink/dynlink.cmxa $(OCAMLJAVA_CMXA_FILES) $(LINKFLAGS) $(OCAMLCMXFILES) $(EXECMXFILES)
+ 
+ $(OCAMLDOC_LIBCMA): $(LIBCMOFILES)
+ 	$(OCAMLC) -a -o $@ $(LINKFLAGS) $(OCAMLSRCDIR)/tools/depend.cmo $(LIBCMOFILES)
+diff -aur original/ocamldoc/odoc.ml patched/ocamldoc/odoc.ml
+--- original/ocamldoc/odoc.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/ocamldoc/odoc.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -82,6 +82,8 @@
+ ;;
+ List.iter load_plugin plugins;;
+ 
++let () = Jutils.ocamldoc_mode := true
++
+ let () = print_DEBUG "Fin du chargement dynamique eventuel"
+ 
+ let () = Odoc_args.parse ()
+diff -aur original/ocamldoc/odoc_analyse.ml patched/ocamldoc/odoc_analyse.ml
+--- original/ocamldoc/odoc_analyse.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/ocamldoc/odoc_analyse.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -108,6 +108,7 @@
+    differences only concern code generation (i believe).*)
+ let process_error exn =
+   let report ppf = function
++  (* errors common to ocamlc/ocamlopt/ocamljava *)
+   | Lexer.Error(err, loc) ->
+       Location.print_error ppf loc;
+       Lexer.report_error ppf err
+@@ -147,6 +148,16 @@
+   | Warnings.Errors (n) ->
+       Location.print_error_cur_file ppf;
+       fprintf ppf "Some fatal warnings were triggered (%d occurrences)" n
++  (* errors specific to ocamljava *)
++  | Jcompilenv.Error code ->
++      Location.print_error_cur_file ppf;
++      Jcompilenv.report_error ppf code
++  (* errors from the Barista library *)
++  | x when BaristaLibrary.Predefined.is_barista_exception x ->
++      Location.print_error_cur_file ppf;
++      fprintf ppf "Java error:@ %s"
++        (BaristaLibrary.Predefined.string_of_exception x)
++  (* unknown exception *)
+   | x ->
+       fprintf ppf "@]";
+       fprintf ppf
+diff -aur original/ocamldoc/odoc_args.ml patched/ocamldoc/odoc_args.ml
+--- original/ocamldoc/odoc_args.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/ocamldoc/odoc_args.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -196,6 +196,11 @@
+   "-rectypes", Arg.Set Odoc_global.recursive_types, M.rectypes ;
+   "-nolabels", Arg.Unit (fun () -> Odoc_global.classic := true), M.nolabels ;
+   "-warn-error", Arg.Set Odoc_global.warn_error, M.werr ;
++  "-classpath", Arg.String (fun s -> Jclflags.(classpath_reset := true; classpath := [s])), M.classpath ;
++  "-cp", Arg.String (Jclflags.(fun s -> classpath := !classpath @ [s])), M.cp ;
++  "-java-extensions", Arg.Set Jclflags.java_extensions, M.java_extensions ;
++  "-java-generics", Arg.Unit (fun _ -> Misc.fatal_error "not available in this build"), M.java_generics ;
++  "-java-internal-types", Arg.Set Jclflags.java_internal_types, M.java_internal_types ;
+   "-hide-warnings", Arg.Clear Odoc_config.print_warnings, M.hide_warnings ;
+   "-o", Arg.String (fun s -> Odoc_global.out_file := s), M.out_file ;
+   "-d", Arg.String (fun s -> Odoc_global.target_dir := s), M.target_dir ;
+diff -aur original/ocamldoc/odoc_messages.ml patched/ocamldoc/odoc_messages.ml
+--- original/ocamldoc/odoc_messages.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/ocamldoc/odoc_messages.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -45,6 +45,11 @@
+ let nolabels = "\tIgnore non-optional labels in types"
+ let werr = "\tTreat ocamldoc warnings as errors"
+ let hide_warnings = "\n\t\tdo not print ocamldoc warnings"
++let classpath = "<path>\tSet the classpath"
++let cp = "<path>\tAdd to the classpath"
++let java_extensions = "\tEnable Java extensions"
++let java_generics = "\tEnable Java generics"
++let java_internal_types = "\tShow Java internal types"
+ let target_dir = "<dir>\tGenerate files in directory <dir>, rather than in current\n"^
+   "\t\tdirectory (for man and HTML generators)"
+ let dump = "<file>\tDump collected information into <file>"
+diff -aur original/typing/ctype.ml patched/typing/ctype.ml
+--- original/typing/ctype.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/ctype.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -2583,10 +2583,103 @@
+       set_row_field e2 f1
+   | _ -> raise (Unify [])
+ 
++exception Invalid_java_instance
++
++let rec check_java_instances_no_generics ty =
++  match ty.desc with
++  | Tvar _ ->
++      ()
++  | Tarrow (_, ty1, ty2, _) ->
++      check_java_instances_no_generics ty1;
++      check_java_instances_no_generics ty2
++  | Ttuple l ->
++      check_java_instances_no_generics_list l
++  | Tconstr (p, l, _)
++    when (Path.same Predef.path_java_instance p) || (Path.same Predef.path_java_extends p) ->
++      List.iter
++        check_java_instances_no_generics_under
++        l
++  | Tconstr (_, l, _) ->
++      check_java_instances_no_generics_list l;
++  | Tobject (ty, { contents = l }) ->
++      check_java_instances_no_generics ty;
++      (match l with
++      | Some (_, l) ->
++          check_java_instances_no_generics_list l
++      | None -> ())
++  | Tfield (_, _, ty1, ty2) ->
++      check_java_instances_no_generics ty1;
++      check_java_instances_no_generics ty2
++  | Tnil ->
++      ()
++  | Tlink ty ->
++      check_java_instances_no_generics ty
++  | Tsubst ty ->
++      check_java_instances_no_generics ty
++  | Tvariant rd ->
++      List.iter
++        (fun (_, rf) ->
++          check_java_instances_no_generics_row_field rf)
++        rd.row_fields;
++      check_java_instances_no_generics rd.row_more;
++      (match rd.row_name with
++      | Some (_, l) ->
++          check_java_instances_no_generics_list l
++      | None ->
++          ())
++  | Tunivar _ ->
++      ()
++  | Tpoly (ty, l) ->
++      check_java_instances_no_generics ty;
++      check_java_instances_no_generics_list l
++  | Tpackage (_, _, l) ->
++      check_java_instances_no_generics_list l
++and check_java_instances_no_generics_row_field = function
++  | Rpresent (Some ty) ->
++      check_java_instances_no_generics ty
++  | Rpresent None ->
++      ()
++  | Reither (_, l, _, { contents = rfo }) ->
++      check_java_instances_no_generics_list l;
++      (match rfo with
++      | Some rf ->
++          check_java_instances_no_generics_row_field rf
++      | None ->
++          ())
++  | Rabsent ->
++      ()
++and check_java_instances_no_generics_list l =
++  List.iter check_java_instances_no_generics l
++and check_java_instances_no_generics_under ty =
++  match ty.desc with
++  | Tvar _ | Tunivar _ ->
++      ()
++  | Tlink ty | Tsubst ty ->
++      check_java_instances_no_generics_under ty
++  | Tvariant rd ->
++      let labels = List.map fst rd.row_fields in
++      let classes = Jtypes.classes_of_tags labels in
++      if List.length classes <> 1 then
++        raise Invalid_java_instance
++  | _ ->
++      raise Invalid_java_instance
++
+ 
+ let unify env ty1 ty2 =
+   try
+-    unify env ty1 ty2
++    unify env ty1 ty2;
++    if !Jclflags.java_extensions then begin
++      if !Jclflags.java_generics then begin
++        Jtypes.generics_not_available ()
++      end else begin
++        try
++          check_java_instances_no_generics ty1;
++          check_java_instances_no_generics ty2
++        with
++        | Invalid_java_instance -> raise (Unify ([ty1, ty2]))
++        | _ -> ()
++      end
++    end
+   with
+     Unify trace ->
+       raise (Unify (expand_trace !env trace))
+diff -aur original/typing/predef.ml patched/typing/predef.ml
+--- original/typing/predef.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/predef.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -188,13 +188,212 @@
+   add_type ident_int decl_abstr (
+     empty_env)))))))))))))))))))))))))))
+ 
++let invariant = Variance.full
++let contravariant = Variance.(conjugate covariant)
++
++let make_type1 id variance =
++  let ident = Ident.create id in
++  let path = Pident ident in
++  let typ ty = 
++    newgenty (Tconstr (path, [ty], ref Mnil)) in
++  let new_decl () =
++    let tvar = newgenvar() in
++    {type_params = [tvar];
++     type_arity = 1;
++     type_kind = Type_abstract;
++     type_loc = Location.none;
++     type_private = Asttypes.Public;
++     type_manifest = None;
++     type_variance = [variance];
++     type_newtype_level = None} in
++  ident, path, typ, new_decl
++
++let ident_java_instance,
++  path_java_instance,
++  type_java_instance,
++  decl_java_instance =
++  make_type1 "java_instance" contravariant
++
++let ident_java_extends,
++  path_java_extends,
++  type_java_extends,
++  decl_java_extends =
++  make_type1 "java_extends" contravariant
++
++let ident_java_boolean_array,
++  path_java_boolean_array,
++  type_java_boolean_array,
++  decl_java_boolean_array =
++  make_type1 "java_boolean_array" invariant
++
++let ident_java_byte_array,
++  path_java_byte_array,
++  type_java_byte_array,
++  decl_java_byte_array =
++  make_type1 "java_byte_array" invariant
++
++let ident_java_char_array,
++  path_java_char_array,
++  type_java_char_array,
++  decl_java_char_array =
++  make_type1 "java_char_array" invariant
++
++let ident_java_double_array,
++  path_java_double_array,
++  type_java_double_array,
++  decl_java_double_array =
++  make_type1 "java_double_array" invariant
++
++let ident_java_float_array,
++  path_java_float_array,
++  type_java_float_array,
++  decl_java_float_array =
++  make_type1 "java_float_array" invariant
++
++let ident_java_int_array,
++  path_java_int_array,
++  type_java_int_array,
++  decl_java_int_array =
++  make_type1 "java_int_array" invariant
++
++let ident_java_long_array,
++  path_java_long_array,
++  type_java_long_array,
++  decl_java_long_array =
++  make_type1 "java_long_array" invariant
++
++let ident_java_reference_array,
++  path_java_reference_array,
++  type_java_reference_array,
++  decl_java_reference_array =
++  make_type1 "java_reference_array" invariant
++
++let ident_java_short_array,
++  path_java_short_array,
++  type_java_short_array,
++  decl_java_short_array =
++  make_type1 "java_short_array" invariant
++
++let ident_java_constructor,
++  path_java_constructor,
++  type_java_constructor,
++  decl_java_constructor =
++  make_type1 "java_constructor" invariant
++
++let ident_java_array_shape,
++  path_java_array_shape,
++  type_java_array_shape,
++  decl_java_array_shape =
++  make_type1 "java_array_shape" invariant
++
++let ident_java_array_shape_dims,
++  path_java_array_shape_dims,
++  type_java_array_shape_dims,
++  decl_java_array_shape_dims =
++  make_type1 "java_array_shape_dims" invariant
++
++let ident_java_method,
++  path_java_method,
++  type_java_method,
++  decl_java_method =
++  make_type1 "java_method" invariant
++
++let ident_java_field_get,
++  path_java_field_get,
++  type_java_field_get,
++  decl_java_field_get =
++  make_type1 "java_field_get" invariant
++
++let ident_java_field_set,
++  path_java_field_set,
++  type_java_field_set,
++  decl_java_field_set =
++  make_type1 "java_field_set" invariant
++
++let ident_java_reference_type,
++  path_java_reference_type,
++  type_java_reference_type,
++  decl_java_reference_type =
++  make_type1 "java_reference_type" invariant
++
++let ident_java_any_type,
++  path_java_any_type,
++  type_java_any_type,
++  decl_java_any_type =
++  make_type1 "java_any_type" invariant
++
++let ident_java_proxy,
++  path_java_proxy,
++  type_java_proxy,
++  decl_java_proxy =
++  make_type1 "java_proxy" invariant
++
++let tags exc =
++  [ "java'io'Serializable" ;
++    (if exc then "java'lang'Exception" else "java'lang'Error") ;
++    "java'lang'Object" ;
++    "java'lang'Throwable" ]
++
++let make_exception exc id =
++  let ident = Ident.create_predef_exn id in
++  let path = Pident ident in
++  let row_desc = {
++    row_fields = (List.map (fun s -> s, Rpresent None) (tags exc));
++    row_more = newgenvar ();
++    row_bound = ();
++    row_closed = true;
++    row_fixed = false;
++    row_name = None;
++  } in
++  let new_decl () =
++    { exn_args = [type_java_instance @@ newgenty (Tvariant row_desc)];
++      exn_loc = Location.none; } in
++  ident, path, new_decl
++
++let ident_java_exception,
++  path_java_exception,
++  decl_java_exception =
++  make_exception true "Java_exception"
++
++let ident_java_error,
++  path_java_error,
++  decl_java_error =
++  make_exception false "Java_error"
++
++let build_initial_env add_type add_exception empty_env =
++  let res = build_initial_env add_type add_exception empty_env in
++  let res = add_type ident_java_instance (decl_java_instance ()) res in
++  let res = add_type ident_java_extends (decl_java_extends ()) res in
++  let res = add_type ident_java_boolean_array (decl_java_boolean_array ()) res in
++  let res = add_type ident_java_byte_array (decl_java_byte_array ()) res in
++  let res = add_type ident_java_char_array (decl_java_char_array ()) res in
++  let res = add_type ident_java_double_array (decl_java_double_array ()) res in
++  let res = add_type ident_java_float_array (decl_java_float_array ()) res in
++  let res = add_type ident_java_int_array (decl_java_int_array ()) res in
++  let res = add_type ident_java_long_array (decl_java_long_array ()) res in
++  let res = add_type ident_java_reference_array (decl_java_reference_array ()) res in
++  let res = add_type ident_java_short_array (decl_java_short_array ()) res in
++  let res = add_type ident_java_constructor (decl_java_constructor ()) res in
++  let res = add_type ident_java_array_shape (decl_java_array_shape ()) res in
++  let res = add_type ident_java_array_shape_dims (decl_java_array_shape_dims ()) res in
++  let res = add_type ident_java_method (decl_java_method ()) res in
++  let res = add_type ident_java_field_get (decl_java_field_get ()) res in
++  let res = add_type ident_java_field_set (decl_java_field_set ()) res in
++  let res = add_type ident_java_reference_type (decl_java_reference_type ()) res in
++  let res = add_type ident_java_any_type (decl_java_any_type ()) res in
++  let res = add_type ident_java_proxy (decl_java_proxy ()) res in
++  let res = add_exception ident_java_exception (decl_java_exception ()) res in
++  let res = add_exception ident_java_error (decl_java_error ()) res in
++  res
++
+ let builtin_values =
+   List.map (fun id -> Ident.make_global id; (Ident.name id, id))
+       [ident_match_failure; ident_out_of_memory; ident_stack_overflow;
+        ident_invalid_argument;
+        ident_failure; ident_not_found; ident_sys_error; ident_end_of_file;
+        ident_division_by_zero; ident_sys_blocked_io;
+-       ident_assert_failure; ident_undefined_recursive_module ]
++       ident_assert_failure; ident_undefined_recursive_module;
++       ident_java_exception; ident_java_error]
+ 
+ (* Start non-predef identifiers at 1000.  This way, more predefs can
+    be defined in this file (above!) without breaking .cmi
+diff -aur original/typing/predef.mli patched/typing/predef.mli
+--- original/typing/predef.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/predef.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -49,6 +49,70 @@
+ val path_assert_failure : Path.t
+ val path_undefined_recursive_module : Path.t
+ 
++(* ocamljava-specific types:
++   - "'a java_instance" for exactly a given class 'a
++   - "'a java_extends" for a given class 'a, or one of its subclasses *)
++val path_java_instance: Path.t
++val type_java_instance: type_expr -> type_expr
++val path_java_extends: Path.t
++val type_java_extends: type_expr -> type_expr
++
++(* ocamljava-specific array types *)
++val path_java_boolean_array : Path.t
++val type_java_boolean_array : type_expr -> type_expr
++val path_java_byte_array : Path.t
++val type_java_byte_array : type_expr -> type_expr
++val path_java_char_array : Path.t
++val type_java_char_array : type_expr -> type_expr
++val path_java_double_array : Path.t
++val type_java_double_array : type_expr -> type_expr
++val path_java_float_array : Path.t
++val type_java_float_array : type_expr -> type_expr
++val path_java_int_array : Path.t
++val type_java_int_array : type_expr -> type_expr
++val path_java_long_array : Path.t
++val type_java_long_array : type_expr -> type_expr
++val path_java_reference_array : Path.t
++val type_java_reference_array : type_expr -> type_expr
++val path_java_short_array : Path.t
++val type_java_short_array : type_expr -> type_expr
++
++(* ocamljava-specific "format" types:
++   - "'a java_constructor" for constructor descriptor
++   - "'a path_java_array_shape" for array descriptor
++   - "'a path_java_array_shape_dims" for array descriptor with initialized dimensions
++   - "'a path_java_method" for method descriptor
++   - "'a path_java_field_get" for field descriptor (read accessor)
++   - "'a path_java_field_set" for field descriptor (write accessor)
++   - "'a path_java_reference_type" for class/interface/array descriptor
++   - "'a path_java_any_type" for class/interface/array/primitive/void descriptor
++   - "'a path_java_proxy" for interface descriptor
++   with "'a" the OCaml type for the actual call to the underlying primitive *)
++val path_java_constructor: Path.t
++val type_java_constructor: type_expr -> type_expr
++val path_java_array_shape: Path.t
++val type_java_array_shape: type_expr -> type_expr
++val path_java_array_shape_dims: Path.t
++val type_java_array_shape_dims: type_expr -> type_expr
++val path_java_method: Path.t
++val type_java_method: type_expr -> type_expr
++val path_java_field_get: Path.t
++val type_java_field_get: type_expr -> type_expr
++val path_java_field_set: Path.t
++val type_java_field_set: type_expr -> type_expr
++val path_java_reference_type: Path.t
++val type_java_reference_type: type_expr -> type_expr
++val path_java_any_type: Path.t
++val type_java_any_type: type_expr -> type_expr
++val path_java_proxy: Path.t
++val type_java_proxy: type_expr -> type_expr
++
++(* ocamljava-specific exceptions:
++   - "path_java_exception" for subclasses of java.lang.Exception
++   - "path_java_error" for subclasses of java.lang.Error *)
++val path_java_exception : Path.t
++val path_java_error : Path.t
++
+ (* To build the initial environment. Since there is a nasty mutual
+    recursion between predef and env, we break it by parameterizing
+    over Env.t, Env.add_type and Env.add_exception. *)
+diff -aur original/typing/printtyp.ml patched/typing/printtyp.ml
+--- original/typing/printtyp.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/printtyp.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -533,6 +533,17 @@
+ let print_label ppf l =
+   if !print_labels && l <> "" || is_optional l then fprintf ppf "%s:" l
+ 
++let path_java_instance_as_name = Path.name Predef.path_java_instance
++
++let path_java_extends_as_name = Path.name Predef.path_java_extends
++
++let path_is_instance_or_extends p =
++  if !Jutils.ocamldoc_mode then
++    let p = Path.name p in
++    (path_java_instance_as_name = p) || (path_java_extends_as_name = p)
++  else
++    (Path.same Predef.path_java_instance p) || (Path.same Predef.path_java_extends p)
++
+ let rec tree_of_typexp sch ty =
+   let ty = repr ty in
+   let px = proxy ty in
+@@ -561,6 +572,35 @@
+         pr_arrow l ty1 ty2
+     | Ttuple tyl ->
+         Otyp_tuple (tree_of_typlist sch tyl)
++    | Tconstr (p, tl, abbrev)
++      when !Jclflags.java_extensions
++          && not !Jclflags.java_internal_types
++          && path_is_instance_or_extends p ->
++         if !Jclflags.java_generics then begin
++           Jtypes.generics_not_available ()
++         end else begin
++           let rec extract = function
++             | [ { desc = Tvariant var; _ } ] ->
++                 let closed = var.row_closed in
++                 let labels = List.map fst var.row_fields in
++                 let classes =
++                   Jtypes.classes_of_tags labels
++                   |> List.map Jtypes.use_single_quotes in
++                 let name = String.concat "&" classes in
++                 [ Otyp_constr (Oide_ident name, []) ], closed
++             | [ { desc = Tvar _; _ } as ty ] ->
++                 [ Otyp_var (is_non_gen sch ty, name_of_type ty) ], true
++             | [ { desc = Tlink te; _ } ] ->
++                 extract [ te ]
++             | _ ->
++                 raise Not_found in
++           try
++             let inner, closed = extract tl in
++             Otyp_constr (Oide_ident (if closed then "java_instance" else "java_extends"),
++                          inner)
++           with Not_found ->
++             Otyp_stuff "<invalid java type>"
++         end
+     | Tconstr(p, tyl, abbrev) ->
+         begin match best_type_path p with
+           (_, Nth n) -> tree_of_typexp sch (List.nth tyl n)
+@@ -1341,6 +1381,9 @@
+     None -> ()
+   | Some (t3, t4) -> explanation unif t3 t4 ppf
+ 
++let no_explanation unif mis ppf =
++  ignore (unif, mis, ppf)
++
+ let ident_same_name id1 id2 =
+   if Ident.equal id1 id2 && not (Ident.same id1 id2) then begin
+     add_unique id1; add_unique id2
+@@ -1379,6 +1422,13 @@
+       and t2, t2' = may_prepare_expansion (tr = []) t2 in
+       print_labels := not !Clflags.classic;
+       let tr = List.map prepare_expansion tr in
++      let explanation_function =
++        if (not !Jclflags.java_internal_types)
++            && ((Jtypes.is_instance_or_extends t1)
++              || (Jtypes.is_instance_or_extends t2)) then
++          no_explanation
++        else
++          explanation in
+       fprintf ppf
+         "@[<v>\
+           @[%t@;<1 2>%a@ \
+@@ -1388,7 +1438,7 @@
+         txt1 (type_expansion t1) t1'
+         txt2 (type_expansion t2) t2'
+         (trace false "is not compatible with type") tr
+-        (explanation unif mis);
++        (explanation_function unif mis);
+       print_labels := true
+     with exn ->
+       print_labels := true;
+diff -aur original/typing/typecore.ml patched/typing/typecore.ml
+--- original/typing/typecore.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typecore.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -63,6 +63,7 @@
+   | Recursive_local_constraint of (type_expr * type_expr) list
+   | Unexpected_existential
+   | Unqualified_gadt_pattern of Path.t * string
++  | Invalid_java_descriptor of string * string
+ 
+ exception Error of Location.t * Env.t * error
+ 
+@@ -1862,17 +1863,56 @@
+           exp_env = env }
+       end
+   | Pexp_constant(Const_string s as cst) ->
+-      rue {
+-        exp_desc = Texp_constant cst;
+-        exp_loc = loc; exp_extra = [];
+-        exp_type =
+-        (* Terrible hack for format strings *)
+-           begin match (repr (expand_head env ty_expected)).desc with
+-             Tconstr(path, _, _) when Path.same path Predef.path_format6 ->
+-               type_format loc s
+-           | _ -> instance_def Predef.type_string
+-           end;
+-        exp_env = env }
++      let return ty =
++        rue { exp_desc = Texp_constant cst;
++              exp_loc = loc;
++              exp_extra = [];
++              exp_type = ty;
++              exp_env = env } in
++      let return_int category func =
++        try
++          let ty, id = func loc in
++          rue { exp_desc = Texp_constant (Const_int id);
++                exp_loc = loc;
++                exp_extra = [];
++                exp_type = ty;
++                exp_env = env }
++        with Failure msg ->
++          let err = Invalid_java_descriptor (category, msg) in
++          raise (Error (loc, env, err)) in
++      (* Terrible hack for format strings and Java descriptors *)
++      begin match (repr (expand_head env ty_expected)).desc with
++        Tconstr(path, _, _) when Path.same path Predef.path_format6 ->
++          return (type_format loc s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_constructor) ->
++              return_int "constructor" (Jtypes.java_constructor_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_array_shape) ->
++              return_int "array shape" (Jtypes.java_array_shape_of_string false Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_array_shape_dims) ->
++              return_int "array shape" (Jtypes.java_array_shape_of_string true Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_method) ->
++              return_int "method" (Jtypes.java_method_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_field_get) ->
++              return_int "field get" (Jtypes.java_field_get_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_field_set) ->
++              return_int "field set" (Jtypes.java_field_set_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_reference_type) ->
++              return_int "type" (Jtypes.java_reference_type_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_any_type) ->
++              return_int "type or primitive" (Jtypes.java_any_type_of_string Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_proxy) ->
++              return_int "proxy" (Jtypes.java_proxy_of_string Ctype.newobj Ctype.newty s)
++      | _ -> return (instance_def Predef.type_string)
++      end
+   | Pexp_constant cst ->
+       rue {
+         exp_desc = Texp_constant cst;
+@@ -2012,6 +2052,18 @@
+       let (args, ty_res) = type_application env funct sargs in
+       end_def ();
+       unify_var env (newvar()) funct.exp_type;
++      let funct = (* change the arity of primitives taking a "fake" first parameter *)
++        match funct.exp_desc, args with
++        | Texp_ident (x,
++                      y,
++                      ({ val_kind = Val_prim ({ Primitive.prim_name = pname; _ } as pdesc) } as p)),
++          (_, Some { exp_desc = Texp_constant (Const_int id) }, _) :: _
++          when Jtypes.is_special_primitive pname ->
++            (* increase arity to take into account the "fake" parameter *)
++            let pdesc = { pdesc with Primitive.prim_arity = succ (Jtypes.get_arity pname id) } in
++            let ident = Texp_ident (x, y, { p with val_kind = Val_prim pdesc }) in
++            { funct with exp_desc = ident }
++        | _ -> funct in
+       rue {
+         exp_desc = Texp_apply(funct, args);
+         exp_loc = loc; exp_extra = [];
+@@ -3640,6 +3692,8 @@
+       fprintf ppf "@[The GADT constructor %s of type %a@ %s.@]"
+         name path tpath
+         "must be qualified in this pattern"
++  | Invalid_java_descriptor (kind, msg) ->
++      fprintf ppf "Invalid Java descriptor for %s:@ %s" kind msg
+ 
+ let report_error env ppf err =
+   wrap_printing_env env (fun () -> report_error env ppf err)
+diff -aur original/typing/typecore.mli patched/typing/typecore.mli
+--- original/typing/typecore.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typecore.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -105,6 +105,7 @@
+   | Recursive_local_constraint of (type_expr * type_expr) list
+   | Unexpected_existential
+   | Unqualified_gadt_pattern of Path.t * string
++  | Invalid_java_descriptor of string * string (* parameters: descriptor category and error message *)
+ 
+ exception Error of Location.t * Env.t * error
+ 
+diff -aur original/typing/typemod.ml patched/typing/typemod.ml
+--- original/typing/typemod.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typemod.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -37,6 +37,7 @@
+   | Not_a_packed_module of type_expr
+   | Incomplete_packed_module of type_expr
+   | Scoping_pack of Longident.t * type_expr
++  | Invalid_java_package_name of string
+ 
+ exception Error of Location.t * Env.t * error
+ 
+@@ -840,6 +841,27 @@
+ 
+ (* Type a module value expression *)
+ 
++let java_open_package_prefix = "Package'"
++
++let java_open_package_prefix_length = String.length java_open_package_prefix
++
++let starts_with_java_open_package_prefix s =
++  if String.length s > java_open_package_prefix_length then
++    let i = ref 0 in
++    while (!i < java_open_package_prefix_length)
++        && (s.[!i] = java_open_package_prefix.[!i]) do
++      incr i;
++    done;
++    !i = java_open_package_prefix_length
++  else
++    false
++
++let extract_package_name s =
++  String.sub
++    s
++    java_open_package_prefix_length
++    (String.length s - java_open_package_prefix_length)
++
+ let rec type_module sttn funct_body anchor env smod =
+   match smod.pmod_desc with
+     Pmod_ident lid ->
+@@ -1065,6 +1087,14 @@
+         (item :: str_rem,
+          Sig_modtype(id, Modtype_manifest mty.mty_type) :: sig_rem,
+          final_env)
++    | Pstr_open (_, ({ txt = Longident.Lident package; _ } as lid))
++      when !Jclflags.java_extensions && starts_with_java_open_package_prefix package ->
++        let package_name = extract_package_name package in
++        (try
++          Jtypes.open_package package_name lid.loc
++        with _ ->
++          raise (Error (lid.loc, env, Invalid_java_package_name package_name)));
++        type_struct env srem
+     | Pstr_open (ovf, lid) ->
+         let (path, newenv) = type_open ovf ~toplevel env loc lid in
+         let item = mk (Tstr_open (ovf, path, lid)) in
+@@ -1477,6 +1507,8 @@
+         "The type %a in this module cannot be exported.@ " longident lid;
+       fprintf ppf
+         "Its type contains local dependencies:@ %a" type_expr ty
++  | Invalid_java_package_name s ->
++      fprintf ppf "`%s' ts not a valid package name" s
+ 
+ let report_error env ppf err =
+   Printtyp.wrap_printing_env env (fun () -> report_error ppf err)
+diff -aur original/typing/typemod.mli patched/typing/typemod.mli
+--- original/typing/typemod.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typemod.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -58,6 +58,7 @@
+   | Not_a_packed_module of type_expr
+   | Incomplete_packed_module of type_expr
+   | Scoping_pack of Longident.t * type_expr
++  | Invalid_java_package_name of string
+ 
+ exception Error of Location.t * Env.t * error
+ 
+diff -aur original/typing/typetexp.ml patched/typing/typetexp.ml
+--- original/typing/typetexp.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typetexp.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -51,6 +51,8 @@
+   | Unbound_cltype of Longident.t
+   | Ill_typed_functor_application of Longident.t
+   | Illegal_reference_to_recursive_module
++  | Invalid_java_instance_parameter
++  | Invalid_java_instance of Longident.t * (string option)
+ 
+ exception Error of Location.t * Env.t * error
+ 
+@@ -255,6 +257,16 @@
+     let ctys = List.map (transl_type env policy) stl in
+     let ty = newty (Ttuple (List.map (fun ctyp -> ctyp.ctyp_type) ctys)) in
+     ctyp (Ttyp_tuple ctys) ty env loc
++  | Ptyp_constr({ txt = Longident.Lident typ_constr; _ } as lid,
++                stl)
++    when !Jclflags.java_extensions
++        && (typ_constr = "java_instance" || typ_constr = "java_extends") ->
++      let closed = typ_constr = "java_instance" in
++      (match stl with
++      | [ cn ] ->
++          java_type policy env styp loc lid closed cn
++      | _ ->
++          raise(Error(styp.ptyp_loc, env, Type_arity_mismatch(lid.txt, 1, List.length stl))))
+   | Ptyp_constr(lid, stl) ->
+       let (path, decl) = find_type env styp.ptyp_loc lid.txt in
+       if List.length stl <> decl.type_arity then
+@@ -566,6 +578,53 @@
+                 pack_txt = p;
+               }) ty env loc
+ 
++and java_type policy env styp loc lid closed cn =
++  match cn.ptyp_desc with
++  | Ptyp_constr ({ txt = (Longident.Lident class_name); _ } as cn_lid, sub_list) ->
++      if !Jclflags.java_generics then begin
++        Jtypes.generics_not_available ()
++      end else begin
++        if sub_list <> [] then
++          raise(Error(cn_lid.loc,
++                      env,
++                      Type_arity_mismatch(cn_lid.txt, 0, List.length sub_list)));
++        let classes =
++          try
++            Jtypes.tags_of_class class_name loc
++          with
++          | Not_found ->
++              raise(Error(cn_lid.loc, env, Invalid_java_instance(cn_lid.txt, None)))
++          | Failure "visibility" ->
++              raise(Error(cn_lid.loc, env, Invalid_java_instance(cn_lid.txt, Some "non-public class")))
++          | Failure "ambiguous" ->
++              raise(Error(cn_lid.loc, env, Invalid_java_instance(cn_lid.txt, Some "ambiguous class name"))) in
++        let core_type_desc =
++          Ttyp_variant (List.map (fun s -> Ttag (s, false, [])) classes,
++                        closed,
++                        None) in
++        let type_desc =
++          Tvariant { row_fields = (List.map (fun s -> s, Rpresent None) classes);
++                     row_more = newty (Tvar None);
++                     row_bound = ();
++                     row_closed = closed;
++                     row_fixed = false;
++                     row_name = None; } in
++      let type_expr = Ctype.newty type_desc in
++      let args = [ ctyp core_type_desc type_expr env loc ] in
++      let path = Predef.path_java_instance in
++      let lid = { txt = Longident.Lident "java_instance";
++                  loc = Location.none; } in
++      let constr = newconstr path (List.map (fun ctyp -> ctyp.ctyp_type) args) in
++      ctyp (Ttyp_constr (path, lid, args)) constr env loc
++      end
++  | Ptyp_var _ ->
++      let (path, decl) = find_type env styp.ptyp_loc lid.txt in
++      let args = [ transl_type env policy cn ] in
++      let constr = newconstr path (List.map (fun ctyp -> ctyp.ctyp_type) args) in
++      ctyp (Ttyp_constr (path, lid, args)) constr env loc
++  | _ ->
++      raise(Error(styp.ptyp_loc, env, Invalid_java_instance_parameter))
++
+ and transl_fields env policy seen =
+   function
+     [] ->
+@@ -827,3 +886,9 @@
+       fprintf ppf "Ill-typed functor application %a" longident lid
+   | Illegal_reference_to_recursive_module ->
+       fprintf ppf "Illegal recursive module reference"
++  | Invalid_java_instance_parameter ->
++      fprintf ppf "Invalid parameter to `java_instance' type@ (can be either a class name or a type variable)"
++  | Invalid_java_instance (lid, None) ->
++      fprintf ppf "Invalid Java instance `%a'" longident lid
++  | Invalid_java_instance (lid, Some s) ->
++      fprintf ppf "Invalid Java instance `%a':@ %s" longident lid s
+diff -aur original/typing/typetexp.mli patched/typing/typetexp.mli
+--- original/typing/typetexp.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/typing/typetexp.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -62,6 +62,8 @@
+   | Unbound_cltype of Longident.t
+   | Ill_typed_functor_application of Longident.t
+   | Illegal_reference_to_recursive_module
++  | Invalid_java_instance_parameter
++  | Invalid_java_instance of Longident.t * (string option) (* parameters: class name and optional error message *)
+ 
+ exception Error of Location.t * Env.t * error
+ 
+diff -aur original/utils/warnings.ml patched/utils/warnings.ml
+--- original/utils/warnings.ml	2014-04-13 09:05:24.000000000 +0200
++++ patched/utils/warnings.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -64,6 +64,7 @@
+   | Open_shadow_identifier of string * string (* 44 *)
+   | Open_shadow_label_constructor of string * string (* 45 *)
+   | Bad_env_variable of string * string     (* 46 *)
++  | Java_deprecated                         (* 1000 *)
+ ;;
+ 
+ (* If you remove a warning, leave a hole in the numbering.  NEVER change
+@@ -119,9 +120,10 @@
+   | Open_shadow_identifier _ -> 44
+   | Open_shadow_label_constructor _ -> 45
+   | Bad_env_variable _ -> 46
++  | Java_deprecated -> 1000
+ ;;
+ 
+-let last_warning_number = 46
++let last_warning_number = 1000
+ (* Must be the max number returned by the [number] function. *)
+ 
+ let letter = function
+@@ -348,6 +350,7 @@
+         kind s
+   | Bad_env_variable (var, s) ->
+     Printf.sprintf "illegal environment variable %s : %s" var s
++  | Java_deprecated -> "Java element is deprecated."
+ ;;
+ 
+ let nerrors = ref 0;;
+@@ -439,6 +442,7 @@
+    43, "Nonoptional label applied as optional.";
+    44, "Open statement shadows an already defined identifier.";
+    45, "Open statement shadows an already defined label or constructor.";
++   1000, "Deprecated Java element.";
+   ]
+ ;;
+ 
+diff -aur original/utils/warnings.mli patched/utils/warnings.mli
+--- original/utils/warnings.mli	2014-04-13 09:05:24.000000000 +0200
++++ patched/utils/warnings.mli	2014-04-13 09:05:24.000000000 +0200
+@@ -59,6 +59,7 @@
+   | Open_shadow_identifier of string * string (* 44 *)
+   | Open_shadow_label_constructor of string * string (* 45 *)
+   | Bad_env_variable of string * string
++  | Java_deprecated                         (* 1000 *)
+ ;;
+ 
+ val parse_options : bool -> string -> unit;;

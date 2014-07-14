@@ -1,0 +1,115 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+# Original file (debugger/Makefile.shared in the OCaml source
+# distribution) is Copyright (C) INRIA.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../config/Makefile
+
+UNIXDIR=../otherlibs/unix
+OCAMLJAVA=../ocamljava.opt
+COMPFLAGS=-warn-error A $(INCLUDES) -java-package 'ocaml.tools.ocamldebug'
+LINKFLAGS=-linkall -I $(UNIXDIR)
+
+INCLUDES=\
+  -I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../toplevel \
+  -I $(UNIXDIR)
+
+OTHEROBJS=\
+  $(UNIXDIR)/unix.cmja \
+  ../utils/misc.cmj ../utils/config.cmj ../utils/tbl.cmj \
+  ../utils/clflags.cmj ../utils/consistbl.cmj ../utils/warnings.cmj \
+  ../parsing/location.cmj ../parsing/longident.cmj \
+  ../typing/ident.cmj ../typing/path.cmj ../typing/types.cmj \
+  ../typing/btype.cmj ../typing/primitive.cmj ../typing/typedtree.cmj \
+  ../typing/subst.cmj ../typing/predef.cmj \
+  ../typing/datarepr.cmj ../typing/cmi_format.cmj ../typing/env.cmj \
+  ../typing/oprint.cmj \
+  ../typing/ctype.cmj ../typing/printtyp.cmj ../typing/mtype.cmj \
+  ../typing/envaux.cmj \
+  ../bytecomp/runtimedef.cmj ../bytecomp/bytesections.cmj \
+  ../bytecomp/dll.cmj ../bytecomp/meta.cmj ../bytecomp/symtable.cmj \
+  ../bytecomp/opcodes.cmj \
+  ../toplevel/genprintval.cmj
+
+
+OBJS=\
+	dynlink.cmj \
+	int64ops.cmj \
+	primitives.cmj \
+	unix_tools.cmj \
+	debugger_config.cmj \
+	parameters.cmj \
+	lexer.cmj \
+	input_handling.cmj \
+	question.cmj \
+	debugcom.cmj \
+	exec.cmj \
+	source.cmj \
+	pos.cmj \
+	checkpoints.cmj \
+	events.cmj \
+	program_loading.cmj \
+	symbols.cmj \
+	breakpoints.cmj \
+	trap_barrier.cmj \
+	history.cmj \
+	printval.cmj \
+	show_source.cmj \
+	time_travel.cmj \
+	program_management.cmj \
+	frames.cmj \
+	eval.cmj \
+	show_information.cmj \
+	loadprinter.cmj \
+	parser.cmj \
+	command_line.cmj \
+	main.cmj
+
+all: prepare ocamldebug restore
+
+prepare:
+	patch -f -p1 < debugger-patch
+
+ocamldebug: $(OTHEROBJS) $(OBJS)
+	$(OCAMLJAVA) $(LINKFLAGS) -o ocamldebug.jar -runtime-parameter embedded=on -runtime-parameter embedded-base=FileAnchor -additional-jar-ref ocaml-lib-files.jar $(OTHEROBJS) $(OBJS)
+
+restore:
+	patch -f -p1 < debugger-unpatch
+
+install:
+	cp ocamldebug.jar $(BINDIR)
+
+clean::
+	rm -f ocamldebug.jar
+	rm -f *.cmj *.jo *.ja *.cmi
+
+.SUFFIXES:
+.SUFFIXES: .ml .cmj .mli .cmi
+
+.ml.cmj:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+.mli.cmi:
+	$(OCAMLJAVA) -c $(COMPFLAGS) $<
+
+depend: beforedepend
+	$(CAMLDEP) $(DEPFLAGS) *.mli *.ml \
+	| sed -e 's,$(UNIXDIR)/,$$(UNIXDIR)/,' > .depend
+
+.PHONY: prepare
+.PHONY: restore

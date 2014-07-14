@@ -1,0 +1,113 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+include ../config/Makefile
+
+EXECUTABLES=ocamlbuildlight.byte ocamlbuildlight.native ocamlbuildlight.jar \
+	ocamlbuild.byte ocamlbuild.native ocamlbuild.jar
+LIBRARIES=ocamlbuild_plugin.cmi \
+	ocamlbuildlightlib.cma ocamlbuildlightlib.cmxa ocamlbuildlightlib.cmja \
+	ocamlbuildlib.cma ocamlbuildlib.cmxa ocamlbuildlib.cmja
+BUILDDIR=_build
+
+prepare:
+	patch -f -p1 < ocamlbuild-patch
+	rm -fr _build
+	cp ../myocamlbuild_config.ml ocamlbuild_Myocamlbuild_config.ml
+	../_build/ocamlbuild/ocamlbuild.byte ocamlbuild.byte
+	cp _build/ocamlbuild.byte ocamlbuild.tmp
+	rm -fr _build
+
+compile:
+	rm -fr _build
+	./ocamlbuild.tmp ocamlbuild.byte
+	cp _build/ocamlbuild.byte ocamlbuild.tmp
+	rm -fr _build
+	./ocamlbuild.tmp $(LIBRARIES) $(EXECUTABLES)
+
+restore:
+	patch -f -p1 < ocamlbuild-unpatch
+
+clean:
+	rm -fr _build
+
+install:: install-original
+	install $(BUILDDIR)/ocamlbuildlight.jar \
+		$(BUILDDIR)/ocamlbuild.jar \
+		$(INSTALL_BIN)
+	install -m 644 \
+	        $(BUILDDIR)/ocamlbuildlib.cmja \
+	        $(BUILDDIR)/ocamlbuildlib.ja \
+	        $(BUILDDIR)/ocamlbuildlightlib.cmja \
+	        $(BUILDDIR)/ocamlbuildlightlib.ja \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.cmj \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.jo \
+	        $(BUILDDIR)/ocamlbuild_executor.cmj \
+	        $(BUILDDIR)/ocamlbuild_executor.jo \
+	        $(BUILDDIR)/ocamlbuild_pack.cmj \
+	        $(BUILDDIR)/ocamlbuild_pack.jo \
+	        $(BUILDDIR)/ocamlbuild.cmj \
+	        $(BUILDDIR)/ocamlbuild.jo \
+	        $(BUILDDIR)/ocamlbuildlight.cmj \
+	        $(BUILDDIR)/ocamlbuildlight.jo \
+	        $(BUILDDIR)/ocamlbuild_plugin.cmj \
+	        $(BUILDDIR)/ocamlbuild_plugin.jo \
+	        $(INSTALL_LIB)
+
+install-original::
+	mkdir -p $(INSTALL_BIN)
+	mkdir -p $(INSTALL_LIB)
+	install $(BUILDDIR)/ocamlbuild.byte \
+		$(BUILDDIR)/ocamlbuild.native \
+		$(BUILDDIR)/ocamlbuildlight.byte \
+		$(BUILDDIR)/ocamlbuildlight.native \
+		$(INSTALL_BIN)
+	install $(BUILDDIR)/ocamlbuild.native $(INSTALL_BIN)/ocamlbuild
+	install $(BUILDDIR)/ocamlbuildlight.byte $(INSTALL_BIN)/ocamlbuildlight
+	install -m 644 \
+	        $(BUILDDIR)/ocamlbuildlib.cmxa \
+	        $(BUILDDIR)/ocamlbuildlib.a \
+	        $(BUILDDIR)/ocamlbuildlib.cma \
+	        $(BUILDDIR)/ocamlbuildlightlib.cmxa \
+	        $(BUILDDIR)/ocamlbuildlightlib.a \
+	        $(BUILDDIR)/ocamlbuildlightlib.cma \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.cmx \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.o \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.cmo \
+	        $(BUILDDIR)/ocamlbuild_unix_plugin.cmi \
+	        $(BUILDDIR)/ocamlbuild_executor.cmi \
+	        $(BUILDDIR)/ocamlbuild_executor.cmo \
+	        $(BUILDDIR)/ocamlbuild_executor.cmx \
+	        $(BUILDDIR)/ocamlbuild_executor.o \
+	        $(BUILDDIR)/ocamlbuild_pack.cmi \
+	        $(BUILDDIR)/ocamlbuild_pack.cmo \
+	        $(BUILDDIR)/ocamlbuild_pack.cmx \
+	        $(BUILDDIR)/ocamlbuild_pack.o \
+	        $(BUILDDIR)/ocamlbuild.cmi \
+	        $(BUILDDIR)/ocamlbuild.cmx \
+	        $(BUILDDIR)/ocamlbuild.o \
+	        $(BUILDDIR)/ocamlbuild.cmo \
+	        $(BUILDDIR)/ocamlbuildlight.cmx \
+	        $(BUILDDIR)/ocamlbuildlight.o \
+	        $(BUILDDIR)/ocamlbuildlight.cmo \
+	        $(BUILDDIR)/ocamlbuild_plugin.cmi \
+	        $(BUILDDIR)/ocamlbuild_plugin.cmx \
+	        $(BUILDDIR)/ocamlbuild_plugin.cmo \
+	        $(INSTALL_LIB)
+	ranlib $(INSTALL_LIB)/ocamlbuildlib.a
+	ranlib $(INSTALL_LIB)/ocamlbuildlightlib.a
