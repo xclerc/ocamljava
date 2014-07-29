@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <project name="ocamljava-check-ant-and-java-versions" default="check">
 
-  <property name="minimum-ant-version" value="1.8.0"/>
+  <property name="minimum-ant-version" value="1.9.0"/>
   <property name="minimum-java-version" value="1.7"/>
   <property name="class-introduced-in-minimum-java-version"
             value="java.nio.file.Files"/>
