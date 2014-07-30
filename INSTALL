@@ -4,7 +4,7 @@ Most dependencies are provided as archives in the "third-party/" directory, but
 the following elements are needed in order to build and then use OCaml-Java:
   - a "decent" shell
   - GNU Make 3.81
-  - Apache Ant 1.8.0
+  - Apache Ant 1.9.0
   - JDK 1.7, with the "JAVA_HOME" environment variable properly set
 
 Installation steps:
