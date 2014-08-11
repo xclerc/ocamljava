@@ -822,7 +822,7 @@ and transl_switch add_function result_kind stack_frame arg sw =
              | Unboxed_int64 -> Mconst (Lambda_const (Const_base (Const_int64 0L)))
              | Unboxed_nativeint -> Mconst (Lambda_const (Const_base (Const_nativeint 0n)))
              | Unboxed_float -> Mconst (Lambda_const (Const_base (Const_float "1.0")))
-             | Unboxed_instance _ -> Mboxedunit
+             | Unboxed_instance _ -> convert Boxed_value result_kind Mboxedunit
              | Unboxed_java_array _ -> convert Boxed_value result_kind Mboxedunit))
 
 and transl_letrec add_function result_kind stack_frame bindings body =
