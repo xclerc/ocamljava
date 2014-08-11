@@ -94,6 +94,8 @@ let int_op_kind =
   else
     Unboxed_int
 
+let bool_kind = Normalized_int
+
 let string_kind = Boxed_value
 
 let array_kind = Boxed_value
@@ -105,7 +107,7 @@ let signature_of_primitive prim args =
   let unary k = Fixed [k], k in
   let binary k = Fixed [k; k], k in
   let shift k = Fixed [k; Normalized_int], k in
-  let comparison k = Fixed [k; k], Normalized_int in
+  let comparison k = Fixed [k; k], bool_kind in
   let unary_bi bi = unary (kind_of_boxed_integer bi) in
   let binary_bi bi = binary (kind_of_boxed_integer bi) in
   let shift_bi bi = shift (kind_of_boxed_integer bi) in
@@ -160,9 +162,9 @@ let signature_of_primitive prim args =
       |> Runtimeprimitives.get_description
       |> signature_of_primdesc
   | Praise -> Fixed [Boxed_value], Boxed_value
-  | Psequand -> binary Normalized_int
-  | Psequor -> binary Normalized_int
-  | Pnot -> unary Normalized_int
+  | Psequand -> binary bool_kind
+  | Psequor -> binary bool_kind
+  | Pnot -> unary bool_kind
   | Pnegint -> unary int_op_kind
   | Paddint -> binary int_op_kind
   | Psubint -> binary int_op_kind
@@ -212,9 +214,9 @@ let signature_of_primitive prim args =
   | Parraysets Pfloatarray -> Fixed [array_kind; Normalized_int; Unboxed_float], Boxed_value
   | Parraysets Pgenarray -> Fixed [array_kind; Normalized_int; Boxed_value], Boxed_value
   | Parraysets Paddrarray -> Fixed [array_kind; Normalized_int; Boxed_value], Boxed_value
-  | Pisint -> Fixed [Boxed_value], Normalized_int
-  | Pisout -> Fixed [int_op_kind; int_op_kind], Normalized_int
-  | Pbittest -> Fixed [Boxed_value; Normalized_int], Normalized_int
+  | Pisint -> Fixed [Boxed_value], bool_kind
+  | Pisout -> Fixed [int_op_kind; int_op_kind], bool_kind
+  | Pbittest -> Fixed [Boxed_value; Normalized_int], bool_kind
   | Pbintofint bi -> Fixed [int_op_kind], kind_of_boxed_integer bi
   | Pintofbint bi -> Fixed [kind_of_boxed_integer bi], int_op_kind
   | Pcvtbint (src, dst) -> Fixed [kind_of_boxed_integer src], kind_of_boxed_integer dst
@@ -320,15 +322,15 @@ let signature_of_java_primitive = function
   | Java_get_null ->
       [Boxed_value], Unboxed_instance "java.lang.Object"
   | Java_is_null ->
-      [Unboxed_instance "java.lang.Object"], Normalized_int
+      [Unboxed_instance "java.lang.Object"], bool_kind
   | Java_is_not_null ->
-      [Unboxed_instance "java.lang.Object"], Normalized_int
+      [Unboxed_instance "java.lang.Object"], bool_kind
   | Java_equal ->
-      [Unboxed_instance "java.lang.Object"; Unboxed_instance "java.lang.Object"], int_kind
+      [Unboxed_instance "java.lang.Object"; Unboxed_instance "java.lang.Object"], bool_kind
   | Java_not_equal ->
-      [Unboxed_instance "java.lang.Object"; Unboxed_instance "java.lang.Object"], int_kind
+      [Unboxed_instance "java.lang.Object"; Unboxed_instance "java.lang.Object"], bool_kind
   | Java_instanceof _ ->
-      [Unboxed_instance "java.lang.Object"], Normalized_int
+      [Unboxed_instance "java.lang.Object"], bool_kind
   | Java_cast typ ->
       [Unboxed_instance "java.lang.Object"], kind_of_java_type (typ :> java_type)
   | Java_class _ ->
