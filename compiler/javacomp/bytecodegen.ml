@@ -1149,7 +1149,7 @@ let compile_function ppf fd =
             match typ with
             | `Long | `Double -> 2
             | `Array _ | `Float | `Class _ | `Byte
-            | `Char | `Boolean | `Int | `Short -> 1in
+            | `Char | `Boolean | `Int | `Short -> 1 in
           (acc_idx + sz, (acc_idx, id) :: acc_ids, typ :: acc_params)
         else
           (acc_idx, acc_ids, acc_params))
