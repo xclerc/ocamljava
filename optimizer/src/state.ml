@@ -29,9 +29,14 @@ let get_class_loader () =
   match !class_loader with
   | Some x -> x
   | None ->
-      let cl =
+      let cl_init =
         ClassPath.make ()
-        |> ClassPath.append (UTF8.of_string !input_file)
+        |> ClassPath.append (UTF8.of_string !input_file) in
+      let cl =
+        List.fold_left
+          (fun acc elem -> ClassPath.append (UTF8.of_string elem) acc)
+          cl_init
+          !Args.classpath
         |> ClassLoader.make_of_class_path in
       class_loader := Some cl;
       cl

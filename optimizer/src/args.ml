@@ -17,6 +17,8 @@
  *)
 
 
+let classpath = ref []
+
 let no_backtrace = ref true
 
 let no_debug = ref true
@@ -43,6 +45,10 @@ let add_file x =
   files := x :: !files
 
 let switches = [
+  "-cp",
+  Arg.String (fun s -> classpath := s :: !classpath),
+  "<path>  Append to classpath" ;
+
   "-no-backtrace",
   Arg.Bool (fun b -> no_backtrace := b),
   "<bool>  Whether to assume absence of backtrace (default: true)" ;

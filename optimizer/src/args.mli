@@ -19,6 +19,9 @@
 (** Handling of command-line parameters. *)
 
 
+val classpath : string list ref
+(** Classpath elements. *)
+
 val no_backtrace : bool ref
 (** Whether to assume absence of backtrace. *)
 
