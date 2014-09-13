@@ -96,8 +96,17 @@ external synchronized : 'a java_instance -> (unit -> unit) -> unit =
 
 (* Interface implementation *)
 
+external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> 'a =
+  "java proxy loader"
+
+external proxy_system : 'a java_proxy -> 'a =
+  "java proxy system"
+
+external proxy_runtime : 'a java_proxy -> 'a =
+  "java proxy runtime"
+
 external proxy : 'a java_proxy -> 'a =
-  "java proxy"
+  "java proxy system"
 
 
 (* Miscellaneous *)

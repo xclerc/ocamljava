@@ -1044,7 +1044,9 @@ and is_java_primitive = function
   | "java instanceof"
   | "java cast"
   | "java class"
-  | "java proxy"
+  | "java proxy loader"
+  | "java proxy system"
+  | "java proxy runtime"
   | "java null"
   | "java is_null"
   | "java is_not_null"
@@ -1157,11 +1159,17 @@ and close_java_primitive fenv cenv pname args =
           (Jjavaprim(Java_class typ, args, Debuginfo.none),
            Value_unknown(Some(LR_java_instance "java.lang.Class")))
       end
-  | "java proxy" ->
+  | "java proxy loader" | "java proxy system" | "java proxy runtime" ->
       let args = close_list_approx fenv cenv args in
       let (id, args, _approx) = split_args args in
       begin match Jtypes.get_proxy_info id with
         { Jtypes.proxy_class; proxy_classes; proxy_mapping } ->
+          let jpp_kind =
+            match pname with
+            | "java proxy loader"  -> Custom_class_loader
+            | "java proxy system"  -> System_class_loader
+            | "java proxy runtime" -> Runtime_class_loader
+            | _ -> assert false in
           let jpp_interface = convert_class_name proxy_class in
           let jpp_interfaces =
             List.map
@@ -1175,7 +1183,7 @@ and close_java_primitive fenv cenv pname args =
                   jppb_parameters = convert_java_types params;
                   jppb_ocaml_name = name })
               proxy_mapping in
-          let proxy = { jpp_interface; jpp_interfaces; jpp_mapping } in
+          let proxy = { jpp_kind; jpp_interface; jpp_interfaces; jpp_mapping } in
           let typ = `Class jpp_interface in
           (Jjavaprim(Java_proxy proxy, args, Debuginfo.none),
            Value_unknown(Some(repr_of_java_type typ)))

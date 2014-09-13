@@ -41,7 +41,9 @@ let is_special_primitive = function
   | "java instanceof"
   | "java cast"
 (*| "java class" is a special primitive, but its parameter is not erased *)
-  | "java proxy" -> true
+  | "java proxy loader" -> true
+  | "java proxy system" -> true
+  | "java proxy runtime" -> true
   | _ -> false
 
 let use_dots s =
@@ -1000,7 +1002,11 @@ let get_arity prim_name id =
       1
   | "java class" ->
       1
-  | "java proxy" ->
+  | "java proxy loader" ->
+      2
+  | "java proxy system" ->
+      1
+  | "java proxy runtime" ->
       1
   | _ ->
       Misc.fatal_error "Jtypes.get_arity"

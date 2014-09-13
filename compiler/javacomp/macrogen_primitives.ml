@@ -339,5 +339,12 @@ let signature_of_java_primitive = function
       [Unboxed_instance "java.lang.Throwable"], Boxed_value
   | Java_synchronized _ ->
       [Unboxed_instance "java.lang.Object"; Boxed_value], Boxed_value
-  | Java_proxy { jpp_interface; jpp_interfaces = _; jpp_mapping = _ } ->
-      [Boxed_value], Unboxed_instance jpp_interface
+  | Java_proxy { jpp_kind; jpp_interface; jpp_interfaces = _; jpp_mapping = _ } ->
+      begin match jpp_kind with
+      | Custom_class_loader ->
+          [Unboxed_instance "java.lang.ClassLoader"; Boxed_value], Unboxed_instance jpp_interface
+      | System_class_loader ->
+          [Boxed_value], Unboxed_instance jpp_interface
+      | Runtime_class_loader ->
+          [Boxed_value], Unboxed_instance jpp_interface
+      end

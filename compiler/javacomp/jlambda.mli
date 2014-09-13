@@ -103,7 +103,12 @@ and java_primitive_field_kind =
 and java_primitive_sync_kind =
   | Inlined_sync
   | Function_sync
+and java_primitive_proxy_kind =
+  | Custom_class_loader
+  | System_class_loader
+  | Runtime_class_loader
 and java_primitive_proxy = {
+    jpp_kind : java_primitive_proxy_kind;
     jpp_interface : string;
     jpp_interfaces : string list;
     jpp_mapping : java_primitive_proxy_binding list;

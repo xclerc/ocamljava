@@ -364,7 +364,7 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
               leaf [ Instruction.ATHROW ] ]
       | _ -> assert false
       end
-  | Java_proxy { jpp_interface; jpp_interfaces; jpp_mapping } ->
+  | Java_proxy { jpp_kind; jpp_interface; jpp_interfaces; jpp_mapping } ->
       let jpp_interfaces =
         jpp_interfaces
         |> List.filter (fun x -> x <> "java.lang.Object")
@@ -392,7 +392,11 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
         [ array_instrs ;
           args_instrs ; 
           compile_mapping jpp_mapping ;
-          meth_make_proxy ;
+          begin match jpp_kind with
+          | Custom_class_loader  ->  meth_make_proxy_loader
+          | System_class_loader  ->  meth_make_proxy_system
+          | Runtime_class_loader ->  meth_make_proxy_runtime
+          end ;
           leaf [ Instruction.CHECKCAST (`Class_or_interface (make_class jpp_interface)) ] ]
 
 and compile_array ofs typ { jpad_total; jpad_init } prim_args compile_expression =

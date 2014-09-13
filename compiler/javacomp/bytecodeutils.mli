@@ -231,7 +231,9 @@ val meth_modint64 : Instrtree.t
 val meth_mulint : Instrtree.t
 val meth_negint : Instrtree.t
 val meth_notEqualValues : Instrtree.t
-val meth_make_proxy : Instrtree.t
+val meth_make_proxy_loader : Instrtree.t
+val meth_make_proxy_system : Instrtree.t
+val meth_make_proxy_runtime : Instrtree.t
 val meth_offset : Instrtree.t
 val meth_offsetint : Instrtree.t
 val meth_offsetref : Instrtree.t

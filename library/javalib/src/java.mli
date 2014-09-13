@@ -243,12 +243,15 @@ external synchronized : 'a java_instance -> (unit -> unit) -> unit =
 
 (** {6 Interface implementation} *)
 
-external proxy : 'a java_proxy -> 'a =
-  "java proxy"
-(** [proxy "interfacenames" impl] returns an instance that implements
-    [interfacenames] (a comma-separated list of interface names) using
-    the methods provided by [impl]. For example, an instance of
-    {i java.lang.Runnable} can be built using the following code:
+external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> 'a =
+  "java proxy loader"
+(** [proxy_loader "interfacenames" cl impl] returns an instance that
+    implements [interfacenames] (a comma-separated list of interface
+    names) using the methods provided by [impl]. The class is defined in
+    the class loader [cl].
+
+    For example, an instance of {i java.lang.Runnable} can be built using
+    the following code:
     {[
       proxy "java.lang.Runnable" (object
         method run = ...
@@ -273,6 +276,19 @@ external proxy : 'a java_proxy -> 'a =
     ]}
 
  *)
+
+external proxy_system : 'a java_proxy -> 'a =
+  "java proxy system"
+(** Same as [proxy_loader], but uses the system class loader. *)
+
+external proxy_runtime : 'a java_proxy -> 'a =
+  "java proxy runtime"
+(** Same as [proxy_loader], but uses the class loader that was used to
+    load the OCaml-Java runtime. *)
+
+external proxy : 'a java_proxy -> 'a =
+  "java proxy system"
+(** Sysnonym for [proxy_system]. *)
 
 
 (** {6 Miscellaneous} *)

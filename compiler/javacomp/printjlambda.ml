@@ -50,6 +50,11 @@ let ellipsis ppf = function
   | true -> fprintf ppf "@ varargs"
   | false -> ()
 
+let proxy_kind ppf = function
+  | Custom_class_loader  -> fprintf ppf "loader"
+  | System_class_loader  -> fprintf ppf "system"
+  | Runtime_class_loader -> fprintf ppf "runtime"
+
 let rec java_primitive ppf = function
   | Java_constructor (cn, params, ellip) ->
       fprintf ppf "constructor@ %s%a%a"
@@ -121,7 +126,7 @@ let rec java_primitive ppf = function
       fprintf ppf "synchronized@ %a@ %d"
         sync_kind kind
         idx
-  | Java_proxy { jpp_interface; jpp_interfaces; jpp_mapping } ->
+  | Java_proxy { jpp_kind; jpp_interface; jpp_interfaces; jpp_mapping } ->
       let string_list ppf l =
         List.iter
           (fun s ->
@@ -138,7 +143,8 @@ let rec java_primitive ppf = function
           l in
       let mapping ppf l =
         fprintf ppf "@ {%a }" bindings l in
-      fprintf ppf "proxy@ %s%a%a"
+      fprintf ppf "proxy@ %a%s%a%a"
+        proxy_kind jpp_kind
         jpp_interface
         string_list jpp_interfaces
         mapping jpp_mapping
