@@ -47,20 +47,33 @@ let is_special_primitive = function
   | _ -> false
 
 let use_dots s =
-  let res = String.copy s in
-  let len = String.length res in
-  for i = 0 to pred len do
-    if res.[i] = '\'' then res.[i] <- '.'
+  let len = String.length s in
+  let res = Buffer.create len in
+  let i = ref 0 in
+  while !i < len do
+    match s.[!i] with
+    | '\'' when (!i + 1 < len) && (s.[!i + 1] = '\'') ->
+        Buffer.add_char res '$';
+        i := !i + 2
+    | '\'' ->
+        Buffer.add_char res '.';
+        incr i
+    | ch ->
+        Buffer.add_char res ch;
+        incr i
   done;
-  res
+  Buffer.contents res
 
 let use_single_quotes s =
-  let res = String.copy s in
-  let len = String.length res in
+  let len = String.length s in
+  let res = Buffer.create len in
   for i = 0 to pred len do
-    if res.[i] = '.' || res.[i] = '$' then res.[i] <- '\''
+    match s.[i] with
+    | '.' -> Buffer.add_char res '\''
+    | '$' -> Buffer.add_char res '\''; Buffer.add_char res '\''
+    | ch  -> Buffer.add_char res ch
   done;
-  res
+  Buffer.contents res
 
 let contains_dots s =
   let i = ref (String.length s - 3) in
