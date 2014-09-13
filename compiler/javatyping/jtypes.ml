@@ -1004,7 +1004,7 @@ let get_arity prim_name id =
         |> List.length in
       atleast1 (if is_static then nb_params else succ nb_params)
   | "java field get" ->
-      1      
+      1
   | "java field set" ->
       let field_info = get_field_set_info id in
       let is_static = AccessFlag.mem_field `Static field_info.field_field.Field.flags in
