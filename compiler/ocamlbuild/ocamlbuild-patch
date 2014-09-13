@@ -371,7 +371,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  (* findlib *)
  let () =
    if !Options.use_ocamlfind then begin
-@@ -490,6 +539,36 @@
+@@ -490,6 +539,39 @@
      (fun param -> S [A "-inline"; A param]);
    pflag ["ocaml"; "compile"] "pp"
      (fun param -> S [A "-pp"; A param]);
@@ -381,7 +381,10 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
 +    (fun param -> S [A "-for-pack"; A param]);
 +  pflag ["ocaml"; "java"; "compile"] "inline"
 +    (fun param -> S [A "-inline"; A param]);
-+  let java_pflag compile link pack name =
++  let java_pflag interf compile link pack name =
++    if interf then
++      pflag ["ocaml"; "interf"; "compile"; "java-extensions"] name
++        (fun param -> S [A ("-" ^ name); A param]);
 +    if compile then
 +      pflag ["ocaml"; "java"; "compile"] name
 +        (fun param -> S [A ("-" ^ name); A param]);
@@ -391,24 +394,24 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
 +    if pack then
 +      pflag ["ocaml"; "java"; "pack"] name
 +        (fun param -> S [A ("-" ^ name); A param]) in
-+  java_pflag false true false "additional-class";
-+  java_pflag false true false "additional-file";
-+  java_pflag false true false "additional-jar";
-+  java_pflag false true false "additional-jar-ref";
-+  java_pflag false true false "applet";
-+  java_pflag true true false "classpath";
-+  java_pflag true true false "cp";
-+  java_pflag true true true "java-package";
-+  java_pflag true true false "javac";
-+  java_pflag true true false "jopt";
-+  java_pflag true true false "provider";
-+  java_pflag false true false "runtime-parameter";
-+  java_pflag true false false "servlet";
-+  java_pflag false true false "war";
++  java_pflag false false true false "additional-class";
++  java_pflag false false true false "additional-file";
++  java_pflag false false true false "additional-jar";
++  java_pflag false false true false "additional-jar-ref";
++  java_pflag false false true false "applet";
++  java_pflag true true true false "classpath";
++  java_pflag true true true false "cp";
++  java_pflag false true true true "java-package";
++  java_pflag false true true false "javac";
++  java_pflag false true true false "jopt";
++  java_pflag false true true false "provider";
++  java_pflag false false true false "runtime-parameter";
++  java_pflag false true false false "servlet";
++  java_pflag false false true false "war";
    pflag ["ocaml"; "ocamldep"] "pp"
      (fun param -> S [A "-pp"; A param]);
    pflag ["ocaml"; "doc"] "pp"
-@@ -532,6 +611,9 @@
+@@ -532,6 +614,9 @@
  ocaml_lib ~extern:true ~dir:"+ocamldoc" "ocamldoc";;
  ocaml_lib ~extern:true ~dir:"+ocamlbuild" ~tag_name:"use_ocamlbuild" "ocamlbuildlib";;
  
@@ -418,7 +421,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4" "camlp4lib";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_old_camlp4" "camlp4";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4_full" "camlp4fulllib";;
-@@ -541,6 +623,7 @@
+@@ -541,6 +626,7 @@
          A"-I"; A"+camlp4/Camlp4Filters"]);;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "byte"] (A"+camlp4/Camlp4Bin.cmo");;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "native"] (A"+camlp4/Camlp4Bin.cmx");;
@@ -426,7 +429,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  
  flag ["ocaml"; "debug"; "compile"; "byte"] (A "-g");;
  flag ["ocaml"; "debug"; "link"; "byte"; "program"] (A "-g");;
-@@ -574,6 +657,7 @@
+@@ -574,6 +660,7 @@
    flag ["ocaml"; "doc"; "thread"] (S[A"-I"; A"+threads"]);
    flag ["ocaml"; "link"; "thread"; "native"; "program"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "program"] (A "threads.cma");
@@ -434,7 +437,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
    flag ["ocaml"; "link"; "thread"; "native"; "toplevel"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "toplevel"] (A "threads.cma");
  end;;
-@@ -609,4 +693,13 @@
+@@ -609,4 +696,13 @@
  ocaml_lib "ocamlbuildlib";;
  ocaml_lib "ocamlbuildlightlib";;
  
