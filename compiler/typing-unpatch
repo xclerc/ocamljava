@@ -3032,7 +3032,15 @@ diff -aur patched/typing/typemod.ml original/typing/typemod.ml
      | Pstr_open (ovf, lid) ->
          let (path, newenv) = type_open ovf ~toplevel env loc lid in
          let item = mk (Tstr_open (ovf, path, lid)) in
-@@ -1507,8 +1477,6 @@
+@@ -1329,7 +1299,6 @@
+         with Not_found ->
+           raise(Error(Location.in_file sourcefile, Env.empty,
+                       Interface_not_compiled sourceintf)) in
+-      normalize_signature finalenv simple_sg;
+       let dclsig = Env.read_signature modulename intf_file in
+       let coercion = Includemod.compunit sourcefile sg intf_file dclsig in
+       Typecore.force_delayed_checks ();
+@@ -1508,8 +1477,6 @@
          "The type %a in this module cannot be exported.@ " longident lid;
        fprintf ppf
          "Its type contains local dependencies:@ %a" type_expr ty
