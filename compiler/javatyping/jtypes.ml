@@ -90,7 +90,7 @@ let before_any =
   let pos = { Lexing.pos_fname = "";
   	      Lexing.pos_lnum = 0;
   	      Lexing.pos_bol = 0;
-  	      Lexing.pos_cnum = 0; } in  
+  	      Lexing.pos_cnum = 0; } in
   { Location.loc_start = pos;
     Location.loc_end = pos;
     Location.loc_ghost = false; }
@@ -160,7 +160,7 @@ let rec interface_parents cl cd =
     |> List.map (fun p -> interface_parents cl p)
     |> List.flatten in
   cd :: tail
-  
+
 module StringSet = Set.Make (String)
 
 let rec add_all_parents cl cd acc =
@@ -854,7 +854,7 @@ let compute_mapping loader classes additional_methods newty =
         (fun def ->
           let def_name =
             def.ClassDefinition.name
-            |> Name.external_utf8_for_class 
+            |> Name.external_utf8_for_class
             |> UTF8.to_string in
           List.fold_right
             (fun (elem : Method.t) (acc : Method.regular list) ->

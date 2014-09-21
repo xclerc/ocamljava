@@ -251,7 +251,7 @@ let empty_cstr =
   let code =
     Attribute.({ max_stack = u2 1;
                  max_locals = u2 1;
-                 code = 
+                 code =
                    [ Instruction.ALOAD_0 ;
                      Instruction.INVOKESPECIAL
                        (Names.object_,

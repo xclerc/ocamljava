@@ -93,7 +93,7 @@ let kind_of_repr = function
       Unboxed_float
   | LR_nativeint ->
       Unboxed_nativeint
-  | LR_int32 -> 
+  | LR_int32 ->
       Unboxed_int32
   | LR_int64 ->
       Unboxed_int64

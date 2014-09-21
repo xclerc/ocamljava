@@ -1039,7 +1039,7 @@ and compile_expression_list_to_array ofs l =
                          expr_instrs ;
                          leaf [ Instruction.AASTORE ] ]) in
         (ofs + res_sz, Int32.succ idx, res_instrs :: instrs))
-      (ofs + size_sz + array_sz, 0l, []) 
+      (ofs + size_sz + array_sz, 0l, [])
       l in
   node
     [ size_instrs ;
@@ -1172,7 +1172,7 @@ let compile_function ppf fd =
             | ControlFlow.Switch_jump _-> true
             | ControlFlow.Next_instruction
             | ControlFlow.Called_method
-            | ControlFlow.Calling_method _ 
+            | ControlFlow.Calling_method _
             | ControlFlow.Exception_handler -> false)
           instrs in
       if (exception_table = []) && (not contains_jump) then

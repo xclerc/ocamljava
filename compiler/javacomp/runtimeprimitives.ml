@@ -120,7 +120,7 @@ let visit loader class_name =
     |> Name.external_utf8_for_class
     |> UTF8.to_string in
   if is_primitive_provider cdef then begin
-    if !Jclflags.dump_primitives then 
+    if !Jclflags.dump_primitives then
       Printf.printf "primitives from %s:\n" class_name;
     List.iter
       (function

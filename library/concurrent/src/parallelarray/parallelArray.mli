@@ -120,7 +120,7 @@ val map : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'b) -> 'a arra
 (** Similar to [Array.map], except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread. 
+    to be allocated to a thread.
 
     Raises [Runtime.Raised] if the passed function raises an exception. *)
 
@@ -128,7 +128,7 @@ val iteri : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> (int -> 'a -> unit)
 (** Similar to [Array.iteri], except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread. 
+    to be allocated to a thread.
 
     Raises [Runtime.Raised] if the passed function raises an exception. *)
 
@@ -136,7 +136,7 @@ val mapi : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> (int -> 'a -> 'b) ->
 (** Similar to [Array.mapi], except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread. 
+    to be allocated to a thread.
 
     Raises [Runtime.Raised] if the passed function raises an exception. *)
 
@@ -147,7 +147,7 @@ val fold_left : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'b -> 'a
     to be allocated to a thread.
 
     {i This version uses an additional function in order to be able to
-    "merge" the computations done on sub arrrays.} 
+    "merge" the computations done on sub arrrays.}
 
     Raises [Runtime.Raised] if any of the passed functions raises an exception. *)
 
@@ -168,7 +168,7 @@ val sort : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'a -> int) ->
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
 
-    The current implementation has a {i O(n)} space complexity. 
+    The current implementation has a {i O(n)} space complexity.
 
     Raises [Runtime.Raised] if the passed function raises an exception. *)
 

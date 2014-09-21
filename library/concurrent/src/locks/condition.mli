@@ -20,7 +20,7 @@
 
 
 type t
-(** The type of conditions, constructed from [Lock] values. 
+(** The type of conditions, constructed from [Lock] values.
 
     Operations on conditions should be called only when the lock the
     condition was constructed from is held by the current thread. *)

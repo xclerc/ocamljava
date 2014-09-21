@@ -63,7 +63,7 @@ let remove_unused_globals remove_index code =
           if pushes_int_to_remove remove_index int_instr then
             false
           else
-            keep in        
+            keep in
         rewrite (ofs + sz) keep (nops sz acc) tl
     | Instruction.INVOKESTATIC (cn, mn, ([], `Void))
       :: tl
@@ -121,7 +121,7 @@ let optimize_code preopt_fun code_attr rules meth =
        markers by some rules in order to ensure termination *)
     |> Code.optimize_graph ~rules:[ Rewrite.remove_nops ]
     |> Code.flatten_graph ~use_offsets:true in
-  let unifier = State.get_unifier () in    
+  let unifier = State.get_unifier () in
   let max_stack, max_locals, stack_map_frame =
     Code.compute_stack_infos
       !State.current_class_name

@@ -267,7 +267,7 @@ let path_in_archive prefix str suffix =
     add_string buff prefix;
     Buffer.add_char buff '/'
   end;
-  add_string buff str;   
+  add_string buff str;
   Buffer.add_string buff suffix;
   Buffer.contents buff
 
@@ -308,7 +308,7 @@ let link ppf objfiles output_name =
     (fun (info, file_name, crc) -> check_consistency file_name info crc)
     units_tolink;
   let startup_name, startup_class =
-    make_startup_class units_tolink output_name in 
+    make_startup_class units_tolink output_name in
   try
     let builder = Archiveutils.open_builder output_name in
     (* always add startup class and globals map *)

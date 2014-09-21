@@ -131,7 +131,7 @@ let signature_of_primitive prim args =
                 Fixed [Boxed_value], kind_of_approx approx.(idx)
             | _ ->
                 Fixed [Boxed_value], Boxed_value
-          with _ -> 
+          with _ ->
             Fixed [Boxed_value], Boxed_value
           end
       | _ -> Fixed [Boxed_value], Boxed_value

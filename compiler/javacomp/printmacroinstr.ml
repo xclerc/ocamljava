@@ -37,7 +37,7 @@ let value_kind ppf = function
       |> BaristaLibrary.Descriptor.external_utf8_of_java_type
       |> BaristaLibrary.UTF8.to_string
       |> fprintf ppf "array:%s"
-  
+
 let value_kinds ppf l =
   List.iter
     (fun vk ->

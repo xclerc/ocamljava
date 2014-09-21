@@ -413,7 +413,7 @@ let dump_interface ?(indent = 0) buff i =
                     n
                     (String.concat ", " l)))
     i.interf_methods;
-  indent ();  
+  indent ();
   add_string "}\n\n"
 
 let rec dump_class ?(indent = 0) buff c =
@@ -485,7 +485,7 @@ let rec contains_cast_block l =
 and contains_cast_statement = function
   | Expression e -> contains_cast_expression e
   | Variable_declaration (_, _, e) -> contains_cast_expression e
-  | Return None -> false 
+  | Return None -> false
   | Return (Some e) -> contains_cast_expression e
   | Super_constructor (el) -> contains_cast_expression_list el
   | Assign (_, e) -> contains_cast_expression e

@@ -41,7 +41,7 @@ let elements_of_signature signature =
                          acc_types, (Ident.name id, type_expr, Some idx)
                          :: acc_functions, succ idx
         | Sig_value _
-        | Sig_type _      
+        | Sig_type _
         | Sig_exception _
         | Sig_module _
         | Sig_modtype _
@@ -128,7 +128,7 @@ let wrap name signature =
       ~annotations:["@Override"]
       [Public] ~return:(Some type_Value) "value"
       [If (Infix ("==", cached_id, Null_literal), Block build_cached);
-       JavaAST.return cached_id] in 
+       JavaAST.return cached_id] in
   let name = Ident.name name in
   let full_name name =
     if type_parameters = [] then

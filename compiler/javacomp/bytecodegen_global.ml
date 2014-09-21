@@ -105,7 +105,7 @@ let make_copy_method' classname l =
   make_regular_method "copy" ([`Class class_BlockValue], `Void) code
 
 let make_duplicate_method classname l =
-  let l = 
+  let l =
     l
     |> List.map
         (fun (_, name, _, typ) ->

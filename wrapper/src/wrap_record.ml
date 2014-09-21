@@ -133,7 +133,7 @@ let wrap name fields record_repr type_parameters =
       "equals"
       ~parameters:[type_Object, "obj"]
       (let cond = Instance_of (Identifier "obj", Reference (Ident.name name, [])) in
-      let if_branch = 
+      let if_branch =
         let t = Reference (Ident.name name, []) in
         let l =
           List.map

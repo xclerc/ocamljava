@@ -29,7 +29,7 @@ let make n c =
   let res = Java.make "StringBuilder(int)" (Int32.of_int n) in
   for _i = 1 to n do
     Java.call "StringBuilder.append(char):StringBuilder" res c
-    |> ignore 
+    |> ignore
   done;
   Java.call "StringBuilder.toString()" res
 

@@ -48,7 +48,7 @@ let rec expand_if_needed te =
       te
   | _ ->
       try
-        Ctype.full_expand !State.environment (Ctype.repr te) 
+        Ctype.full_expand !State.environment (Ctype.repr te)
       with _ -> te
 
 let rec visit t path te =

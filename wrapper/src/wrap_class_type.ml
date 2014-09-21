@@ -144,7 +144,7 @@ let wrap name class_type_declaration =
       ~annotations:["@Override"]
       [Public] ~return:(Some type_Value) "value"
       [If (Infix ("==", cached_id, Null_literal), Block build_cached);
-       JavaAST.return cached_id] in  
+       JavaAST.return cached_id] in
   let name = Ident.name name in
   let full_name name =
     if type_parameters = [] then

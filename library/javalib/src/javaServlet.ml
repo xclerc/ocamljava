@@ -89,7 +89,7 @@ module Default_HTTP = struct
     let code =
       if Java.call "String.endsWith(_)" protocol v_1_1 then
         Java.get "javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED" ()
-      else 
+      else
         Java.get "javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST" () in
     let msg = Printf.sprintf "HTTP method %s is not supported by this URL" meth |> JavaString.of_string in
     Java.call "javax.servlet.http.HttpServletResponse.sendError(_,_)" resp code msg
@@ -110,7 +110,7 @@ module Default_HTTP = struct
     while Java.call "java.util.Enumeration.hasMoreElements()" headers do
       let header_name =
         Java.call "java.util.Enumeration.nextElement()" headers
-        |> Java.cast "String" in      
+        |> Java.cast "String" in
       let header_value = Java.call "javax.servlet.http.HttpServletRequest.getHeader(_)" req header_name in
       append buff cr_lf;
       append buff header_name;

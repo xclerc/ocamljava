@@ -39,7 +39,7 @@ exception Exception of error
 
 let fail e = raise (Exception e)
 
-let map_option l = 
+let map_option l =
   List.fold_right
     (fun elem acc ->
       match elem with

@@ -104,7 +104,7 @@ let compunit current_class global_class jlam =
       Queue.take functions
     with Queue.Empty ->
       raise Not_found in
-  let add_function cls lbl params repr body = 
+  let add_function cls lbl params repr body =
     if cls = current_class then
       Queue.add { lbl; params; repr; body } functions in
   let repr = Lambda.LR_unit in

@@ -36,7 +36,7 @@ let compile_class ~name ~parent ~fields ~methods ~attributes =
              methods = methods;
              attributes = attributes; } in
   let buff = ByteBuffer.make_of_size 1024 in
-  let stream = OutputStream.make_of_buffer buff in  
+  let stream = OutputStream.make_of_buffer buff in
   ClassFile.write (ClassDefinition.encode cd) stream;
   OutputStream.close stream;
   ByteBuffer.contents buff

@@ -225,7 +225,7 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
             instrs, [], ofs + (size instrs)
         | Static_call, [], _ -> assert false
         | _ -> Instrtree.leaf [], prim_args, ofs in
-      let call, params = 
+      let call, params =
         match call_kind with
         | Static_call ->
             Instruction.INVOKESTATIC (class_name, method_name, desc),
@@ -372,7 +372,7 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
       let set_elements =
         List.fold_left
           (fun (acc_idx, acc_instrs) elem ->
-            let instrs = 
+            let instrs =
               leaf [ Instruction.DUP ;
                      Instruction.LDC_W (`Int acc_idx) ;
                      Instruction.LDC_W (`Class_or_interface elem) ;
@@ -390,7 +390,7 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
       let args_instrs = compile_expression_list (ofs + array_sz + 1) prim_args in
       node
         [ array_instrs ;
-          args_instrs ; 
+          args_instrs ;
           compile_mapping jpp_mapping ;
           begin match jpp_kind with
           | Custom_class_loader  ->  meth_make_proxy_loader
@@ -431,7 +431,7 @@ and compile_array ofs typ { jpad_total; jpad_init } prim_args compile_expression
 
 and compile_expression_list_java ?(ellipsis=false) ofs exprs types compile_expression =
   let len = List.length exprs in
-  let _, _, res = 
+  let _, _, res =
     List.fold_left2
       (fun (idx, curr_ofs, acc) expr (typ : Descriptor.non_void_java_type) ->
         if ellipsis && (idx = pred len) then begin

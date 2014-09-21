@@ -157,7 +157,7 @@ let make_applet_class unit_infos approx =
           | _ -> param
         else
           param in
-      let code = 
+      let code =
         (* note: do not use unboxed parameters, because the developer
            may have provided a compatible module that do not refer to
            unboxed type (e.g. "let stop _ = ...") *)

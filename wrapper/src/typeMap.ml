@@ -73,7 +73,7 @@ let find_predefined boxed path =
       | Some p -> Path.same p path
       | None -> false)
     (TypeInfo.predefined_types boxed)
-    
+
 let find_defined path =
   try
     try

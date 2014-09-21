@@ -305,7 +305,7 @@ let wrap ident constructors variant_kind type_parameters =
               fields in
           let meth =
             let additional_parameters = ref [] in
-            let quantif = 
+            let quantif =
               List.map
                 (fun (id, _) ->
                   if not (List.mem_assoc id !used) then begin

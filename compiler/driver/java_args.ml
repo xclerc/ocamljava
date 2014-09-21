@@ -229,7 +229,7 @@ let mk_scripting f =
 ;;
 
 let mk_servlet f =
-  "-servlet", Arg.Symbol (["generic"; 
+  "-servlet", Arg.Symbol (["generic";
                            "http";
                            "context-listener";
                            "context-attribute-listener";

@@ -143,7 +143,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
   let make_field_name' fn =
     fn
     |> Name.utf8_for_field
-    |> UTF8.to_string 
+    |> UTF8.to_string
     |> make_field_name
 
   (** Executes [f l] where [l] is the class loader, handling

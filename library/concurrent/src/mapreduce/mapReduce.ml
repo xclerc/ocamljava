@@ -67,7 +67,7 @@ module Make (C : Computation) = struct
         | Some i ->
             Stream.junk inputs;
             ignore (ExecutorCompletionService.submit service C.map i)
-        | None -> decr running      
+        | None -> decr running
       done;
       KeyMap.fold C.reduce !map
     with
