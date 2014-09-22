@@ -1,3 +1,17 @@
+Version 2.0-alpha2 (2014-09-22):
+--------------------------------
+  - HTML5 / Bootstrap mode for ocamldoc
+  - bug in proxies: method dispatch failing when overriding a method from
+    java.lang.Object
+  - bug#5: incorrect code generation for match construct
+  - bug#6: broken Java instance comparisons
+  - bug#7: support for inner-classes in presence of opened packages
+  - bug#9: incorrect inference of Java instance (as unboxed parameter value)
+  - bug#10: proxy variants (allowing to specify a class loader)
+  - bug#11: inner-classes and plain classes cannot be discriminated
+  - bug#12: ocamlbuild does not pass "-cp" and "-classpath" options when
+    compiling an interface with "-java-extensions"
+
 Version 2.0-alpha1 (2014-07-14):
 --------------------------------
   - revamped project organization (only one code base)
