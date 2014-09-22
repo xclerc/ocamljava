@@ -1,6 +1,7 @@
 The various archives in this directory are copies of the following open source
 software:
   - Barista, from http://barista.x9c.fr
+  - Bootstrap, from http://getbootstrap.com
   - Camlzip, from http://forge.ocamlcore.org/projects/camlzip
   - Camomile, from https://github.com/yoriyuki/Camomile
   - Jacl, from http://tcljava.sourceforge.net

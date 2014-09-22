@@ -45,7 +45,7 @@ default: \
 	step18-build-and-install-ocamlc-jar \
 	step19-build-and-install-ocamldebug-jar \
 	step20-build-and-install-camlp4 \
-	step21-copy-documentation
+	step21-generate-and-copy-documentation
 
 prepare:
 	test -d timestamps && rm -fr timestamps || true
@@ -150,6 +150,12 @@ step07-build-and-install-extended-ocamlbuild:
 
 step08-build-and-install-extended-ocamldoc-byte-and-native:
 	touch timestamps/step08-build-and-install-extended-ocamldoc-byte-and-native
+	mkdir -p $(PREFIX)/lib/ocaml/ocamldoc/bootstrap
+	cp ../third-party/bootstrap-$(BOOTSTRAP_VERSION)-dist.zip . && \
+	unzip bootstrap-$(BOOTSTRAP_VERSION)-dist.zip && \
+	cat bootstrap-$(BOOTSTRAP_VERSION)-dist/css/bootstrap.min.css | \
+	sed -e 's|../fonts/||g' > $(PREFIX)/lib/ocaml/ocamldoc/bootstrap/bootstrap.min.css && \
+	cp bootstrap-$(BOOTSTRAP_VERSION)-dist/fonts/* $(PREFIX)/lib/ocaml/ocamldoc/bootstrap
 	$(AUGMENTED_PATH) && \
 	cd ocaml-$(OCAML_VERSION) && \
 	$(MAKE) -f Makefile-ocamljava build-extended-ocamldoc-byte-and-native && \
@@ -267,14 +273,62 @@ step20-build-and-install-camlp4:
 	$(MAKE) -f Makefile-ocamljava install-camlp4 && \
 	cd ..
 
-step21-copy-documentation:
-	touch timestamps/step21-copy-documentation
-	for dir in concurrent javalib manual wrappers; do \
+step21-generate-and-copy-documentation:
+	touch timestamps/step21-generate-and-copy-documentation
+	for dir in concurrent javalib manual ocjlib stdlib wrappers; do \
 	  if [ -d $(PREFIX)/doc/ocamljava/$$dir ]; then \
 	    rm -fr $(PREFIX)/doc/ocamljava/$$dir; \
 	  fi; \
 	done
 	mkdir -p $(PREFIX)/doc/ocamljava
+	mkdir $(PREFIX)/doc/ocamljava/stdlib
+	mkdir $(PREFIX)/doc/ocamljava/ocjlib
+	cd ocaml-$(OCAML_VERSION) && \
+	./ocamldoc/ocamldoc.opt \
+	  -html -html5 -sort \
+	  -t 'OCaml standard library' \
+	  -d $(PREFIX)/doc/ocamljava/stdlib \
+	  -I stdlib \
+	  -I otherlibs/bigarray \
+	  -I otherlibs/dynlink \
+	  -I otherlibs/graph \
+	  -I otherlibs/num \
+	  -I otherlibs/str \
+	  -I otherlibs/unix \
+	  stdlib/*.mli \
+	  otherlibs/bigarray/bigarray.mli \
+	  otherlibs/dynlink/dynlink.mli \
+	  otherlibs/graph/graphics.mli \
+	  otherlibs/num/*.mli \
+	  otherlibs/str/str.mli \
+	  otherlibs/unix/unix.mli && \
+	cd ..
+	cd ocaml-$(OCAML_VERSION) && \
+	./ocamldoc/ocamldoc.opt \
+	  -html -html5 -sort \
+	  -t 'OCaml-Java library' \
+	  -java-extensions \
+	  -cp ../external-jars/servlet-api.jar \
+	  -d $(PREFIX)/doc/ocamljava/ocjlib \
+	  -I stdlib \
+	  -I otherlibs/bigarray \
+	  -I otherlibs/dynlink \
+	  -I otherlibs/graph \
+	  -I otherlibs/num \
+	  -I otherlibs/str \
+	  -I otherlibs/unix \
+	  `find ../library/javalib/_build/src -type d | xargs -I {} echo -I {} | xargs` \
+	  `find ../library/concurrent/_build/src -type d | xargs -I {} echo -I {} | xargs` \
+	  stdlib/*.mli \
+	  otherlibs/bigarray/bigarray.mli \
+	  otherlibs/dynlink/dynlink.mli \
+	  otherlibs/graph/graphics.mli \
+	  otherlibs/num/*.mli \
+	  otherlibs/str/str.mli \
+	  otherlibs/unix/unix.mli \
+	  `find ../library/javalib/_build/src -type d | xargs -I {} echo {}/*.mli | xargs` \
+	  `find ../library/concurrent/_build/src -type d | xargs -I {} echo {}/*.mli | xargs` && \
+	cd ..
 	cp -R library/concurrent/_build/concurrent.docdir \
 	      $(PREFIX)/doc/ocamljava
 	mv $(PREFIX)/doc/ocamljava/concurrent.docdir \
@@ -312,4 +366,4 @@ step21-copy-documentation:
 .PHONY: step18-build-and-install-ocamlc-jar
 .PHONY: step19-build-and-install-ocamldebug-jar
 .PHONY: step20-build-and-install-camlp4
-.PHONY: step21-copy-documentation
+.PHONY: step21-generate-and-copy-documentation

@@ -55,6 +55,6 @@ let () =
   dispatch begin function
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
-        flag ["ocaml"; "doc"] (A"-sort");
+        flag ["ocaml"; "doc"] (S[A"-sort"; A"-html5"; A"-t"; A"Concurrent library"]);
     | _ -> ()
   end
