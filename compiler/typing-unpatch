@@ -2344,7 +2344,7 @@ diff -aur patched/ocamldoc/odoc_analyse.ml original/ocamldoc/odoc_analyse.ml
 diff -aur patched/ocamldoc/odoc_args.ml original/ocamldoc/odoc_args.ml
 --- patched/ocamldoc/odoc_args.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/ocamldoc/odoc_args.ml	2014-04-13 09:05:24.000000000 +0200
-@@ -196,11 +196,6 @@
+@@ -196,21 +196,6 @@
    "-rectypes", Arg.Set Odoc_global.recursive_types, M.rectypes ;
    "-nolabels", Arg.Unit (fun () -> Odoc_global.classic := true), M.nolabels ;
    "-warn-error", Arg.Set Odoc_global.warn_error, M.werr ;
@@ -2353,13 +2353,57 @@ diff -aur patched/ocamldoc/odoc_args.ml original/ocamldoc/odoc_args.ml
 -  "-java-extensions", Arg.Set Jclflags.java_extensions, M.java_extensions ;
 -  "-java-generics", Arg.Unit (fun _ -> Misc.fatal_error "not available in this build"), M.java_generics ;
 -  "-java-internal-types", Arg.Set Jclflags.java_internal_types, M.java_internal_types ;
+-  "-java-prefix-url", Arg.String (fun s ->
+-    try
+-      let idx = String.index s '@' in
+-      let prefix = String.sub s 0 idx in
+-      let suffix = String.sub s (succ idx) (String.length s - idx - 1) in
+-      Odoc_global.java_url_bases := (prefix, suffix) :: !Odoc_global.java_url_bases;
+-    with _ ->
+-      print_string "ignoring invalid argument -java-prefix-url";
+-      print_endline s), M.java_prefix_url ;
+-  "-jdk-base-url", Arg.Set_string Odoc_global.jdk_base_url, M.jdk_base_url ;
    "-hide-warnings", Arg.Clear Odoc_config.print_warnings, M.hide_warnings ;
    "-o", Arg.String (fun s -> Odoc_global.out_file := s), M.out_file ;
    "-d", Arg.String (fun s -> Odoc_global.target_dir := s), M.target_dir ;
+@@ -257,7 +242,6 @@
+   "\n\n *** HTML options ***\n";
+ 
+ (* html only options *)
+-  "-html5", Arg.Set Odoc_html.html5, M.html5;
+   "-all-params", Arg.Set Odoc_html.with_parameter_list, M.with_parameter_list ;
+   "-css-style", Arg.String (fun s -> Odoc_html.css_style := Some s), M.css_style ;
+   "-index-only", Arg.Set Odoc_html.index_only, M.index_only ;
+diff -aur patched/ocamldoc/odoc_global.ml original/ocamldoc/odoc_global.ml
+--- patched/ocamldoc/odoc_global.ml	2013-06-05 18:34:40.000000000 +0200
++++ original/ocamldoc/odoc_global.ml	2013-06-05 18:34:40.000000000 +0200
+@@ -84,9 +84,3 @@
+ let with_toc = ref true
+ 
+ let with_index = ref true
+-
+-let jdk_base_url = ref "http://docs.oracle.com/javase/7/docs/api/"
+-
+-let java_url_bases = ref [
+-  "javax/servlet/", "http://tomcat.apache.org/tomcat-8.0-doc/servletapi/"
+-]
+diff -aur patched/ocamldoc/odoc_global.mli original/ocamldoc/odoc_global.mli
+--- patched/ocamldoc/odoc_global.mli	2012-10-15 19:50:56.000000000 +0200
++++ original/ocamldoc/odoc_global.mli	2012-10-15 19:50:56.000000000 +0200
+@@ -102,9 +102,3 @@
+ 
+ (** The flag which indicates if we must generate a trailer.*)
+ val with_trailer : bool ref
+-
+-(** The base URL for JDK classes. *)
+-val jdk_base_url : string ref
+-
+-(** The map from class prefixes to URL bases. *)
+-val java_url_bases : (string * string) list ref
 diff -aur patched/ocamldoc/odoc_messages.ml original/ocamldoc/odoc_messages.ml
 --- patched/ocamldoc/odoc_messages.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/ocamldoc/odoc_messages.ml	2014-04-13 09:05:24.000000000 +0200
-@@ -45,11 +45,6 @@
+@@ -45,18 +45,10 @@
  let nolabels = "\tIgnore non-optional labels in types"
  let werr = "\tTreat ocamldoc warnings as errors"
  let hide_warnings = "\n\t\tdo not print ocamldoc warnings"
@@ -2368,9 +2412,16 @@ diff -aur patched/ocamldoc/odoc_messages.ml original/ocamldoc/odoc_messages.ml
 -let java_extensions = "\tEnable Java extensions"
 -let java_generics = "\tEnable Java generics"
 -let java_internal_types = "\tShow Java internal types"
+-let java_prefix_url = "<prefix@url>\tBase URL for classes beginning with prefix"
+-let jdk_base_url = "<url>\tBase URL for JDK classes"
  let target_dir = "<dir>\tGenerate files in directory <dir>, rather than in current\n"^
    "\t\tdirectory (for man and HTML generators)"
  let dump = "<file>\tDump collected information into <file>"
+ let load = "<file>\tLoad information from <file> ; may be used several times"
+-let html5 = "\tUse HTML5 (based on Bootstrap) "^html_only
+ let css_style = "<file>\n\t\tUse content of <file> as CSS style definition "^html_only
+ let index_only = "\tGenerate index files only "^html_only
+ let colorize_code = "\n\t\tColorize code even in documentation pages "^html_only
 diff -aur patched/typing/ctype.ml original/typing/ctype.ml
 --- patched/typing/ctype.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/typing/ctype.ml	2014-04-13 09:05:24.000000000 +0200
