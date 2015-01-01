@@ -659,9 +659,12 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
 -        let match_s = Str.matched_string str_t in
 -        let ocaml_name, java_name, kind =
 -          extract_class_name match_s in
--        let url_base = base_url_of_class java_name in
--        Printf.sprintf "<a href=\"%s%s.html\">%s%s</a>"
--          url_base java_name ocaml_name kind
+-        if (String.length ocaml_name > 0) && (ocaml_name.[0] <> '\'') then begin
+-          let url_base = base_url_of_class java_name in
+-          Printf.sprintf "<a href=\"%s%s.html\">%s%s</a>"
+-            url_base java_name ocaml_name kind
+-        end else
+-          match_s
 -      in
        let s2 = Str.global_substitute
            (Str.regexp "\\([A-Z]\\([a-zA-Z_'0-9]\\)*\\.\\)+\\([a-z][a-zA-Z_'0-9]*\\)")
