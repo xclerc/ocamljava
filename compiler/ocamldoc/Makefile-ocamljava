@@ -266,7 +266,7 @@ odoc_see_lexer.ml: odoc_see_lexer.mll
 ######################
 install: dummy
 	$(CP) ocamldoc.jar $(INSTALL_BINDIR)
-	$(CP) $(OCAMLDOC_LIBCMJA) $(INSTALL_LIBDIR)
+	$(CP) *.cmj $(OCAMLDOC_LIBCMJA) $(INSTALL_LIBDIR)
 
 # Testing :
 ###########
