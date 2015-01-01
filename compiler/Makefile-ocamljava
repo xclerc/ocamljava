@@ -34,7 +34,6 @@ OCAMLJAVA=./ocamljava.opt -java-package 'ocaml.compilers'
 COMPFLAGS=-strict-sequence $(INCLUDES)
 LINKFLAGS=
 LINKFLAGS_FOR_JAR_COMPILERS=\
-  -runtime-parameter stop-jvm=off \
   -runtime-parameter embedded=on \
   -runtime-parameter embedded-base=FileAnchor \
   -additional-jar-ref ocaml-lib-files.jar
