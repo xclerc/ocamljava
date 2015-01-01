@@ -3,6 +3,7 @@ Version 2.0-alpha2 (2014-09-22):
   - HTML5 / Bootstrap mode for ocamldoc
   - bug in proxies: method dispatch failing when overriding a method from
     java.lang.Object
+  - bugs #1 and #2: require Ant 1.9.0 or later
   - bug#5: incorrect code generation for match construct
   - bug#6: broken Java instance comparisons
   - bug#7: support for inner-classes in presence of opened packages
