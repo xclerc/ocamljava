@@ -669,7 +669,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            s
        in
 -      let s3 = Str.global_substitute
--          (Str.regexp "[a-zA-Z_'0-9]+[ \t]+java_\\(instance\\)\\|\\(extends\\)")
+-          (Str.regexp "[a-zA-Z_'0-9]*[ \t]+java_\\(\\(instance\\)\\|\\(extends\\)\\)")
 -          g
 -          s2
 -      in
