@@ -131,7 +131,7 @@ diff -aur original/ocaml_compiler.ml patched/ocaml_compiler.ml
            ocaml_ppflags tags; ocaml_include_flags arg; A"-o"; Px out; P arg])
  
  let ocamlc_link flag tags deps out =
-@@ -105,6 +110,37 @@
+@@ -105,6 +110,41 @@
  
  let native_lib_linker_tags tags = tags++"ocaml"++"link"++"native"++"library"
  
@@ -146,7 +146,11 @@ diff -aur original/ocaml_compiler.ml patched/ocaml_compiler.ml
 +          atomize_paths deps; A"-o"; Px out])
 +
 +let ocamljava_link_lib = ocamljava_link (A"-a")
++let ocamljava_link_shared_lib = ocamljava_link (A"-shared")
 +let ocamljava_link_prog = ocamljava_link N
++
++let java_shared_lib_linker tags =
++    ocamljava_link_shared_lib tags
 +
 +let ocamljava_p tags deps out =
 +  let dirnames = List.union [] (List.map Pathname.dirname deps) in
@@ -169,7 +173,7 @@ diff -aur original/ocaml_compiler.ml patched/ocaml_compiler.ml
  
  let prepare_compile build ml =
    let dir = Pathname.dirname ml in
-@@ -168,6 +204,13 @@
+@@ -168,6 +208,13 @@
    prepare_link cmx cmi [cmx_ext; "cmi"] build;
    ocamlopt_c (Tags.union (tags_of_pathname ml) (tags_of_pathname cmx)++"implem"+++tag) ml cmx
  
@@ -183,7 +187,7 @@ diff -aur original/ocaml_compiler.ml patched/ocaml_compiler.ml
  let libs_of_use_lib tags =
    Tags.fold begin fun tag acc ->
      try let libpath, extern = Hashtbl.find info_libraries tag in
-@@ -266,6 +309,15 @@
+@@ -266,6 +313,22 @@
  let native_profile_library_link x = native_profile_link_gen native_lib_linker
    (fun tags -> native_lib_linker_tags tags++"profile") x
  
@@ -196,10 +200,17 @@ diff -aur original/ocaml_compiler.ml patched/ocaml_compiler.ml
 +let java_library_link x =
 +  java_link_gen java_lib_linker java_lib_linker_tags x
 +
++let java_shared_library_tags tags basetags =
++  List.fold_left (++) (basetags++"ocaml"++"link"++"java"++"shared"++"library") tags
++
++let java_shared_library_link ?(tags = []) x =
++  link_one_gen java_shared_lib_linker
++    (java_shared_library_tags tags) x
++
  let link_units table extensions cmX_ext cma_ext a_ext linker tagger contents_list cmX env build =
    let cmX = env cmX in
    let tags = tagger (tags_of_pathname cmX) in
-@@ -392,3 +444,15 @@
+@@ -392,3 +455,15 @@
  let native_profile_library_link_mllib = link_from_file native_profile_library_link_modules
  
  let native_profile_shared_library_link_mldylib = link_from_file native_profile_shared_library_link_modules
@@ -237,16 +248,17 @@ diff -aur original/ocaml_compiler.mli patched/ocaml_compiler.mli
  val prepare_libs :
    string -> string -> Pathname.t ->
    Rule.builder -> Pathname.t list
-@@ -51,6 +56,8 @@
+@@ -51,6 +56,9 @@
  val native_shared_library_link : ?tags:(string list) -> string -> string -> Rule.action
  val native_profile_link : string -> string -> Rule.action
  val native_profile_library_link : string -> string -> Rule.action
 +val java_link : string -> string -> Rule.action
 +val java_library_link : string -> string -> Rule.action
++val java_shared_library_link : ?tags:(string list) -> string -> string -> Rule.action
  val link_modules :
    (Pathname.t * string list) list ->
    string -> string ->
-@@ -85,6 +92,10 @@
+@@ -85,6 +93,10 @@
  val native_profile_library_link_mllib : string -> string -> Rule.action
  val native_profile_shared_library_link_modules : string list -> string -> Rule.action
  val native_profile_shared_library_link_mldylib : string -> string -> Rule.action
@@ -349,7 +361,33 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  rule "ocaml: p.cmx & p.o -> p.cmxa & p.a"
    ~tags:["ocaml"; "native"; "profile"; "library"]
    ~prods:["%.p.cmxa"; x_p_a]
-@@ -436,6 +477,10 @@
+@@ -277,6 +318,12 @@
+   ~deps:["%.cmx"; x_o]
+   (Ocaml_compiler.native_shared_library_link "%.cmx" "%.cmxs");;
+ 
++rule "ocaml: cmj & jo -> cmjs"
++  ~tags:["ocaml"; "java"; "shared"; "library"]
++  ~prods:["%.cmjs"]
++  ~deps:["%.cmj"; x_jo]
++  (Ocaml_compiler.java_shared_library_link "%.cmj" "%.cmjs");;
++
+ rule "ocaml: cmx & o -> cmxs & so"
+   ~tags:["ocaml"; "native"; "shared"; "library"]
+   ~prods:["%.cmxs"; x_dll]
+@@ -289,6 +336,12 @@
+   ~deps:["%.cmxa"; x_a]
+   (Ocaml_compiler.native_shared_library_link ~tags:["linkall"] "%.cmxa" "%.cmxs");;
+ 
++rule "ocaml: cmja & ja -> cmjs"
++  ~tags:["ocaml"; "java"; "shared"; "library"]
++  ~prods:["%.cmjs"]
++  ~deps:["%.cmja"; x_ja]
++  (Ocaml_compiler.java_shared_library_link ~tags:["linkall"] "%.cmja" "%.cmjs");;
++
+ rule "ocaml dependencies ml"
+   ~prod:"%.ml.depends"
+   ~dep:"%.ml"
+@@ -436,6 +489,10 @@
    S (List.map (fun x -> A (x^".cmxa")) !Options.ocaml_libs)
  end;;
  
@@ -360,7 +398,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  flag ["ocaml"; "byte"; "link"] begin
    S (List.map (fun x -> A (x^".cmo")) !Options.ocaml_mods)
  end;;
-@@ -444,6 +489,10 @@
+@@ -444,6 +501,10 @@
    S (List.map (fun x -> A (x^".cmx")) !Options.ocaml_mods)
  end;;
  
@@ -371,7 +409,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  (* findlib *)
  let () =
    if !Options.use_ocamlfind then begin
-@@ -490,6 +539,39 @@
+@@ -490,6 +551,39 @@
      (fun param -> S [A "-inline"; A param]);
    pflag ["ocaml"; "compile"] "pp"
      (fun param -> S [A "-pp"; A param]);
@@ -411,7 +449,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
    pflag ["ocaml"; "ocamldep"] "pp"
      (fun param -> S [A "-pp"; A param]);
    pflag ["ocaml"; "doc"] "pp"
-@@ -532,6 +614,9 @@
+@@ -532,6 +626,9 @@
  ocaml_lib ~extern:true ~dir:"+ocamldoc" "ocamldoc";;
  ocaml_lib ~extern:true ~dir:"+ocamlbuild" ~tag_name:"use_ocamlbuild" "ocamlbuildlib";;
  
@@ -421,7 +459,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4" "camlp4lib";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_old_camlp4" "camlp4";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4_full" "camlp4fulllib";;
-@@ -541,6 +626,7 @@
+@@ -541,6 +638,7 @@
          A"-I"; A"+camlp4/Camlp4Filters"]);;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "byte"] (A"+camlp4/Camlp4Bin.cmo");;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "native"] (A"+camlp4/Camlp4Bin.cmx");;
@@ -429,7 +467,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
  
  flag ["ocaml"; "debug"; "compile"; "byte"] (A "-g");;
  flag ["ocaml"; "debug"; "link"; "byte"; "program"] (A "-g");;
-@@ -574,6 +660,7 @@
+@@ -574,6 +672,7 @@
    flag ["ocaml"; "doc"; "thread"] (S[A"-I"; A"+threads"]);
    flag ["ocaml"; "link"; "thread"; "native"; "program"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "program"] (A "threads.cma");
@@ -437,7 +475,7 @@ diff -aur original/ocaml_specific.ml patched/ocaml_specific.ml
    flag ["ocaml"; "link"; "thread"; "native"; "toplevel"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "toplevel"] (A "threads.cma");
  end;;
-@@ -609,4 +696,13 @@
+@@ -609,4 +708,13 @@
  ocaml_lib "ocamlbuildlib";;
  ocaml_lib "ocamlbuildlightlib";;
  
