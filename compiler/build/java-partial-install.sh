@@ -130,6 +130,7 @@ if test -d camlp4; then
       $dir/*.jo    \
       $CAMLP4DIR/$dir
   done
+  installdir *.cmj *.jo $CAMLP4DIR
   installdir \
     camlp4lib.cmja Camlp4.cmi \
     camlp4fulllib.cmja \
