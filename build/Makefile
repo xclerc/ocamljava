@@ -168,10 +168,10 @@ step09-build-and-install-ocamljava-libraries:
 	$(AUGMENTED_PATH) && \
 	cp -R ../library . && \
 	for lib in javalib concurrent; do \
-	  (cd library/$$lib && \
+	  cd library/$$lib && \
 	  $(MAKE) build && \
 	  $(MAKE) install && \
-	  cd ../..); \
+	  cd ../..; \
 	done
 
 step10-build-and-install-barista-with-ocamljava:
