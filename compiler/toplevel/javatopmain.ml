@@ -23,7 +23,7 @@ open Jclflags
 
 let usage = "Usage: ocamlj <options> <object-files> [script-file]\noptions are:"
 
-let preload_objects = ref []
+let preload_objects = ref ["javalib.cmja"]
 
 let prepare ppf =
   Javatoploop.set_paths ();

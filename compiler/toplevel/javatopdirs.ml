@@ -109,6 +109,13 @@ let dir_load ppf name = ignore (load_file ppf name)
 
 let _ = Hashtbl.add directive_table "load" (Directive_string (dir_load std_out))
 
+(* To add to classpath *)
+
+let dir_classpath _ppf name = add_cp name
+
+let _ = Hashtbl.add directive_table "classpath" (Directive_string (dir_classpath std_out))
+let _ = Hashtbl.add directive_table "cp" (Directive_string (dir_classpath std_out))
+
 (* Load commands from a file *)
 
 let dir_use ppf name = ignore(Javatoploop.use_file ppf name)
