@@ -65,6 +65,8 @@ let _ = Hashtbl.add directive_table "cd" (Directive_string dir_cd)
 
 (* Load in-core a .cmjs file *)
 
+external add_cp : string -> unit = "caml_natdynlink_addcp"
+
 let rec load_file ppf name =
   let filename = try Some (find_in_path !Config.load_path name) with Not_found -> None in
   match filename with
@@ -72,6 +74,12 @@ let rec load_file ppf name =
   | Some name -> really_load_file ppf name
 
 and really_load_file ppf filename =
+  if Filename.check_suffix filename ".cmj" then
+    add_cp ((Filename.chop_extension filename) ^ ".jo")
+  else if Filename.check_suffix filename ".cmja" then
+    add_cp ((Filename.chop_extension filename) ^ ".ja")
+  else
+    ();
   let fn,tmp =
     if Filename.check_suffix filename ".cmj" || Filename.check_suffix filename ".cmja"
     then
