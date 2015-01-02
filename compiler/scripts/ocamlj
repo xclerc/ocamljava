@@ -1,0 +1,52 @@
+#
+# This file is part of OCaml-Java compiler.
+# Copyright (C) 2007-2014 Xavier Clerc.
+#
+# OCaml-Java compiler is free software; you can redistribute it and/or modify
+# it under the terms of the Q Public License v1.0 as published by
+# Trolltech (with a change to choice of law).
+#
+# OCaml-Java compiler is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Q Public License for more details.
+#
+# You should have received a copy of the Q Public License
+# along with this program.  If not, see
+# <http://opensource.org/licenses/QPL-1.0>.
+#
+
+case "`uname`" in
+  CYGWIN*)
+    if [ ! -z "$JAVA_HOME" ]; then
+      JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+    fi
+    ;;
+  Darwin*)
+    if [ -z "$JAVA_HOME" ]; then
+      JAVA_HOME=`/usr/libexec/java_home -F -v 1.7+`
+      if [ $? != 0 ]; then
+        echo 'error: unable to find a Java 1.7 installation.'
+        exit 1
+      fi
+    fi
+    ;;
+  *) ;;
+esac
+
+if [ -z "$JAVA_HOME" ]; then
+  OCJ_JAVA=`which java 2> /dev/null`
+  if [ -z "$OCJ_JAVA" ]; then
+    echo 'error: unable to find Java home.'
+    exit 1
+  fi
+else
+  OCJ_JAVA=$JAVA_HOME/bin/java
+fi
+
+OCJ_JAR=`dirname $0`/ocamlj.jar
+case "`uname`" in
+  CYGWIN*) OCJ_JAR=`cygpath --mixed "$OCJ_JAR"` ;;
+  *) ;;
+esac
+exec "$OCJ_JAVA" -Xss8M -jar "$OCJ_JAR" $@

@@ -138,6 +138,9 @@ build-java-toplevel: $(JAVATOP:.cmo=.cmi) $(JAVATOP:.cmo=.cmj)
 
 install-java-toplevel:
 	cp ocamlj.jar $(BINDIR)
+	cp toplevel/javatopdirs.cm[ij] toplevel/javatopdirs.jo $(LIBDIR)
+	cp scripts/ocamlj $(BINDIR)
+	chmod +x $(BINDIR)/ocamlj
 
 install-ocamljava-jar:
 	cp ocamljava.jar $(BINDIR)
