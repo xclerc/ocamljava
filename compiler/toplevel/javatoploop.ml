@@ -441,9 +441,9 @@ let load_ocamlinit ppf =
   | Some f -> if Sys.file_exists f then ignore (use_silently ppf f)
               else fprintf ppf "Init file not found: \"%s\".@." f
   | None ->
-     if Sys.file_exists ".ocamlinit" then ignore (use_silently ppf ".ocamlinit")
+     if Sys.file_exists ".ocamljinit" then ignore (use_silently ppf ".ocamljinit")
      else try
-       let home_init = Filename.concat (Sys.getenv "HOME") ".ocamlinit" in
+       let home_init = Filename.concat (Sys.getenv "HOME") ".ocamljinit" in
        if Sys.file_exists home_init then ignore (use_silently ppf home_init)
      with Not_found -> ()
 ;;
