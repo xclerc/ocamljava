@@ -19,6 +19,17 @@
  *)
 
 
+let initial_env () =
+  let env = Compmisc.initial_env () in
+  if !Jclflags.java_extensions && (not !Clflags.nopervasives) then
+    try
+      Env.open_pers_signature "JavaPervasives" env
+    with Not_found ->
+      prerr_endline "Warning: JavaPervasives is not opened.";
+      env
+  else
+    env
+
 (* Compile a .mli file *)
 
 let interface ppf sourcefile outputprefix =
@@ -30,7 +41,7 @@ let interface ppf sourcefile outputprefix =
   Compenv.check_unit_name ppf sourcefile modulename;
   Env.set_unit_name modulename;
   let inputfile = Pparse.preprocess sourcefile in
-  let initial_env = Compmisc.initial_env() in
+  let initial_env = initial_env () in
   try
     let ast =
       Pparse.file ppf inputfile Parse.interface Config.ast_intf_magic_number in
@@ -74,7 +85,7 @@ let implementation ppf sourcefile outputprefix =
   Compenv.check_unit_name ppf sourcefile modulename;
   Env.set_unit_name modulename;
   let inputfile = Pparse.preprocess sourcefile in
-  let env = Compmisc.initial_env() in
+  let env = initial_env () in
   Jcompilenv.reset ?packname:!Clflags.for_package modulename;
   let cmjfile = outputprefix ^ Jconfig.ext_compiled in
   let objfile = outputprefix ^ Jconfig.ext_obj in

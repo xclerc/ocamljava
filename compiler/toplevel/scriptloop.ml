@@ -18,6 +18,17 @@
  * <http://opensource.org/licenses/QPL-1.0>.
  *)
 
+let initial_env () =
+  let env = Compmisc.initial_env () in
+  if !Jclflags.java_extensions && (not !Clflags.nopervasives) then
+    try
+      Env.open_pers_signature "JavaPervasives" env
+    with Not_found ->
+      prerr_endline "Warning: JavaPervasives is not opened.";
+      env
+  else
+    env
+
 open Config
 open Parsetree
 open Misc
@@ -142,7 +153,7 @@ let set_paths () =
   ()
 
 let initialize_toplevel_env () =
-  toplevel_env := Compmisc.initial_env()
+  toplevel_env := initial_env()
 
 let eval : string -> 'a = fun s ->
   (* init *)

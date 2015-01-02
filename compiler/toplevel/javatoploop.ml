@@ -18,6 +18,17 @@
  * <http://opensource.org/licenses/QPL-1.0>.
  *)
 
+let initial_env () =
+  let env = Compmisc.initial_env () in
+  if !Jclflags.java_extensions && (not !Clflags.nopervasives) then
+    try
+      Env.open_pers_signature "JavaPervasives" env
+    with Not_found ->
+      prerr_endline "Warning: JavaPervasives is not opened.";
+      env
+  else
+    env
+
 (* The interactive toplevel loop *)
 
 open Path
@@ -446,7 +457,7 @@ let set_paths () =
   ()
 
 let initialize_toplevel_env () =
-  toplevel_env := Compmisc.initial_env()
+  toplevel_env := initial_env()
 
 (* The interactive loop *)
 
@@ -487,6 +498,6 @@ let run_script ppf name args =
   Obj.truncate (Obj.repr Sys.argv) len;
   Arg.current := 0;
   Compmisc.init_path true;
-  toplevel_env := Compmisc.initial_env();
+  toplevel_env := initial_env();
   Sys.interactive := false;
   use_silently ppf name
