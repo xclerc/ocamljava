@@ -125,7 +125,10 @@ let is_java_array_primitive pname =
 let is_int ty =
   match (Btype.repr ty).Types.desc with
   | Types.Tconstr (path, [], _) ->
-      Path.same Predef.path_int path
+      (Path.same Predef.path_int path)
+      || (Path.same Predef.path_java_byte path)
+      || (Path.same Predef.path_java_char path)
+      || (Path.same Predef.path_java_short path)
   | _ -> false
 
 let is_int_list ty =

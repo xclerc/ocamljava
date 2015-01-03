@@ -265,23 +265,23 @@ type conversion_function = (Types.type_desc -> Types.type_expr) -> string -> Loc
 
 let rec ocaml_type_of_java_type ?(ellipsis=false) newty closed (desc : Descriptor.java_type) =
   match desc with
-  | `Boolean        -> Predef.type_bool
-  | `Byte           -> Predef.type_int
-  | `Char           -> Predef.type_int
-  | `Double         -> Predef.type_float
-  | `Float          -> Predef.type_float
-  | `Int            -> Predef.type_int32
-  | `Long           -> Predef.type_int64
-  | `Short          -> Predef.type_int
-  | `Void           -> Predef.type_unit
-  | `Array `Boolean -> (if ellipsis then Predef.type_array else Predef.type_java_boolean_array) Predef.type_bool
-  | `Array `Byte    -> (if ellipsis then Predef.type_array else Predef.type_java_byte_array)    Predef.type_int
-  | `Array `Char    -> (if ellipsis then Predef.type_array else Predef.type_java_char_array)    Predef.type_int
-  | `Array `Double  -> (if ellipsis then Predef.type_array else Predef.type_java_double_array)  Predef.type_float
-  | `Array `Float   -> (if ellipsis then Predef.type_array else Predef.type_java_float_array)   Predef.type_float
-  | `Array `Int     -> (if ellipsis then Predef.type_array else Predef.type_java_int_array)     Predef.type_int32
-  | `Array `Long    -> (if ellipsis then Predef.type_array else Predef.type_java_long_array)    Predef.type_int64
-  | `Array `Short   -> (if ellipsis then Predef.type_array else Predef.type_java_short_array)   Predef.type_int
+  | `Boolean        -> Predef.type_java_boolean
+  | `Byte           -> Predef.type_java_byte
+  | `Char           -> Predef.type_java_char
+  | `Double         -> Predef.type_java_double
+  | `Float          -> Predef.type_java_float
+  | `Int            -> Predef.type_java_int
+  | `Long           -> Predef.type_java_long
+  | `Short          -> Predef.type_java_short
+  | `Void           -> Predef.type_java_void
+  | `Array `Boolean -> (if ellipsis then Predef.type_array else Predef.type_java_boolean_array) Predef.type_java_boolean
+  | `Array `Byte    -> (if ellipsis then Predef.type_array else Predef.type_java_byte_array)    Predef.type_java_byte
+  | `Array `Char    -> (if ellipsis then Predef.type_array else Predef.type_java_char_array)    Predef.type_java_char
+  | `Array `Double  -> (if ellipsis then Predef.type_array else Predef.type_java_double_array)  Predef.type_java_double
+  | `Array `Float   -> (if ellipsis then Predef.type_array else Predef.type_java_float_array)   Predef.type_java_float
+  | `Array `Int     -> (if ellipsis then Predef.type_array else Predef.type_java_int_array)     Predef.type_java_int
+  | `Array `Long    -> (if ellipsis then Predef.type_array else Predef.type_java_long_array)    Predef.type_java_long
+  | `Array `Short   -> (if ellipsis then Predef.type_array else Predef.type_java_short_array)   Predef.type_java_short
   | `Array at ->
       if ellipsis then
         (at :> Descriptor.java_type)
@@ -463,7 +463,7 @@ let get_array_info, java_array_shape_of_string =
       if n <= 0 then
         ty
       else
-        newty (Types.Tarrow ("", Predef.type_int32, arrow (pred n) ty, Types.Cok)) in
+        newty (Types.Tarrow ("", Predef.type_java_int, arrow (pred n) ty, Types.Cok)) in
     let path =
       if specify_dimensions then
         Predef.path_java_array_shape_dims
