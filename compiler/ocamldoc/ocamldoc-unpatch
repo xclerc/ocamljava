@@ -9,7 +9,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  let with_parameter_list = ref false
  let css_style = ref None
  let index_only = ref false
-@@ -30,53 +29,6 @@
+@@ -30,61 +29,6 @@
  let html_short_functors = ref false
  let charset = ref "iso-8859-1"
  
@@ -28,6 +28,14 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
 -let close_sub       () = if_html5 "</sub>"       "</sub>"
 -let open_type       () = if_html5 "<tt class=\"type\">" "<code class=\"type\">"
 -let close_type      () = if_html5 "</tt>"        "</code>"
+-let open_kbd        () = if_html5 "<kbd>"        "<tt>"
+-let close_kbd       () = if_html5 "</kbd>"       "</tt>"
+-let open_strike     () = if_html5 "<s>"          "<strike>"
+-let close_strike    () = if_html5 "</s>"         "</strike>"
+-let open_underline  () = if_html5 "<u>"          "<u>"
+-let close_underline () = if_html5 "</u>"         "</u>"
+-let open_table      () = if_html5 "<table class=\"table table-striped table-hover table-condensed\">"        "<table>"
+-let close_table     () = if_html5 "</table>"     "</table>"
 -let new_line        () = if_html5 "\n<br><br>\n" "\n<p>\n"
 -let open_container  () = if_html5 "<div class=\"container\" style=\"max-width: 48em;\">"   ""
 -let close_container () = if_html5 "</div>"       ""
@@ -63,39 +71,160 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
  (** The functions used for naming files and html marks.*)
  module Naming =
-@@ -338,30 +290,7 @@
+@@ -277,53 +221,6 @@
+ let bs = Buffer.add_string
+ 
+ 
+-module Tables : sig
+-  type state
+-  val make_state : unit -> state
+-  val begin_table : state -> unit
+-  val end_table : state -> unit
+-  val begin_row : state -> unit
+-  val end_row : state -> unit
+-  val add_cell : state -> unit
+-  val add_cells : int -> state -> unit
+-end = struct
+-  type state = {
+-      row_stack : (int option * int) Stack.t;
+-      mutable last_row_length : int option;
+-      mutable current_row_length : int;
+-    }
+-  let make_state () =
+-    { row_stack = Stack.create ();
+-      last_row_length = None;
+-      current_row_length = 0; }
+-  let begin_table st =
+-    Stack.push (st.last_row_length, st.current_row_length) st.row_stack;
+-    st.last_row_length <- None;
+-    st.current_row_length <- 0
+-  let end_table st =
+-    let last, curr = Stack.pop st.row_stack in
+-    st.last_row_length <- last;
+-    st.current_row_length <- curr
+-  let begin_row _ =
+-    ()
+-  let end_row st =
+-    (match st.last_row_length with
+-    | Some x ->
+-        if x <> st.current_row_length then
+-          let msg =
+-            Printf.sprintf "table row has invalid length (%d instead of %d)"
+-              st.current_row_length
+-              x in
+-          Odoc_info.warning msg
+-    | None ->
+-        st.last_row_length <- Some st.current_row_length);
+-    st.current_row_length <- 0
+-  let add_cell st =
+-    st.current_row_length <- succ st.current_row_length
+-  let add_cells n st =
+-    st.current_row_length <- st.current_row_length + n
+-end
+-
+ (** Generation of html code from text structures. *)
+ class virtual text =
+   object (self)
+@@ -393,97 +290,7 @@
        | Odoc_info.Custom (s,t) -> self#html_of_custom_text b s t
        | Odoc_info.Target (target, code) -> self#html_of_Target b ~target ~code
  
--    method html_of_custom_text b s t =
--      let string_of_text t =
+-    val tables = Tables.make_state ()
+-
+-    method html_of_custom_text buff tag text =
+-      let string_of_text text =
 -        let tmp = Buffer.create 256 in
--        self#html_of_text tmp t;
+-        self#html_of_text tmp text;
 -        Buffer.contents tmp in
--      match s with
+-      let trimmed_string_of_text text =
+-        text
+-        |> string_of_text
+-        |> String.trim in
+-      let add s =
+-        Buffer.add_string buff s in
+-      match tag with
+-      | "k" ->
+-          add (open_kbd ());
+-          self#html_of_text buff text;
+-          add (close_kbd ())
+-      | "s" ->
+-          add (open_strike ());
+-          self#html_of_text buff text;
+-          add (close_strike ())
+-      | "u" ->
+-          add (open_underline ());
+-          self#html_of_text buff text;
+-          add (close_underline ())
+-      | "table" ->
+-          Tables.begin_table tables;
+-          add (open_table ());
+-          self#html_of_text buff text;
+-          add (close_table ());
+-          Tables.end_table tables
+-      | "caption" ->
+-          add "<caption>";
+-          self#html_of_text buff text;
+-          add "</caption>"
+-      | "header" ->
+-          Tables.add_cell tables;
+-          add "<th>";
+-          self#html_of_text buff text;
+-          add "</th>"
+-      | "row" ->
+-          Tables.begin_row tables;
+-          add "<tr>";
+-          self#html_of_text buff text;
+-          add "</tr>";
+-          Tables.end_row tables
+-      | "data" ->
+-          Tables.add_cell tables;
+-          add "<td>";
+-          self#html_of_text buff text;
+-          add "</td>"
+-      | "span" ->
+-          let text = trimmed_string_of_text text in
+-          let idx1 = try String.index text ' ' with Not_found -> max_int in
+-          let idx2 = try String.index text '\t' with Not_found -> max_int in
+-          let idx = min idx1 idx2 in
+-          if idx < max_int then
+-            let sz = String.sub text 0 idx in
+-            try
+-              let n = int_of_string sz in
+-              if n >= 1 then begin
+-                Tables.add_cells n tables;
+-                let text = String.sub text idx ((String.length text) - idx) in
+-                add ("<td colspan=\"" ^ sz ^ "\">");
+-                add text;
+-                add "</td>"
+-              end else
+-                Odoc_info.warning "span size should be positive"
+-            with Failure _ ->
+-              Odoc_info.warning "span size should be an integer"
+-          else
+-            Odoc_info.warning "span size is missing"
 -      | "java" ->
--          let t = String.trim (string_of_text t) in
--          let len = String.length t in
--          let buff = Buffer.create len in
+-          let text = trimmed_string_of_text text in
+-          let len = String.length text in
+-          let tmp_buff = Buffer.create len in
 -          for i = 0 to pred len do
--            match t.[i] with
--            | '.' -> Buffer.add_char buff '/'
--            | '$' -> Buffer.add_char buff '.'
--            | ch  -> Buffer.add_char buff ch
+-            match text.[i] with
+-            | '.' -> Buffer.add_char tmp_buff '/'
+-            | '$' -> Buffer.add_char tmp_buff '.'
+-            | ch  -> Buffer.add_char tmp_buff ch
 -          done;
--          let buff = Buffer.contents buff in
--          Buffer.add_string b "<tt><a href=\"";
--          Buffer.add_string b (base_url_of_class buff);
--          Buffer.add_string b buff;
--          Buffer.add_string b ".html\">";
--          Buffer.add_string b t;
--          Buffer.add_string b "</a></tt>";
+-          let class_name = Buffer.contents tmp_buff in
+-          add "<tt><a href=\"";
+-          add (base_url_of_class class_name);
+-          add class_name;
+-          add ".html\">";
+-          add text;
+-          add "</a></tt>";
 -      | _ -> ()
 +    method html_of_custom_text b s t = ()
  
      method html_of_Target b ~target ~code =
        if String.lowercase target = "html" then bs b code else ()
-@@ -406,62 +335,11 @@
+@@ -528,62 +335,11 @@
                  None -> String.sub s first 1
                | Some last -> String.sub s first ((last-first)+1)
          in
@@ -159,7 +288,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
             bs b "</pre>"
            )
        else
-@@ -469,7 +347,7 @@
+@@ -591,7 +347,7 @@
           bs b "<pre class=\"codepre\"><code class=\"";
           bs b Odoc_ocamlhtml.code_class;
           bs b "\">" ;
@@ -168,7 +297,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
           bs b "</code></pre>"
          )
  
-@@ -479,14 +357,14 @@
+@@ -601,14 +357,14 @@
        bs b "</pre>"
  
      method html_of_Bold b t =
@@ -187,7 +316,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      method html_of_Emphasize b t =
        bs b "<em>" ;
-@@ -522,7 +400,7 @@
+@@ -644,7 +400,7 @@
          tl;
        bs b "</OL>\n"
  
@@ -196,7 +325,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      method html_of_Block b t =
        bs b "<blockquote>\n";
-@@ -594,20 +472,19 @@
+@@ -716,20 +472,19 @@
            bs b "</a>"
  
      method html_of_Superscript b t =
@@ -223,7 +352,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        List.iter
          (fun name ->
            bs b "<tr><td class=\"module\">";
-@@ -685,7 +562,7 @@
+@@ -807,7 +562,7 @@
        match l with
          [] -> ()
        | _ ->
@@ -232,7 +361,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            self#html_of_text b [Raw (String.concat ", " l)];
            bs b "<br>\n"
  
-@@ -694,7 +571,7 @@
+@@ -816,7 +571,7 @@
        match v_opt with
          None -> ()
        | Some v ->
@@ -241,7 +370,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
             self#html_of_text b [Raw v];
             bs b "<br>\n"
  
-@@ -703,16 +580,16 @@
+@@ -825,16 +580,16 @@
        match s_opt with
          None -> ()
        | Some s ->
@@ -261,7 +390,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#html_of_text b text;
          bs b "<br>\n"
        in
-@@ -723,15 +600,13 @@
+@@ -845,15 +600,13 @@
        match l with
          [] -> ()
        | (s, t) :: [] ->
@@ -279,7 +408,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            List.iter
              (fun (ex, desc) ->
                bp b "<li><code>%s</code> " ex ;
-@@ -756,11 +631,11 @@
+@@ -878,11 +631,11 @@
        match l with
          [] -> ()
        | see :: [] ->
@@ -293,7 +422,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            List.iter
              (fun see ->
                bs b "<li>" ;
-@@ -775,7 +650,7 @@
+@@ -897,7 +650,7 @@
        match return_opt with
          None -> ()
        | Some s ->
@@ -302,7 +431,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            self#html_of_text b s;
            bs b "<br>\n"
  
-@@ -888,7 +763,7 @@
+@@ -1010,7 +763,7 @@
      inherit info
  
      val mutable doctype =
@@ -311,7 +440,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
      method character_encoding () =
        Printf.sprintf
          "<meta content=\"text/html; charset=%s\" http-equiv=\"Content-Type\">\n"
-@@ -896,157 +771,86 @@
+@@ -1018,157 +771,86 @@
  
      (** The default style options. *)
      val mutable default_style_options =
@@ -549,7 +678,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      (** The style file for all pages. *)
      val mutable style_file = "style.css"
-@@ -1157,12 +961,7 @@
+@@ -1279,12 +961,7 @@
        | Some f ->
            style_file <- f
        );
@@ -563,7 +692,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      (** Get the title given by the user *)
      method title = match !Global.title with None -> "" | Some t -> self#escape t
-@@ -1286,32 +1085,24 @@
+@@ -1408,32 +1085,24 @@
         match pre with
           None -> ()
         | Some name ->
@@ -599,7 +728,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
               Odoc_messages.next
        );
        bs b "</div>\n"
-@@ -1328,18 +1119,10 @@
+@@ -1450,18 +1119,10 @@
        try
          let chanout = open_out file in
          let b = new_buf () in
@@ -619,7 +748,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body></html>";
          Buffer.output_buffer chanout b;
          close_out chanout
-@@ -1371,57 +1154,12 @@
+@@ -1493,60 +1154,12 @@
            else
              s_final
        in
@@ -681,7 +810,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      (** Take a string and return the string where fully qualified module idents
         have been replaced by links to the module referenced by the ident.*)
-@@ -1451,9 +1189,9 @@
+@@ -1576,9 +1189,9 @@
      method html_of_type_expr b m_name t =
        let s = Odoc_info.remove_ending_newline (Odoc_info.string_of_type_expr t) in
        let s2 = newline_to_indented_br s in
@@ -693,7 +822,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      (** Print html code to display a [Types.type_expr list]. *)
      method html_of_type_expr_list ?par b m_name sep l =
-@@ -1462,52 +1200,47 @@
+@@ -1587,52 +1200,47 @@
        print_DEBUG "html#html_of_type_expr_list: 1";
        let s2 = newline_to_indented_br s in
        print_DEBUG "html#html_of_type_expr_list: 2";
@@ -757,7 +886,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            (
             match modu with
               None ->
-@@ -1518,14 +1251,11 @@
+@@ -1643,14 +1251,11 @@
                 let (html_file, _) = Naming.html_files m.m_name in
                 bp b " <a href=\"%s\">..</a> " html_file
            );
@@ -775,7 +904,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        | Module_functor (p, k) ->
            if !html_short_functors then
              bs b " "
-@@ -1546,31 +1276,24 @@
+@@ -1671,31 +1276,24 @@
            (* TODO: l'application n'est pas correcte dans un .mli.
               Que faire ? -> afficher le module_type du typedtree  *)
            self#html_of_module_kind b father k1;
@@ -814,7 +943,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            begin
              match mta.mta_module with
                None ->
-@@ -1579,7 +1302,7 @@
+@@ -1704,7 +1302,7 @@
                  let (html_file, _) = Naming.html_files mt.mt_name in
                  bp b " <a href=\"%s\">%s</a> " html_file (self#escape code)
            end;
@@ -823,7 +952,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
  
      method html_of_module_parameter b father p =
-@@ -1589,28 +1312,14 @@
+@@ -1714,28 +1312,14 @@
          else
            "functor ", "-> "
        in
@@ -859,7 +988,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      method html_of_module_element b father ele =
        match ele with
-@@ -1637,10 +1346,7 @@
+@@ -1762,10 +1346,7 @@
      method html_of_module_type_kind b father ?modu ?mt kind =
        match kind with
          Module_type_struct eles ->
@@ -871,7 +1000,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            (
             match mt with
               None ->
-@@ -1658,27 +1364,23 @@
+@@ -1783,27 +1364,23 @@
                 let (html_file, _) = Naming.html_files mt.mt_name in
                 bp b " <a href=\"%s\">..</a> " html_file
            );
@@ -906,7 +1035,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      (** Print html code to display the type of a module parameter.. *)
      method html_of_module_parameter_type b m_name p =
-@@ -1697,7 +1399,7 @@
+@@ -1822,7 +1399,7 @@
      (** Print html code for a value. *)
      method html_of_value b v =
        Odoc_info.reset_type_names ();
@@ -915,7 +1044,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bp b "<span id=\"%s\">" (Naming.value_target v);
        bs b (self#keyword "val");
        bs b " ";
-@@ -1712,7 +1414,7 @@
+@@ -1837,7 +1414,7 @@
        bs b "</span>";
        bs b " : ";
        self#html_of_type_expr b (Name.father v.val_name) v.val_type;
@@ -924,7 +1053,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        self#html_of_info b v.val_info;
        (
         if !with_parameter_list then
-@@ -1724,7 +1426,7 @@
+@@ -1849,7 +1426,7 @@
      (** Print html code for an exception. *)
      method html_of_exception b e =
        Odoc_info.reset_type_names ();
@@ -933,7 +1062,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bp b "<span id=\"%s\">" (Naming.exception_target e);
        bs b (self#keyword "exception");
        bs b " ";
-@@ -1750,7 +1452,7 @@
+@@ -1875,7 +1452,7 @@
                  bp b "<a href=\"%s\">%s</a>" (Naming.complete_exception_target e) e.ex_name
             )
        );
@@ -942,7 +1071,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        self#html_of_info b e.ex_info
  
      (** Print html code for a type. *)
-@@ -1759,12 +1461,12 @@
+@@ -1884,12 +1461,12 @@
        let father = Name.father t.ty_name in
        bs b
          (match t.ty_manifest, t.ty_kind with
@@ -959,7 +1088,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          );
        bp b "<span id=\"%s\">" (Naming.type_target t);
        bs b ((self#keyword "type")^" ");
-@@ -1783,25 +1485,23 @@
+@@ -1908,25 +1485,23 @@
             bs b " "
        );
        (match t.ty_kind with
@@ -991,7 +1120,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
              bp b "<span id=\"%s\">%s</span>"
                (Naming.const_target t constr)
                (self#constructor constr.vc_name);
-@@ -1820,25 +1520,22 @@
+@@ -1945,25 +1520,22 @@
                   bs b (" " ^ (self#keyword "->") ^ " ");
                   self#html_of_type_expr b father r;
              );
@@ -1022,7 +1151,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
              );
              bs b "\n</tr>"
            in
-@@ -1852,37 +1549,33 @@
+@@ -1977,37 +1549,33 @@
            bs b
              (
               match t.ty_manifest with
@@ -1068,7 +1197,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
              );
              bs b "\n</tr>"
            in
-@@ -1896,7 +1589,7 @@
+@@ -2021,7 +1589,7 @@
      (** Print html code for a class attribute. *)
      method html_of_attribute b a =
        let module_name = Name.father (Name.father a.att_value.val_name) in
@@ -1077,7 +1206,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bp b "<span id=\"%s\">" (Naming.attribute_target a);
        bs b (self#keyword "val");
        bs b " ";
-@@ -1922,13 +1615,13 @@
+@@ -2047,13 +1615,13 @@
        bs b "</span>";
        bs b " : ";
        self#html_of_type_expr b module_name a.att_value.val_type;
@@ -1093,7 +1222,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        (* html mark *)
        bp b "<span id=\"%s\">" (Naming.method_target m);
       bs b ((self#keyword "method")^" ");
-@@ -1945,7 +1638,7 @@
+@@ -2070,7 +1638,7 @@
        bs b "</span>";
        bs b " : ";
        self#html_of_type_expr b module_name m.met_value.val_type;
@@ -1102,7 +1231,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        self#html_of_info b m.met_value.val_info;
        (
         if !with_parameter_list then
-@@ -1978,9 +1671,9 @@
+@@ -2103,9 +1671,9 @@
              match Parameter.desc_by_name p n with
                None -> ()
              | Some t ->
@@ -1114,7 +1243,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
                  self#html_of_text b t
            in
            print_concat b "<br>\n" print_one l2
-@@ -1993,9 +1686,9 @@
+@@ -2118,9 +1686,9 @@
            bs b "<div class=\"param_info\">";
            bs b "<table border=\"0\" cellpadding=\"3\" width=\"100%\">\n";
            bs b "<tr>\n<td align=\"left\" valign=\"top\" width=\"1%\">";
@@ -1126,7 +1255,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            bs b "<td>\n<table class=\"paramstable\">\n";
            let print_one p =
              bs b "<tr>\n<td align=\"center\" valign=\"top\" width=\"15%\" class=\"code\">\n";
-@@ -2026,11 +1719,9 @@
+@@ -2151,11 +1719,9 @@
            l
        in
        let f p =
@@ -1140,7 +1269,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#html_of_parameter_description b p;
          bs b "</div>\n"
        in
-@@ -2044,17 +1735,16 @@
+@@ -2169,17 +1735,16 @@
        | _ ->
            bs b "<table border=\"0\" cellpadding=\"3\" width=\"100%\">\n";
            bs b "<tr>\n";
@@ -1162,7 +1291,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
                bs b "<td align=\"center\" valign=\"top\">:</td>\n";
                bs b "<td>" ;
                self#html_of_module_parameter_type b m_name p;
-@@ -2075,7 +1765,7 @@
+@@ -2200,7 +1765,7 @@
      method html_of_module b ?(info=true) ?(complete=true) ?(with_link=true) m =
        let (html_file, _) = Naming.html_files m.m_name in
        let father = Name.father m.m_name in
@@ -1171,7 +1300,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bs b ((self#keyword "module")^" ");
        (
         if with_link then
-@@ -2090,7 +1780,7 @@
+@@ -2215,7 +1780,7 @@
         | _ -> bs b ": "
        );
        self#html_of_module_kind b father ~modu: m m.m_kind;
@@ -1180,7 +1309,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        if info then
          (
           if complete then
-@@ -2105,7 +1795,7 @@
+@@ -2230,7 +1795,7 @@
      method html_of_modtype b ?(info=true) ?(complete=true) ?(with_link=true) mt =
        let (html_file, _) = Naming.html_files mt.mt_name in
        let father = Name.father mt.mt_name in
@@ -1189,7 +1318,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bs b ((self#keyword "module type")^" ");
        (
         if with_link then
-@@ -2119,7 +1809,7 @@
+@@ -2244,7 +1809,7 @@
            bs b " = ";
            self#html_of_module_type_kind b father ~mt k
        );
@@ -1198,7 +1327,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        if info then
          (
           if complete then
-@@ -2132,7 +1822,7 @@
+@@ -2257,7 +1822,7 @@
  
      (** Print html code for an included module. *)
      method html_of_included_module b im =
@@ -1207,7 +1336,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        bs b ((self#keyword "include")^" ");
        (
         match im.im_module with
-@@ -2150,7 +1840,7 @@
+@@ -2275,7 +1840,7 @@
             in
             bp b "<a href=\"%s\">%s</a>" file name
        );
@@ -1216,7 +1345,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        self#html_of_info b im.im_info
  
      method html_of_class_element b element =
-@@ -2165,10 +1855,7 @@
+@@ -2290,10 +1855,7 @@
      method html_of_class_kind b father ?cl kind =
        match kind with
          Class_structure (inh, eles) ->
@@ -1228,7 +1357,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            (
             match cl with
               None ->
-@@ -2184,10 +1871,7 @@
+@@ -2309,10 +1871,7 @@
                 let (html_file, _) = Naming.html_files cl.cl_name in
                 bp b " <a href=\"%s\">..</a> " html_file
            );
@@ -1240,7 +1369,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
        | Class_apply capp ->
            (* TODO: display final type from typedtree *)
-@@ -2201,25 +1885,16 @@
+@@ -2326,25 +1885,16 @@
                 self#html_of_class_type_param_expr_list b father l;
                 bs b " "
            );
@@ -1271,7 +1400,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
      method html_of_class_type_kind b father ?ct kind =
        match kind with
-@@ -2231,15 +1906,12 @@
+@@ -2356,15 +1906,12 @@
                 self#html_of_class_type_param_expr_list b father l;
                 bs b " "
            );
@@ -1290,7 +1419,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
            (
             match ct with
               None ->
-@@ -2254,17 +1926,14 @@
+@@ -2379,17 +1926,14 @@
                 let (html_file, _) = Naming.html_files ct.clt_name in
                 bp b " <a href=\"%s\">..</a> " html_file
            );
@@ -1310,7 +1439,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        (* we add a html id, the same as for a type so we can
           go directly here when the class name is used as a type name *)
        bp b "<span name=\"%s\">"
-@@ -2297,7 +1966,7 @@
+@@ -2422,7 +1966,7 @@
        bs b " : " ;
        self#html_of_class_parameter_list b father c ;
        self#html_of_class_kind b father ~cl: c c.cl_kind;
@@ -1319,7 +1448,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        print_DEBUG "html#html_of_class : info" ;
        (
         if complete then
-@@ -2311,7 +1980,7 @@
+@@ -2436,7 +1980,7 @@
        Odoc_info.reset_type_names ();
        let father = Name.father ct.clt_name in
        let (html_file, _) = Naming.html_files ct.clt_name in
@@ -1328,7 +1457,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        (* we add a html id, the same as for a type so we can
           go directly here when the class type name is used as a type name *)
        bp b "<span id=\"%s\">"
-@@ -2341,7 +2010,7 @@
+@@ -2466,7 +2010,7 @@
        bs b "</span>";
        bs b " = ";
        self#html_of_class_type_kind b father ~ct ct.clt_kind;
@@ -1337,7 +1466,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
        (
         if complete then
           self#html_of_info ~cls: "classtype top" ~indent: true
-@@ -2454,11 +2123,9 @@
+@@ -2579,11 +2123,9 @@
        try
          let chanout = open_out (Filename.concat !Global.target_dir simple_file) in
          let b = new_buf () in
@@ -1349,7 +1478,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#print_navbar b None None "";
          bs b "<h1>";
          bs b title;
-@@ -2490,14 +2157,12 @@
+@@ -2615,14 +2157,12 @@
                in
                bs b "<tr><td align=\"left\"><br>";
                bs b s ;
@@ -1366,7 +1495,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body>\n</html>";
          Buffer.output_buffer chanout b;
          close_out chanout
-@@ -2535,7 +2200,6 @@
+@@ -2660,7 +2200,6 @@
            ~comments: (Class.class_comments cl)
            (self#inner_title cl.cl_name);
          bs b "<body>\n";
@@ -1374,7 +1503,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#print_navbar b pre_name post_name cl.cl_name;
          bs b "<h1>";
          bs b (Odoc_messages.clas^" ");
-@@ -2553,7 +2217,6 @@
+@@ -2678,7 +2217,6 @@
          (* the various elements *)
          List.iter (self#html_of_class_element b)
            (Class.class_elements ~trans:false cl);
@@ -1382,7 +1511,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body></html>";
          Buffer.output_buffer chanout b;
          close_out chanout;
-@@ -2585,7 +2248,6 @@
+@@ -2710,7 +2248,6 @@
            (self#inner_title clt.clt_name);
  
          bs b "<body>\n";
@@ -1390,7 +1519,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#print_navbar b pre_name post_name clt.clt_name;
          bs b "<h1>";
          bs b (Odoc_messages.class_type^" ");
-@@ -2601,7 +2263,6 @@
+@@ -2726,7 +2263,6 @@
          (* the various elements *)
          List.iter (self#html_of_class_element b)
            (Class.class_type_elements ~trans: false clt);
@@ -1398,7 +1527,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body></html>";
          Buffer.output_buffer chanout b;
          close_out chanout;
-@@ -2632,7 +2293,6 @@
+@@ -2757,7 +2293,6 @@
            ~comments: (Module.module_type_comments mt)
            (self#inner_title mt.mt_name);
          bs b "<body>\n";
@@ -1406,7 +1535,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#print_navbar b pre_name post_name mt.mt_name;
          bp b "<h1>";
          bs b (Odoc_messages.module_type^" ");
-@@ -2652,14 +2312,9 @@
+@@ -2777,14 +2312,9 @@
          bs b "<hr width=\"100%\">\n";
          (* module elements *)
          List.iter
@@ -1422,7 +1551,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body></html>";
          Buffer.output_buffer chanout b;
          close_out chanout;
-@@ -2706,7 +2361,6 @@
+@@ -2831,7 +2361,6 @@
            ~comments: (Module.module_comments modu)
            (self#inner_title modu.m_name);
          bs b "<body>\n" ;
@@ -1430,7 +1559,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          self#print_navbar b pre_name post_name modu.m_name ;
          bs b "<h1>";
          if modu.m_text_only then
-@@ -2741,14 +2395,9 @@
+@@ -2866,14 +2395,9 @@
  
          (* module elements *)
          List.iter
@@ -1446,7 +1575,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body></html>";
          Buffer.output_buffer chanout b;
          close_out chanout;
-@@ -2790,7 +2439,6 @@
+@@ -2915,7 +2439,6 @@
          bs b "<html>\n";
          self#print_header b self#title;
          bs b "<body>\n";
@@ -1454,7 +1583,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
  
          bs b "<h1>";
          bs b title;
-@@ -2808,7 +2456,6 @@
+@@ -2933,7 +2456,6 @@
                 (List.map (fun m -> m.m_name) module_list);
           | Some i -> self#html_of_info ~indent: false b info
          );
@@ -1462,7 +1591,7 @@ diff -aur patched/odoc_html.ml original/odoc_html.ml
          bs b "</body>\n</html>";
          Buffer.output_buffer chanout b;
          close_out chanout
-@@ -2961,30 +2608,6 @@
+@@ -3086,30 +2608,6 @@
        if not !index_only then
          self#generate_elements self#generate_for_module module_list ;
  
