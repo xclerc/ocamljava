@@ -237,10 +237,18 @@ let toplevel_env = ref Env.empty
 let print_out_exception ppf exn outv =
   !print_out_phrase ppf (Ophr_exception (exn, outv))
 
+external ndl_print_stack_trace: 'a -> unit = "caml_natdynlink_print_stack_trace"
+
+let print_stack_trace_if_java_exn = function
+  | Java_exception e -> ndl_print_stack_trace e
+  | Java_error e     -> ndl_print_stack_trace e
+  | _                -> ()
+    
 let print_exception_outcome ppf exn =
   if exn = Out_of_memory then Gc.full_major ();
   let outv = outval_of_value !toplevel_env (Obj.repr exn) Predef.type_exn in
-  print_out_exception ppf exn outv
+  print_out_exception ppf exn outv;
+  print_stack_trace_if_java_exn exn
 
 (* The table of toplevel directives.
    Filled by functions from module topdirs. *)
@@ -287,6 +295,7 @@ let execute_phrase print_outcome ppf phr =
               let outv =
                 outval_of_value !toplevel_env (Obj.repr exn) Predef.type_exn
               in
+              print_stack_trace_if_java_exn exn ;
               Ophr_exception (exn, outv)
         in
         !print_out_phrase ppf out_phr;
