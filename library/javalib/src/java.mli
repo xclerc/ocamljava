@@ -136,7 +136,7 @@ external make_array_dims : 'a java_array_shape_dims -> 'a =
 
 (** {6 Method call} *)
 
-external call : 'a java_method -> 'a =
+external call : 'a java_method_call -> 'a =
   "java method call"
 (** [call "methoddesc" p0 ... pn] calls and returns the result of method
     [methoddesc] called with parameters [pi], where [p0] is the instance
@@ -147,6 +147,11 @@ external call : 'a java_method -> 'a =
     ]}
 
     Raises [Java_exception] if the method throws an exception. *)
+external exec : 'a java_method_exec -> 'a =
+  "java method exec"
+
+external chain : 'a java_method_chain -> 'a =
+  "java method chain"
 
 
 (** {6 Field access} *)

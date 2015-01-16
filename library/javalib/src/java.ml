@@ -31,8 +31,14 @@ external make_array_dims : 'a java_array_shape_dims -> 'a =
 
 (* Method call *)
 
-external call : 'a java_method -> 'a =
+external call : 'a java_method_call -> 'a =
   "java method call"
+
+external exec : 'a java_method_exec -> 'a =
+  "java method exec"
+
+external chain : 'a java_method_chain -> 'a =
+  "java method chain"
 
 
 (* Field access *)

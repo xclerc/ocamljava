@@ -1039,6 +1039,8 @@ and is_java_primitive = function
   | "java make array"
   | "java make array dims"
   | "java method call"
+  | "java method exec"
+  | "java method chain"
   | "java field get"
   | "java field set"
   | "java instanceof"
@@ -1085,11 +1087,11 @@ and close_java_primitive fenv cenv pname args =
           (Jjavaprim(Java_array(typ, dims), args, Debuginfo.none),
            Value_unknown(Some(repr_of_java_type (typ :> Jlambda.java_type))))
       end
-  | "java method call" ->
+  | "java method call" | "java method exec" | "java method chain" ->
       let args = close_list_approx fenv cenv args in
       let (id, args, _approx) = split_args args in
       begin match Jtypes.get_method_info id with
-        { Jtypes.method_class; method_method; method_ellipsis } ->
+        { Jtypes.method_class; method_method; method_call; method_ellipsis } ->
           let class_name = convert_class_name method_class.ClassDefinition.name in
           let meth_name = convert_method_name method_method.Method.name in
           let kind =
@@ -1102,7 +1104,7 @@ and close_java_primitive fenv cenv pname args =
           let (params, return) = method_method.Method.descriptor in
           let params = convert_java_types params in
           let return = convert_java_type return in
-          (Jjavaprim(Java_method(class_name, meth_name, kind, params, method_ellipsis, return), args, Debuginfo.none),
+          (Jjavaprim(Java_method(class_name, meth_name, method_call, kind, params, method_ellipsis, return), args, Debuginfo.none),
            Value_unknown(Some(repr_of_java_type return)))
       end
   | "java field get" | "java field set" ->

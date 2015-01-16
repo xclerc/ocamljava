@@ -81,9 +81,15 @@ let rec java_primitive ppf = function
   | Java_array_of_object jt ->
       fprintf ppf "array_of_object@ %a"
         array_type jt
-  | Java_method (cn, mn, ck, params, ellip, return) ->
-      fprintf ppf "method@ %a@ %s.%s%a%a@ %a"
+  | Java_method (cn, mn, mc, ck, params, ellip, return) ->
+      let return =
+        match mc with
+        | Jtypes.Bare_call     -> return
+        | Jtypes.Pop_result    -> `Void
+        | Jtypes.Push_instance -> `Class cn in
+      fprintf ppf "method@ %a%a@ %s.%s%a%a@ %a"
         call_kind ck
+        method_call mc
         cn
         mn
         non_void_java_type_list params
@@ -152,6 +158,10 @@ and call_kind ppf = function
   | Static_call    -> fprintf ppf "static"
   | Interface_call -> fprintf ppf "interface"
   | Virtual_call   -> fprintf ppf "virtual"
+and method_call ppf = function
+  | Jtypes.Bare_call     -> fprintf ppf ""
+  | Jtypes.Pop_result    -> fprintf ppf "[exec]"
+  | Jtypes.Push_instance -> fprintf ppf "[chain]"
 and field_kind ppf = function
   | Static_field   -> fprintf ppf "static"
   | Instance_field -> fprintf ppf "instance"

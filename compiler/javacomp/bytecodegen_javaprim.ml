@@ -117,6 +117,19 @@ let convert_from_java = function
   | `Array _ -> Instrtree.leaf [] (* cast is done by explicit conversion *)
   | `Void    -> field_Value_UNIT
 
+let pop_java_result = function
+  | `Boolean -> Instrtree.leaf [ Instruction.POP ]
+  | `Byte    -> Instrtree.leaf [ Instruction.POP ]
+  | `Char    -> Instrtree.leaf [ Instruction.POP ]
+  | `Float   -> Instrtree.leaf [ Instruction.POP ]
+  | `Int     -> Instrtree.leaf [ Instruction.POP ]
+  | `Short   -> Instrtree.leaf [ Instruction.POP ]
+  | `Class _ -> Instrtree.leaf [ Instruction.POP ]
+  | `Array _ -> Instrtree.leaf [ Instruction.POP ]
+  | `Double  -> Instrtree.leaf [ Instruction.POP2 ]
+  | `Long    -> Instrtree.leaf [ Instruction.POP2 ]
+  | `Void    -> Instrtree.leaf []
+
 let extract_primitive_array : Descriptor.array_type -> Descriptor.java_type option = function
   | `Array `Boolean -> Some `Boolean
   | `Array `Byte    -> Some `Byte
@@ -209,7 +222,7 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
       node
         [ compile_expression_list_java ofs prim_args params compile_expression ;
           leaf [ Instruction.CHECKCAST (`Array_type typ) ] ]
-  | Java_method (class_name, method_name, call_kind, types, ellipsis, typ) ->
+  | Java_method (class_name, method_name, post_call, call_kind, types, ellipsis, typ) ->
       let class_name = make_class class_name in
       let method_name = make_method method_name in
       let params = unconvert_java_types types in
@@ -238,9 +251,20 @@ let rec compile_java_primitive ofs jprim prim_args compile_expression_list compi
             (`Class class_name) :: params in
     node
         [ discard_unit ;
-          compile_expression_list_java ~ellipsis ofs prim_args params compile_expression ;
+          compile_expression_list_java
+            ~duplicate_first:(post_call = Jtypes.Push_instance) ~ellipsis
+            ofs prim_args params compile_expression ;
           leaf [ call ] ;
-          convert_from_java return ]
+          begin match post_call with
+          | Jtypes.Bare_call ->
+              convert_from_java return
+          | Jtypes.Pop_result ->
+              node
+                [ pop_java_result return ;
+                  convert_from_java `Void ]
+          | Jtypes.Push_instance ->
+              leaf []
+          end ]
   | Java_get (class_name, field_name, field_kind, typ) ->
       let class_name = make_class class_name in
       let field_name = make_field field_name in
@@ -429,7 +453,7 @@ and compile_array ofs typ { jpad_total; jpad_init } prim_args compile_expression
           leaf [ Instruction.MULTIANEWARRAY (`Array_type typ, Utils.u1 jpad_init) ] ]
   end
 
-and compile_expression_list_java ?(ellipsis=false) ofs exprs types compile_expression =
+and compile_expression_list_java ?(duplicate_first=false) ?(ellipsis=false) ofs exprs types compile_expression =
   let len = List.length exprs in
   let _, _, res =
     List.fold_left2
@@ -526,6 +550,13 @@ and compile_expression_list_java ?(ellipsis=false) ofs exprs types compile_expre
       (0, ofs, [])
       exprs
       types in
-  res
-  |> List.rev
-  |> node
+  if duplicate_first then
+    begin match List.rev res with
+    | hd :: tl -> hd :: (leaf [Instruction.DUP]) :: tl
+    | []       -> []
+    end
+    |> node
+  else
+    res
+    |> List.rev
+    |> node

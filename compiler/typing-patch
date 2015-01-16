@@ -2642,7 +2642,7 @@ diff -aur original/typing/parmatch.ml patched/typing/parmatch.ml
 diff -aur original/typing/predef.ml patched/typing/predef.ml
 --- original/typing/predef.ml	2014-04-13 09:05:24.000000000 +0200
 +++ patched/typing/predef.ml	2014-04-13 09:05:24.000000000 +0200
-@@ -188,13 +188,290 @@
+@@ -188,13 +188,304 @@
    add_type ident_int decl_abstr (
      empty_env)))))))))))))))))))))))))))
  
@@ -2819,11 +2819,23 @@ diff -aur original/typing/predef.ml patched/typing/predef.ml
 +  decl_java_array_shape_dims =
 +  make_type1 "java_array_shape_dims" invariant
 +
-+let ident_java_method,
-+  path_java_method,
-+  type_java_method,
-+  decl_java_method =
-+  make_type1 "java_method" invariant
++let ident_java_method_call,
++  path_java_method_call,
++  type_java_method_call,
++  decl_java_method_call =
++  make_type1 "java_method_call" invariant
++
++let ident_java_method_exec,
++  path_java_method_exec,
++  type_java_method_exec,
++  decl_java_method_exec =
++  make_type1 "java_method_exec" invariant
++
++let ident_java_method_chain,
++  path_java_method_chain,
++  type_java_method_chain,
++  decl_java_method_chain =
++  make_type1 "java_method_chain" invariant
 +
 +let ident_java_field_get,
 +  path_java_field_get,
@@ -2912,7 +2924,9 @@ diff -aur original/typing/predef.ml patched/typing/predef.ml
 +  let res = add_type ident_java_constructor (decl_java_constructor ()) res in
 +  let res = add_type ident_java_array_shape (decl_java_array_shape ()) res in
 +  let res = add_type ident_java_array_shape_dims (decl_java_array_shape_dims ()) res in
-+  let res = add_type ident_java_method (decl_java_method ()) res in
++  let res = add_type ident_java_method_call (decl_java_method_call ()) res in
++  let res = add_type ident_java_method_exec (decl_java_method_exec ()) res in
++  let res = add_type ident_java_method_chain (decl_java_method_chain ()) res in
 +  let res = add_type ident_java_field_get (decl_java_field_get ()) res in
 +  let res = add_type ident_java_field_set (decl_java_field_set ()) res in
 +  let res = add_type ident_java_reference_type (decl_java_reference_type ()) res in
@@ -2937,7 +2951,7 @@ diff -aur original/typing/predef.ml patched/typing/predef.ml
 diff -aur original/typing/predef.mli patched/typing/predef.mli
 --- original/typing/predef.mli	2014-04-13 09:05:24.000000000 +0200
 +++ patched/typing/predef.mli	2014-04-13 09:05:24.000000000 +0200
-@@ -49,6 +49,90 @@
+@@ -49,6 +49,94 @@
  val path_assert_failure : Path.t
  val path_undefined_recursive_module : Path.t
  
@@ -2993,7 +3007,7 @@ diff -aur original/typing/predef.mli patched/typing/predef.mli
 +   - "'a java_constructor" for constructor descriptor
 +   - "'a path_java_array_shape" for array descriptor
 +   - "'a path_java_array_shape_dims" for array descriptor with initialized dimensions
-+   - "'a path_java_method" for method descriptor
++   - "'a path_java_method_{call,exec,chain}" for method descriptor
 +   - "'a path_java_field_get" for field descriptor (read accessor)
 +   - "'a path_java_field_set" for field descriptor (write accessor)
 +   - "'a path_java_reference_type" for class/interface/array descriptor
@@ -3006,8 +3020,12 @@ diff -aur original/typing/predef.mli patched/typing/predef.mli
 +val type_java_array_shape: type_expr -> type_expr
 +val path_java_array_shape_dims: Path.t
 +val type_java_array_shape_dims: type_expr -> type_expr
-+val path_java_method: Path.t
-+val type_java_method: type_expr -> type_expr
++val path_java_method_call: Path.t
++val type_java_method_call: type_expr -> type_expr
++val path_java_method_exec: Path.t
++val type_java_method_exec: type_expr -> type_expr
++val path_java_method_chain: Path.t
++val type_java_method_chain: type_expr -> type_expr
 +val path_java_field_get: Path.t
 +val type_java_field_get: type_expr -> type_expr
 +val path_java_field_set: Path.t
@@ -3129,7 +3147,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
  
  exception Error of Location.t * Env.t * error
  
-@@ -1862,17 +1863,56 @@
+@@ -1862,17 +1863,62 @@
            exp_env = env }
        end
    | Pexp_constant(Const_string s as cst) ->
@@ -3175,8 +3193,14 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
 +            && (Path.same path Predef.path_java_array_shape_dims) ->
 +              return_int "array shape" (Jtypes.java_array_shape_of_string true Ctype.newty s)
 +      | Tconstr(path, _, _) when !Jclflags.java_extensions
-+            && (Path.same path Predef.path_java_method) ->
-+              return_int "method" (Jtypes.java_method_of_string Ctype.newty s)
++            && (Path.same path Predef.path_java_method_call) ->
++              return_int "method" (Jtypes.java_method_of_string Jtypes.Bare_call Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_method_exec) ->
++              return_int "method" (Jtypes.java_method_of_string Jtypes.Pop_result Ctype.newty s)
++      | Tconstr(path, _, _) when !Jclflags.java_extensions
++            && (Path.same path Predef.path_java_method_chain) ->
++              return_int "method" (Jtypes.java_method_of_string Jtypes.Push_instance Ctype.newty s)
 +      | Tconstr(path, _, _) when !Jclflags.java_extensions
 +            && (Path.same path Predef.path_java_field_get) ->
 +              return_int "field get" (Jtypes.java_field_get_of_string Ctype.newty s)
@@ -3197,7 +3221,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
    | Pexp_constant cst ->
        rue {
          exp_desc = Texp_constant cst;
-@@ -2012,6 +2052,18 @@
+@@ -2012,6 +2058,18 @@
        let (args, ty_res) = type_application env funct sargs in
        end_def ();
        unify_var env (newvar()) funct.exp_type;
@@ -3216,7 +3240,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
        rue {
          exp_desc = Texp_apply(funct, args);
          exp_loc = loc; exp_extra = [];
-@@ -3110,7 +3162,7 @@
+@@ -3110,7 +3168,7 @@
    begin match ty.desc with
    | Tarrow _ ->
        Location.prerr_warning loc Warnings.Partial_application
@@ -3225,7 +3249,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
    | Tvar _ when ty.level > tv.level ->
        Location.prerr_warning loc Warnings.Nonreturning_statement
    | Tvar _ ->
-@@ -3640,6 +3692,8 @@
+@@ -3640,6 +3698,8 @@
        fprintf ppf "@[The GADT constructor %s of type %a@ %s.@]"
          name path tpath
          "must be qualified in this pattern"
@@ -3435,19 +3459,21 @@ diff -aur original/typing/typetexp.mli patched/typing/typetexp.mli
 diff -aur original/utils/warnings.ml patched/utils/warnings.ml
 --- original/utils/warnings.ml	2014-04-13 09:05:24.000000000 +0200
 +++ patched/utils/warnings.ml	2014-04-13 09:05:24.000000000 +0200
-@@ -64,6 +64,7 @@
+@@ -64,6 +64,8 @@
    | Open_shadow_identifier of string * string (* 44 *)
    | Open_shadow_label_constructor of string * string (* 45 *)
    | Bad_env_variable of string * string     (* 46 *)
 +  | Java_deprecated                         (* 1000 *)
++  | Java_ignore_on_void                     (* 1001 *)
  ;;
  
  (* If you remove a warning, leave a hole in the numbering.  NEVER change
-@@ -119,9 +120,10 @@
+@@ -119,9 +121,11 @@
    | Open_shadow_identifier _ -> 44
    | Open_shadow_label_constructor _ -> 45
    | Bad_env_variable _ -> 46
 +  | Java_deprecated -> 1000
++  | Java_ignore_on_void -> 1001
  ;;
  
 -let last_warning_number = 46
@@ -3455,15 +3481,16 @@ diff -aur original/utils/warnings.ml patched/utils/warnings.ml
  (* Must be the max number returned by the [number] function. *)
  
  let letter = function
-@@ -348,6 +350,7 @@
+@@ -348,6 +352,8 @@
          kind s
    | Bad_env_variable (var, s) ->
      Printf.sprintf "illegal environment variable %s : %s" var s
 +  | Java_deprecated -> "Java element is deprecated."
++  | Java_ignore_on_void -> "Discarding return value of a void method."
  ;;
  
  let nerrors = ref 0;;
-@@ -439,6 +442,7 @@
+@@ -439,6 +445,7 @@
     43, "Nonoptional label applied as optional.";
     44, "Open statement shadows an already defined identifier.";
     45, "Open statement shadows an already defined label or constructor.";
@@ -3474,11 +3501,12 @@ diff -aur original/utils/warnings.ml patched/utils/warnings.ml
 diff -aur original/utils/warnings.mli patched/utils/warnings.mli
 --- original/utils/warnings.mli	2014-04-13 09:05:24.000000000 +0200
 +++ patched/utils/warnings.mli	2014-04-13 09:05:24.000000000 +0200
-@@ -59,6 +59,7 @@
+@@ -59,6 +59,8 @@
    | Open_shadow_identifier of string * string (* 44 *)
    | Open_shadow_label_constructor of string * string (* 45 *)
    | Bad_env_variable of string * string
 +  | Java_deprecated                         (* 1000 *)
++  | Java_ignore_on_void                     (* 1001 *)
  ;;
  
  val parse_options : bool -> string -> unit;;

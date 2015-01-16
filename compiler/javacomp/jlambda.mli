@@ -75,7 +75,7 @@ type java_primitive =
   | Java_array_length of array_type
   | Java_array_to_object of array_type
   | Java_array_of_object of array_type
-  | Java_method of string * string * java_primitive_call_kind * (non_void_java_type list) * bool * java_type
+  | Java_method of string * string * Jtypes.method_call * java_primitive_call_kind * (non_void_java_type list) * bool * java_type
   | Java_get of string * string * java_primitive_field_kind * non_void_java_type
   | Java_set of string * string * java_primitive_field_kind * non_void_java_type
   | Java_get_null

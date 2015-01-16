@@ -36,6 +36,8 @@ let is_special_primitive = function
   | "java make array"
   | "java make array dims"
   | "java method call"
+  | "java method exec"
+  | "java method chain"
   | "java field get"
   | "java field set"
   | "java instanceof"
@@ -482,9 +484,15 @@ let get_array_info, java_array_shape_of_string =
 
 (* Methods *)
 
+type method_call =
+  | Bare_call
+  | Pop_result
+  | Push_instance
+
 type method_info = {
-    method_class : ClassDefinition.t;
-    method_method : Method.regular;
+    method_class    : ClassDefinition.t;
+    method_method   : Method.regular;
+    method_call     : method_call;
     method_ellipsis : bool;
   }
 
@@ -495,7 +503,7 @@ let add_implicit_type s =
     s ^ ":_"
 
 let get_method_info, java_method_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add call_kind newty s loc ->
     let loader = Jutils.get_class_loader () in
     let s = add_implicit_type s in
     let result =
@@ -518,22 +526,42 @@ let get_method_info, java_method_of_string =
       (contains_dots s)
         && (AccessFlag.mem_method `Varargs meth.Method.flags) in
     let id = length () in
-    add id { method_class = cd; method_method = meth; method_ellipsis = ellipsis };
     let is_static = AccessFlag.mem_method `Static meth.Method.flags in
     let params, return = meth.Method.descriptor in
+    begin match call_kind with
+    | Bare_call ->
+        ()
+    | Pop_result ->
+        if return = `Void then
+          Location.prerr_warning loc Warnings.Java_ignore_on_void
+    | Push_instance ->
+        if return <> `Void then
+          failwith "chaining can only be used with a void method";
+        if is_static then
+          failwith "chaining cannot be used with a static method"
+    end;
+    add id { method_class = cd; method_method = meth; method_call = call_kind; method_ellipsis = ellipsis };
     let params =
       if is_static then
         params
       else
         (`Class cd.ClassDefinition.name) :: params in
     let params = ocaml_type_of_java_type_list ~ellipsis newty false params in
-    let return = ocaml_type_of_java_type newty true return in
+    let return =
+      match call_kind with
+      | Bare_call     -> ocaml_type_of_java_type newty true return
+      | Pop_result    -> ocaml_type_of_java_type newty true `Void
+      | Push_instance -> ocaml_type_of_java_type newty true (`Class cd.ClassDefinition.name) in
     let params =
       if params = [] then
         [ Predef.type_unit ]
       else
         params in
-    newty (Types.Tconstr (Predef.path_java_method,
+    newty (Types.Tconstr (begin match call_kind with
+                         | Bare_call     -> Predef.path_java_method_call
+                         | Pop_result    -> Predef.path_java_method_exec
+                         | Push_instance -> Predef.path_java_method_chain
+                         end,
                           [mk_arrow newty (params @ [return])],
                           ref Types.Mnil)),
     id)
@@ -995,7 +1023,9 @@ let get_arity prim_name id =
   | "java make array" | "java make array dims" ->
       let array_info = get_array_info id in
       array_info.array_init_dimensions
-  | "java method call" ->
+  | "java method call"
+  | "java method exec"
+  | "java method chain" ->
       let meth_info = get_method_info id in
       let is_static = AccessFlag.mem_method `Static meth_info.method_method.Method.flags in
       let nb_params =

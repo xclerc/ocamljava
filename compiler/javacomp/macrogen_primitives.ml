@@ -308,13 +308,18 @@ let signature_of_java_primitive = function
       [kind_of_java_type (typ :> Jlambda.java_type)], Unboxed_instance "java.lang.Object"
   | Java_array_of_object typ ->
       [Unboxed_instance "java.lang.Object"], kind_of_java_type (typ :> Jlambda.java_type)
-  | Java_method (class_name, _, call_kind, params, _, return) ->
+  | Java_method (class_name, _, post_call, call_kind, params, _, return) ->
       let kinds =
         match call_kind, params with
         | Static_call, [] -> [Boxed_value]
         | Static_call, _  -> kinds_of_java_types params
         | _               -> kinds_of_java_types ((`Class class_name) :: params) in
-      kinds, kind_of_java_type return
+      let ret_kind =
+        match post_call with
+        | Jtypes.Bare_call     -> kind_of_java_type return
+        | Jtypes.Pop_result    -> kind_of_java_type `Void
+        | Jtypes.Push_instance -> kind_of_java_type (`Class class_name) in
+      kinds, ret_kind
   | Java_get (_, _, Static_field, typ) ->
       [Boxed_value], kind_of_java_type (typ :> java_type)
   | Java_get (class_name, _, Instance_field, typ) ->

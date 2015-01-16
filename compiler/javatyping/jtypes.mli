@@ -132,14 +132,21 @@ val get_array_info : identifier -> array_info
 
 (** {7 Methods} *)
 
+type method_call =
+  | Bare_call (** Simply calls the method. *)
+  | Pop_result (** Calls the method, and discards its result if any. *)
+  | Push_instance (** Calls the method, and pushed the instance if no result. *)
+(** The kind of method calls. *)
+
 type method_info = {
     method_class : BaristaLibrary.ClassDefinition.t;
     method_method : BaristaLibrary.Method.regular;
+    method_call : method_call;
     method_ellipsis : bool;
   }
 (** The typing information associated to a method. *)
 
-val java_method_of_string : conversion_function
+val java_method_of_string : method_call -> conversion_function
 (** Conversion function for method invocations. *)
 
 val get_method_info : identifier -> method_info
