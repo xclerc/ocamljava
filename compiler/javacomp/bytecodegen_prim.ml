@@ -350,7 +350,11 @@ let rec compile_primitive ofs prim prim_args compile_expression_list compile_exp
         let desc = Runtimeprimitives.get_description name in
         after_args_tree
           (node
-             [ leaf [ Instruction.INVOKESTATIC
+             [ (if desc.Runtimeprimitives.primdesc_parameters = [] then
+                 leaf [ Instruction.POP ]
+               else
+                 leaf []) ;
+               leaf [ Instruction.INVOKESTATIC
                         (make_class desc.Runtimeprimitives.primdesc_class,
                          make_method desc.Runtimeprimitives.primdesc_method,
                          desc.Runtimeprimitives.primdesc_javadesc) ] ;

@@ -62,10 +62,14 @@ let binary_method x =
   List.assoc x binary_math_primitives
 
 let signature_of_primdesc desc =
-  Fixed (List.map kind_of_repr desc.Runtimeprimitives.primdesc_parameters),
-  match desc.Runtimeprimitives.primdesc_return with
+  begin match desc.Runtimeprimitives.primdesc_parameters with
+  | (_ :: _) as l -> Fixed (List.map kind_of_repr l)
+  | []            -> Fixed [Boxed_value]
+  end,
+  begin match desc.Runtimeprimitives.primdesc_return with
   | LR_none -> Boxed_value
   | r       -> kind_of_repr r
+  end
 
 let kind_of_approx = function
   | Value_closure _           -> Boxed_value
