@@ -787,6 +787,11 @@ let rec close fenv cenv = function
       let args = List.map (fun x -> x, None) args in
       (Jsend(kind, jmet, jobj, close_list fenv cenv args, Debuginfo.none),
        Value_unknown None)
+  | Llet(_, id,
+         Lconst (Const_base (Const_string s) | Const_immstring s),
+         Lprim(Pccall { Primitive.prim_name = "ocamljava_javastring_of_string"; _ },
+               [Lvar id', _])) when Ident.same id id' ->
+      make_const_string s
   | Llet(str, id, lam, body) ->
       let (jlam, alam) = close_named fenv cenv id lam in
       begin match (str, alam) with
