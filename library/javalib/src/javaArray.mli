@@ -140,5 +140,10 @@ val wrap : ('e, 'i, 'r) t -> ('e, 'i, 'r) t option
     - [Some x] if [x] is not [null];
     - [None] if [x] is [null]. *)
 
+val unwrap : ('e, 'i, 'r) t option -> ('e, 'i, 'r) t
+(** [unwrap x] unwraps the option [x] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)
+
 val wrapped : (_, _, 'r) t -> 'r
 (** [wrapped a] returns the wrapped array. *)

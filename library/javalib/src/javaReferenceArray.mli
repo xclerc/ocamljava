@@ -100,3 +100,8 @@ val wrap : 'a java_reference_array -> 'a java_reference_array option
 (** [wrap x] wraps the array [x] into an option type:
     - [Some x] if [x] is not [null];
     - [None] if [x] is [null]. *)
+
+val unwrap : 'a java_reference_array option -> 'a java_reference_array
+(** [unwrap x] unwraps the option [x] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

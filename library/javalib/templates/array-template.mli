@@ -178,4 +178,8 @@ val wrap : e $(ocaml_java_type) -> e $(ocaml_java_type) option
 (** [wrap x] wraps the array [x] into an option type:
     - [Some x] if [x] is not [null];
     - [None] if [x] is [null]. *)
+val unwrap : e $(ocaml_java_type) option -> e $(ocaml_java_type)
+(** [unwrap x] unwraps the option [x] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)
 $(extra_intf)

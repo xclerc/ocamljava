@@ -253,6 +253,10 @@ let wrap x =
   else
     Some x
 
+let unwrap = function
+  | Some x -> x
+  | None   -> Obj.magic Java.null
+
 let wrapped : type e i r . (e, i, r) t -> r = function
   | Boolean_array a    -> a
   | Byte_array a       -> a

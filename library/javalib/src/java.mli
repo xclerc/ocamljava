@@ -446,3 +446,8 @@ val wrap : 'a java_instance -> 'a java_instance option
 (** [wrap x] wraps the reference [x] into an option type:
     - [Some x] if [x] is not [null];
     - [None] if [x] is [null]. *)
+
+val unwrap : 'a java_instance option -> 'a java_instance
+(** [unwrap x] unwraps the option [x] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

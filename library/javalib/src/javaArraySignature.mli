@@ -49,5 +49,6 @@ module type T = sig
   val is_null : e t -> bool
   val is_not_null : e t -> bool
   val wrap : e t -> e t option
+  val unwrap : e t option -> e t
 end
 (** The module type of specialized arrays. *)
