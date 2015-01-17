@@ -61,13 +61,16 @@ let array_modules = [
     zero = "zero";
     zero_value = "0";
     extra_intf = [
+      "" ;
+      "(** {6 String operations} *)" ;
+      "" ;
       "external to_string : e java_byte_array -> string =" ;
       "  \"string_of_byte_array\"" ;
-      "(** [to_string x] returns the passed array as wrapped into a string. *)" ;
+      "(** [to_string x] returns the array [x] as wrapped into a string. *)" ;
       "" ;
       "external of_string : string -> e java_byte_array =" ;
       "  \"byte_array_of_string\"" ;
-      "(** [of_string x] returns the array wrapped inside the passed string. *)" ;
+      "(** [of_string x] returns the array wrapped inside [x]. *)" ;
     ];
     extra_impl = [
       "external to_string : e java_byte_array -> string =" ;

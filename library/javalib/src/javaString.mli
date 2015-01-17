@@ -19,7 +19,10 @@
 (** Utility functions for Java strings. *)
 
 
-(** {6 String operations} *)
+(** {6 String operations}
+
+    The following function definitions provide with an interface compatible
+    with [String]. *)
 
 val length : java'lang'String java_instance -> int
 (** Similar to [String.length]. *)
@@ -108,21 +111,21 @@ external to_string : java'lang'String java_instance -> string =
   "ocamljava_javastring_to_string"
 (** [to_string s] converts the Java string [s] into an OCaml string.
 
-    Raises [Java_exeption] if [s] is {i null}. *)
+    @raise Java_exeption if [s] is [null] *)
 
 
 (** {6 Null value} *)
 
 val null : java'lang'String java_instance
-(** The {i null} value. *)
+(** The [null] value. *)
 
 external is_null : java'lang'String java_instance -> bool =
   "java is_null"
-(** [is_null x] returns [true] iff [x] is equal to {i null}. *)
+(** [is_null x] returns [true] iff [x] is equal to [null]. *)
 
 external is_not_null : java'lang'String java_instance -> bool =
   "java is_not_null"
-(** [is_not_null x] returns [false] iff [x] is equal to {i null}. *)
+(** [is_not_null x] returns [false] iff [x] is equal to [null]. *)
 
 
 (** {6 Output functions} *)
@@ -155,17 +158,17 @@ external output_string : out_channel -> java'lang'String java_instance -> unit =
 external read_line : unit -> java'lang'String java_instance =
   "ocamljava_javastring_read_line"
 (** [read_line ()] reads a line from the standard input.
-    Returns {i null} when end of input is reached. *)
+    Returns [null] when end of input is reached. *)
 
 external input_line : in_channel -> java'lang'String java_instance =
   "ocamljava_javastring_input_line"
 (** [input_line ch] reads a line from channel [ch].
-    Returns {i null} when end of input is reached. *)
+    Returns [null] when end of input is reached. *)
 
 
 (** {6 Miscellaneous} *)
 
 val wrap : java'lang'String java_instance -> java'lang'String java_instance option
 (** [wrap x] wraps the reference [x] into an option type:
-    - [Some x] if [x] is not null;
-    - [None] if [x] is null. *)
+    - [Some x] if [x] is not [null];
+    - [None] if [x] is [null]. *)

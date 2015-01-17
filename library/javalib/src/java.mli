@@ -18,29 +18,31 @@
 
 (** Manipulation of Java references.
 
-    The [ocamljava] compiler allows to manipulate Java references through
+    The {k ocamljava} compiler allows to manipulate Java references
+    through typer extensions triggered by the {k -java-extensions}
+    command-line switch. The Java types can then be manipulated through
     two types, namely [cn java_instance] and [cn java_extends]. The
-    former is used to designate instances of exactly one class, while
-    the latter is used to designate instances of either one class or
-    any of its subclasses. In both cases, the type parameter is used to
-    specify the class. It uses the fully-qualified name of the class,
-    just replacing dots with single quotes. The type of Java strings is
-    thus written [java'lang'String java_instance].
+    former is used to designate instances of exactly the given class
+    [cn], while the latter is used to designate instances of either the
+    class [cn] or any of its subclasses. In both cases, the type
+    parameter [cn] is used to specify the class, and uses the
+    fully-qualified name of the class where dots are replaced with single
+    quotes. As a consequence, the type of Java strings is thus written
+    [java'lang'String java_instance].
 
     This module contains the functions needed to create new instances,
     call methods, and access fields. Such functions use {i descriptors}
     to determine the constructor/method/field to use. These descriptors
-    are written as string litterals; for example, parsing a string into
-    an integer can be done by writing:
+    are written as string ltterals; for example, parsing a string into an
+    integer can be done by writing:
     {[
-      let integer = call "java.lang.Integer.parseInt(java.lang.String):int" s
+      let i = call "java.lang.Integer.parseInt(java.lang.String):int" s
     ]}
-
     However, it is possible to use simple names rather than qualified
-    names for classes if their packages have been opened. Initially, the
-    {i java.lang} package is the only one opened. A package can be opened
-    though a modified [open Package'packname] directive; for example
-    opening the {i javax.awt} package can be done by writing:
+    names for classes if their packages have been opened. Initially, only
+    the [java.lang] package is opened. A package can be opened though a
+    modified [open Package'packname] directive; for example, the
+    [javax.awt] package can be opened by writing:
     {[
       open Package'java'awt
     ]}
@@ -49,30 +51,110 @@
     strings can thus be written [_'String java_instance].
 
     Moreover, types of fields and return types of methods can be elided
-    as long as there is no ambiguity. Types of method/constructor
+    as long as there is no ambiguity. Types of method and constructor
     parameters can also be replaced with single underscores, leading to
-    the lighter code to parse an integer:
+    the shorter code to parse an integer:
     {[
-      let integer = call "Integer.parseInt(_)" s
+      let i = call "Integer.parseInt(_)" s
     ]}
     Furthermore, it is possible to use dashes to denote any number of
     parameters, leading to the lightest code to rotate an integer value:
     {[
-      let y = call "Integer.rotateLeft(-)" x bits
+      let j = call "Integer.rotateLeft(-)" i nbits
     ]}
     The compiler will issue an error if there is an ambiguity.
 
+    Besides the [cn java_instance] and [cn java_extends] types that are
+    used to map Java reference types, the compiler maps Java primitive
+    type to newly-introduced OCaml types that are synonym of OCaml
+    predefined types. The complete mapping is given by the following
+    table.
+    {C {table {caption Mapping of Java primitive types.}
+              {row {header Java type}
+                   {header OCaml type}
+                   {header Synonym}}
+              {row {data [boolean]}
+                   {data [java_boolean]}
+                   {data [bool]}}
+              {row {data [byte]}
+                   {data [java_byte]}
+                   {data [int]}}
+              {row {data [char]}
+                   {data [java_char]}
+                   {data [int]}}
+              {row {data [double]}
+                   {data [java_double]}
+                   {data [float]}}
+              {row {data [float]}
+                   {data [java_float]}
+                   {data [float]}}
+              {row {data [int]}
+                   {data [java_int]}
+                   {data [int32]}}
+              {row {data [long]}
+                   {data [java_long]}
+                   {data [int64]}}
+              {row {data [short]}
+                   {data [java_short]}
+                   {data [int]}}
+              {row {data [void]}
+                   {data [java_void]}
+                   {data [unit]}}}}
+
+    A similar scheme is used for Java array types, with a dedicated type
+    for each primitive array type, and an additionnal type for arrays of
+    references. However, contrary to primitive types, array types are not
+    synonyms of existing OCaml types, and a module is associated to each
+    type in order to provide usual operations. The complete mapping from
+    Java array types to OCaml types is given by the following table.
+    {C {table {caption Mapping of Java array types.}
+              {row {header Java type}
+                   {header OCaml type}
+                   {header OCaml module}}
+              {row {data [boolean[]]}
+                   {data [bool java_boolean_array]}
+                   {data [JavaBooleanArray]}}
+              {row {data [byte[]]}
+                   {data [int java_byte_array]}
+                   {data [JavaByteArray]}}
+              {row {data [char[]]}
+                   {data [int java_char_array]}
+                   {data [JavaCharArray]}}
+              {row {data [double[]]}
+                   {data [float java_double_array]}
+                   {data [JavaDoubleArray]}}
+              {row {data [float[]]}
+                   {data [float java_float_array]}
+                   {data [JavaFloatArray]}}
+              {row {data [int[]]}
+                   {data [int32 java_int_array]}
+                   {data [JavaIntArray]}}
+              {row {data [long[]]}
+                   {data [int64 java_long_array]}
+                   {data [JavaLongArray]}}
+              {row {data [short[]]}
+                   {data [int java_short_array]}
+                   {data [JavaShortArray]}}
+              {row {data [reference[]]}
+                   {data ['a java_reference_array]}
+                   {data [JavaReferenceArray]}}}}
+    Each primitive type is parametrized by the type of its elements,
+    allowing a generic treatment of all array types through the
+    [JavaArray] module.
+
     When calling a method with a variable number of arguments, two
-    variants are accepted for the descriptor, impacting how the arguments
+    variants are accepted for the descriptor, impacting the way arguments
     should be passed:
     - if ["C.m(T[])"] is used, then the arguments are passed through a
       Java array;
     - if ["C.m(T...)"] is used, then the arguments are passed through an
       OCaml literal array.
+
     The following code illustrates the alternative:
     {[
-      let a1 = Java.make_array "Object[]" 5l
-      let l1 = Java.call "Arrays.asList(Object[])" a1
+      let l1 =
+        Java.call "Arrays.asList(Object[])"
+          (Java.make_array "Object[]" 5l)
       let l2 =
         Java.call "Arrays.asList(Object...)"
           [| Java.null ; Java.make "Object()" () |]
@@ -84,111 +166,162 @@
       exception Java_exception of java'lang'Exception java_instance
       exception Java_error of java'lang'Error java_instance
     ]}
-
-    {b Warning:} to be able to use the functions from this module, java
-    extensions should be enabled by passing the [-java-extensions] option
-    to the [ocamljava] compiler. *)
+    The former is used for exceptions whose instances inherit from
+    {java java.lang.Exception} ({i i.e. checked} exceptions), while the
+    latter is used for exceptions whose instances inherit from
+    {java java.lang.Error} ({i i.e. unchecked} exceptions). *)
 
 
 (** {6 Instance creation} *)
 
 external make : 'a java_constructor -> 'a =
   "java constructor"
-(** [make "constructordesc" p0 ... pn] calls constructor
-    [constructordesc] with parameters [pi] and returns the created
-    instance. For example, the following code creates an object instance:
+(** [make desc param1 ... paramn] calls the constructor whose descriptor
+    is [desc] with parameters [param1 ... paramn], and returns the
+    created instance.
+
+    [desc] is composed of the following elements:
+    - a class name;
+    - an opening parenthesis ({i i.e.} [(]);
+    - a comma-separated list of types;
+    - a closing parenthesis ({i i.e.} [)]).
+
+    For example, the following code creates an object instance:
     {[
       let inst = make "java.lang.Object()" ()
     ]}
 
-    Raises [Java_exception] if the constructor throws an exception. *)
+    @raise Java_exception if the constructor throws an exception
+    @raise Java_error if the constructor throws an error *)
 
 external make_array : 'a java_array_shape -> 'a =
   "java make array"
-(** [make_array "arraydesc" dim1 ... dimn] builds and returns an array
-    with [n] dimensions. Each element is initialized to the default value
-    (that is false for booleans, and zero for other primitive types), and
-    {i null} for reference types).
+(** [make_array desc dim1 ... dimn] builds and returns an array, whose
+    number of dimensions and type of elements are determined by [desc].
+    Each element is initialized to the default value for the type (that
+    is [false] for booleans, zero for other primitive types, and [null]
+    for reference types).
+
+    [desc] is composed of the following elements:
+    - a type;
+    - a non-empty list of [[]] characters.
 
     For example, the following code creates a 2x3 matrix of byte values:
     {[
       let arr = make_array "byte[][]" 2l 3l
     ]}
 
-    Raises [Java_exception] if a dimension is negative. *)
+    @raise Java_exception if a dimension is negative *)
 
 external make_array_dims : 'a java_array_shape_dims -> 'a =
   "java make array dims"
-(** [make_array_dims "arraydesc" dim1 ... dimn] is similar to
-    [make_array], except that the array descriptor is made of two kinds
-    of dimension specifiers:
-    - {i \[_\]} that indicates that the dimension will be allocated;
-    - {i \[\]} that indicates that the dimension will not be allocated.
+(** [make_array_dims desc dim1 ... dimn] is similar to [make_array],
+    except that the array descriptor is made of two kinds of dimension
+    specifiers, allowing to initialize only the first dimensions of the
+    array.
+
+    [desc] is composed of the following elements:
+    - a type;
+    - a non-empty list of {i dimension specifiers};
+    where a {i dimension specifiers} can be one of:
+    - [\[_\]] that indicates that the dimension will be allocated;
+    - [\[\]] that indicates that the dimension will not be allocated.
 
     For example, the following code creates a two-dimensional array, but
     only the first dimension of the array is allocated and initialized:
     {[
-      let arr = make_array "byte[_][]" 2l
+      let arr = make_array_dims "byte[_][]" 2l
     ]}
 
-    Raises [Java_exception] if a dimension is negative. *)
+    @raise Java_exception if a dimension is negative *)
 
 
 (** {6 Method call} *)
 
 external call : 'a java_method_call -> 'a =
   "java method call"
-(** [call "methoddesc" p0 ... pn] calls and returns the result of method
-    [methoddesc] called with parameters [pi], where [p0] is the instance
-    to call method upon if the method is not static. For example, the
-    following code compares strings s1 and s2:
+(** [call desc param1 ... paramn] calls and returns the result of method
+    [desc] called with parameters [param1 ... paramn], where [param1] is
+    the instance to call method upon if the method is not static.
+
+    [desc] is composed of the following elements:
+    - a class name;
+    - a dot ({i i.e.} [.]);
+    - a method name;
+    - an opening parenthesis ({i i.e.} [(]);
+    - a comma-separated list of types;
+    - a closing parenthesis ({i i.e.} [)]);
+    - optionally, a colon ({i i.e.} [:]) followed by a type.
+
+    For example, the following code compares strings [s1] and [s2]:
     {[
-      let cmp = call "java.lang.String.compareTo(java.lang.String):int" s1 s2
+      call "java.lang.String.compareTo(java.lang.String):int" s1 s2
     ]}
 
-    Raises [Java_exception] if the method throws an exception. *)
+    @raise Java_exception if the method throws an exception
+    @raise Java_error if the method throws an error *)
+
 external exec : 'a java_method_exec -> 'a =
   "java method exec"
+(** Similar to [call], but ignores the result if any. *)
 
 external chain : 'a java_method_chain -> 'a =
   "java method chain"
+(** Similar to [call], returns the instance the method was called upon. *)
 
 
 (** {6 Field access} *)
 
 external get : 'a java_field_get -> 'a =
   "java field get"
-(** [get "fielddesc" obj] retrieves the value of field [fielddesc] for
-    instance [obj]. The [obj] value should not be replaced by [()] if
-    [fielddesc] designates a static field. For example, the following
-    code gets the maximum value of a integer:
+(** [get desc obj] retrieves the value of field [desc] for instance
+    [obj]. The [obj] value should be replaced by [()] if [desc]
+    designates a static field.
+
+    [desc] is composed of the following elements:
+    - a class name;
+    - a dot ({i i.e.} [.]);
+    - optionally, a colon ({i i.e.} [:]) followed by a type.
+
+    For example, the following code gets the maximum value of a integer:
     {[
       let max_int = get "java.lang.Integer.MAX_VALUE:int" ()
-    ]} *)
+    ]}
+
+    @raise Java_exception if obj is [null] *)
 
 external set : 'a java_field_set -> 'a =
   "java field set"
-(** [set "fielddesc" obj x] changes the value of field [fielddesc] for
+(** [set desc obj x] changes the value of field [desc] for
     instance [obj] to [x]. The [obj] value should not be provided if
-    [fielddesc] designates a static field. For example, the following
-    code sets the height of a dimension to zero:
+    [desc] designates a static field.
+
+    [desc] is composed of the following elements:
+    - a class name;
+    - a dot ({i i.e.} [.]);
+    - optionally, a colon ({i i.e.} [:]) followed by a type.
+
+    For example, the following code sets the height of dimension [dim] to
+    zero:
     {[
       let () = set "java.awt.Dimension.height:int" dim 0l
-    ]} *)
+    ]}
+
+    @raise Java_exception if obj is [null] *)
 
 
 (** {6 Null value} *)
 
 val null : 'a java_instance
-(** The {i null} value. *)
+(** The [null] value. *)
 
 external is_null : 'a java_instance -> bool =
   "java is_null"
-(** [is_null x] returns [true] iff [x] is equal to {i null}. *)
+(** [is_null x] returns [true] iff [x] is equal to [null]. *)
 
 external is_not_null : 'a java_instance -> bool =
   "java is_not_null"
-(** [is_not_null x] returns [false] iff [x] is equal to {i null}. *)
+(** [is_not_null x] returns [false] iff [x] is equal to [null]. *)
 
 
 (** {6 Equality test} *)
@@ -208,32 +341,40 @@ external not_equal : 'a java_instance -> 'b java_instance -> bool =
 
 external instanceof : 'a java_reference_type -> 'b java_instance -> bool =
   "java instanceof"
-(** [instanceof "classname" x] returns [true] if [x] is an instance of
-    [classname] or one of its subclasses, where [classname] can designate
-    an array type. *)
+(** [instanceof desc x] returns [true] if [x] is an instance of [desc].
+
+    [desc] is either a class name, or an array descriptor. *)
 
 external cast : 'a java_reference_type -> 'b java_instance -> 'a =
   "java cast"
-(** [cast "classname" x] casts [x] to an instance of [classname], where
-    [classname] can designate an array type.
+(** [cast desc x] casts [x], so that it can be used as an instance of
+    [desc].
 
-    Raises [Java_exception] if the cast fails. *)
+    [desc] is either a class name, or an array descriptor.
+
+    @raise Java_exception if the cast fails *)
 
 
 (** {6 Class retrieval} *)
 
 external get_class : 'a java_any_type -> java'lang'Class java_instance =
   "java class"
-(** [get_class "class_or_primitive_name"] returns the class instance
-    representing the passed type descriptor. *)
+(** [get_class desc] returns the instance of {java java.lang.Class}
+    representing the passed type descriptor.
+
+    [desc] can designate any Java type (primitive, array, reference). *)
 
 
 (** {6 Exception throw} *)
 
 external throw : java'lang'Throwable java_extends -> 'a =
   "java throw"
-(** [throw x] raises the exception instance [x]
-    (wrapped into a [Java_exception] on the OCaml side). *)
+(** [throw x] raises the instance [x], that will be wrapped into either
+    a [Java_exception], or a [Java_error] on the OCaml side.
+
+    @raise Java_exception if [x] is an instance of
+           {java java.lang.Exception}
+    @raise Java_error if [x] is an instance of {java java.lang.Error} *)
 
 
 (** {6 Synchronization} *)
@@ -241,40 +382,43 @@ external throw : java'lang'Throwable java_extends -> 'a =
 external synchronized : 'a java_instance -> (unit -> unit) -> unit =
   "java synchronized"
 (** [synchronized obj (fun () -> ...)] is equivalent to the Java code
-    {i synchronized (obj) \{ ... \}}.
+    [synchronized (obj) \{ ... \}].
 
-    Raises [Java_exception] if the [obj] is {i null}. *)
+    @raise Java_exception if the [obj] is [null] *)
 
 
 (** {6 Interface implementation} *)
 
 external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> 'a =
   "java proxy loader"
-(** [proxy_loader "interfacenames" cl impl] returns an instance that
-    implements [interfacenames] (a comma-separated list of interface
-    names) using the methods provided by [impl]. The class is defined in
-    the class loader [cl].
+(** [proxy_loader desc cl impl] returns an instance that implements the
+    interfaces specified by [desc], using the methods provided by [impl].
+    The class is defined in the class loader [cl].
 
-    For example, an instance of {i java.lang.Runnable} can be built using
-    the following code:
+    [desc] is basically a comma-separated list of interface names.
+
+    For example, an instance of {java java.lang.Runnable} can be built
+    using the following code:
     {[
       proxy "java.lang.Runnable" (object
         method run = ...
       end)
     ]}
+    When only one interface is provided, the instance returned has this
+    type, otherwise it has type {java java.lang.Object}.
 
-    When only one interface is provided, the instance returned by [proxy]
-    has this type, otherwise it has type {i java.lang.Object}.
+    It is also possible to override methods from the
+    {java java.lang.Object} class (independently of their presence or
+    absence in any of the interfaces), by using [.methodName] notation in
+    [desc]. As of Java 1.7, only three methods can be overridden:
+    - [toString];
+    - [equals];
+    - [hashCode].
 
-    It is also possible to override methods from the {i java.lang.Object}
-    class (independently of their presence/absence in any of the
-    interfaces). To this end, it is possible to use the {i .methodName}
-    notation in the interface list. As of Java 1.7, only three methods
-    can be overridden: {i toString}, {i equals}, and {i hashCode}. For
-    example, an instance of {i java.lang.Runnable} overriding {i toString}
-    can be built using the following code:
+    For example, an instance of {java java.lang.Runnable} overriding
+    [toString] can be built using the following code:
     {[
-      proxy "java.lang.Runnable, .toString" (object
+      proxy_loader "java.lang.Runnable, .toString" loader (object
         method run = ...
         method toString = ...
       end)
@@ -284,21 +428,21 @@ external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> '
 
 external proxy_system : 'a java_proxy -> 'a =
   "java proxy system"
-(** Same as [proxy_loader], but uses the system class loader. *)
+(** Similar to [proxy_loader], but uses the system class loader. *)
 
 external proxy_runtime : 'a java_proxy -> 'a =
   "java proxy runtime"
-(** Same as [proxy_loader], but uses the class loader that was used to
+(** Similar to [proxy_loader], but uses the class loader that was used to
     load the OCaml-Java runtime. *)
 
 external proxy : 'a java_proxy -> 'a =
   "java proxy system"
-(** Sysnonym for [proxy_system]. *)
+(** Synonym for [proxy_system]. *)
 
 
 (** {6 Miscellaneous} *)
 
 val wrap : 'a java_instance -> 'a java_instance option
 (** [wrap x] wraps the reference [x] into an option type:
-    - [Some x] if [x] is not null;
-    - [None] if [x] is null. *)
+    - [Some x] if [x] is not [null];
+    - [None] if [x] is [null]. *)
