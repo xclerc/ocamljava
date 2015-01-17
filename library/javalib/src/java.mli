@@ -288,7 +288,7 @@ external get : 'a java_field_get -> 'a =
       let max_int = get "java.lang.Integer.MAX_VALUE:int" ()
     ]}
 
-    @raise Java_exception if obj is [null] *)
+    @raise Java_exception if [obj] is [null] *)
 
 external set : 'a java_field_set -> 'a =
   "java field set"
@@ -307,7 +307,7 @@ external set : 'a java_field_set -> 'a =
       let () = set "java.awt.Dimension.height:int" dim 0l
     ]}
 
-    @raise Java_exception if obj is [null] *)
+    @raise Java_exception if [obj] is [null] *)
 
 
 (** {6 Null value} *)
