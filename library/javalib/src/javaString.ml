@@ -17,19 +17,18 @@
  *)
 
 
-(* String operations *)
+(* String operations, with an interface compatible with [String] *)
 
 let length s =
   Int32.to_int (Java.call "String.length()" s)
 
 let get s i =
-  Java.call "String.charAt(_)" s (Int32.of_int i)
+  Java.call "String.charAt(int)" s (Int32.of_int i)
 
 let make n c =
   let res = Java.make "StringBuilder(int)" (Int32.of_int n) in
   for _i = 1 to n do
-    Java.call "StringBuilder.append(char):StringBuilder" res c
-    |> ignore
+    Java.exec "StringBuilder.append(char):StringBuilder" res c
   done;
   Java.call "StringBuilder.toString()" res
 
@@ -37,21 +36,23 @@ let copy s =
   s
 
 let sub s ofs len =
-  Java.call "String.substring(_,_)" s (Int32.of_int ofs) (Int32.of_int (ofs + len))
+  Java.call "String.substring(int,int)"
+    s
+    (Int32.of_int ofs)
+    (Int32.of_int (ofs + len))
 
 let concat sep l =
   let res = Java.make "StringBuilder()" () in
-  (match l with
+  begin match l with
   | hd :: tl ->
-      ignore (Java.call "StringBuilder.append(CharSequence):StringBuilder" res hd);
+      Java.exec "StringBuilder.append(CharSequence):StringBuilder" res hd;
       List.iter
         (fun s ->
-          Java.call "StringBuilder.append(CharSequence):StringBuilder" res sep
-          |> ignore;
-          Java.call "StringBuilder.append(CharSequence):StringBuilder" res s
-          |> ignore)
+          Java.exec "StringBuilder.append(CharSequence):StringBuilder" res sep;
+          Java.exec "StringBuilder.append(CharSequence):StringBuilder" res s)
         tl
-  | [] -> ());
+  | [] -> ()
+  end;
   Java.call "StringBuilder.toString()" res
 
 let iter f s =
@@ -70,41 +71,32 @@ let map f s =
   let len = Java.call "String.length()" s in
   let res = Java.make "StringBuilder(int)" len in
   for i = 0 to pred (Int32.to_int len) do
-    Java.call "StringBuilder.append(char):StringBuilder" res (f (get s i))
-    |> ignore
+    Java.exec "StringBuilder.append(char):StringBuilder" res (f (get s i))
   done;
   Java.call "StringBuilder.toString()" res
 
 let trim s =
   Java.call "String.trim()" s
 
-external js_of_s : string -> _'String java_instance =
-  "ocamljava_javastring_of_string"
-
-let new_line = js_of_s "\\n"
-let tab = js_of_s "\\t"
-let carriage_return = js_of_s "\\r"
-let backspace = js_of_s "\\b"
-
 let escaped s =
   let len = Java.call "String.length()" s in
   let res = Java.make "StringBuilder(int)" len in
   for i = 0 to pred (Int32.to_int len) do
     let ch = get s i in
-    (match ch with
+    match ch with
     | 34 (* double quote *) | 92 (* back slash *) ->
-        ignore (Java.call "StringBuilder.append(char):StringBuilder" res 92);
-        ignore (Java.call "StringBuilder.append(char):StringBuilder" res ch)
+        Java.exec "StringBuilder.append(char):StringBuilder" res 92;
+        Java.exec "StringBuilder.append(char):StringBuilder" res ch
     | 10 (* new line *) ->
-        ignore (Java.call "StringBuilder.append(String):StringBuilder" res new_line)
+        Java.exec "StringBuilder.append(String):StringBuilder" res !@"\\n"
     | 9 (* tab *) ->
-        ignore (Java.call "StringBuilder.append(String):StringBuilder" res tab)
+        Java.exec "StringBuilder.append(String):StringBuilder" res !@"\\t"
     | 13 (* carriage return *) ->
-        ignore (Java.call "StringBuilder.append(String):StringBuilder" res carriage_return)
+        Java.exec "StringBuilder.append(String):StringBuilder" res !@"\\r"
     | 8 (* backspace *) ->
-        ignore (Java.call "StringBuilder.append(String):StringBuilder" res backspace)
+        Java.exec "StringBuilder.append(String):StringBuilder" res !@"\\b"
     | _ ->
-        ignore (Java.call "StringBuilder.append(char):StringBuilder" res ch))
+        Java.exec "StringBuilder.append(char):StringBuilder" res ch
   done;
   Java.call "StringBuilder.toString()" res
 
@@ -148,11 +140,9 @@ let capitalize s =
   let len = Java.call "String.length()" s in
   let res = Java.make "StringBuilder(int)" len in
   let first = Java.call "Character.toUpperCase(char)" (get s 0) in
-  Java.call "StringBuilder.append(char):StringBuilder" res first
-  |> ignore;
+  Java.exec "StringBuilder.append(char):StringBuilder" res first;
   for i = 1 to pred (Int32.to_int len) do
-    Java.call "StringBuilder.append(char):StringBuilder" res (get s i)
-    |> ignore
+    Java.exec "StringBuilder.append(char):StringBuilder" res (get s i)
   done;
   Java.call "StringBuilder.toString()" res
 
@@ -160,11 +150,9 @@ let uncapitalize s =
   let len = Java.call "String.length()" s in
   let res = Java.make "StringBuilder(int)" len in
   let first = Java.call "Character.toLowerCase(char)" (get s 0) in
-  Java.call "StringBuilder.append(char):StringBuilder" res first
-  |> ignore;
+  Java.exec "StringBuilder.append(char):StringBuilder" res first;
   for i = 1 to pred (Int32.to_int len) do
-    Java.call "StringBuilder.append(char):StringBuilder" res (get s i)
-    |> ignore
+    Java.exec "StringBuilder.append(char):StringBuilder" res (get s i)
   done;
   Java.call "StringBuilder.toString()" res
 
@@ -174,15 +162,15 @@ let compare x y =
   Int32.to_int (Java.call "String.compareTo(String)" x y)
 
 let compare_ignore_case x y =
-  Int32.to_int (Java.call "String.compareToIgnoreCase(_)" x y)
+  Int32.to_int (Java.call "String.compareToIgnoreCase(String)" x y)
 
 
 (* Conversion from/to OCaml strings *)
 
-external of_string : string -> _'String java_instance =
+external of_string : string -> java'lang'String java_instance =
   "ocamljava_javastring_of_string"
 
-external to_string : _'String java_instance -> string =
+external to_string : java'lang'String java_instance -> string =
   "ocamljava_javastring_to_string"
 
 

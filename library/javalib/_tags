@@ -23,6 +23,7 @@ true: -traverse
 # Options
 <src/**/*.ml{,i}>: warnings
 <src/**/*.ml{,i}>: java-extensions
+"src/javaString.ml": needs-java-pervasives
 <src/javaServlet.ml{,i}>: servlet-api
 <**/*.docdir>: servlet-api, java-extensions
 <src/**/*.{cmj,jar}>: java-package(org.ocamljava.library.javalib)

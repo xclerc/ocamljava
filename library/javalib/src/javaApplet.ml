@@ -20,12 +20,12 @@
 (* Applet information *)
 
 type parameter = {
-    param_name : java'lang'String java_instance;
-    param_type : java'lang'String java_instance;
-    param_desc : java'lang'String java_instance;
+    param_name : JavaString.t;
+    param_type : JavaString.t;
+    param_desc : JavaString.t;
   }
 
-type parameter_info = java'lang'String java_instance java_reference_array java_reference_array
+type parameter_info = JavaString.t java_reference_array java_reference_array
 
 let parameter_info_of_list l =
   let len = List.length l in
@@ -45,21 +45,21 @@ let parameter_info_of_list l =
 type awt = java'applet'Applet java_instance
 
 module type AWT = sig
-  val applet_info : java'lang'String java_instance
+  val applet_info    : JavaString.t
   val parameter_info : parameter_info
-  val init : java'applet'Applet java_instance -> unit
-  val start : java'applet'Applet java_instance -> unit
-  val stop : java'applet'Applet java_instance -> unit
-  val destroy : java'applet'Applet java_instance -> unit
+  val init           : awt -> unit
+  val start          : awt -> unit
+  val stop           : awt -> unit
+  val destroy        : awt -> unit
 end
 
 module Default_AWT : AWT = struct
-  let applet_info = JavaString.of_string "AWT applet"
+  let applet_info    = !@"AWT applet"
   let parameter_info = parameter_info_of_list []
-  let init _ = ()
-  let start _ = ()
-  let stop _ = ()
-  let destroy _ = ()
+  let init _         = ()
+  let start _        = ()
+  let stop _         = ()
+  let destroy _      = ()
 end
 
 
@@ -68,50 +68,50 @@ end
 type swing = javax'swing'JApplet java_instance
 
 module type Swing = sig
-  val applet_info : java'lang'String java_instance
+  val applet_info    : JavaString.t
   val parameter_info : parameter_info
-  val init : javax'swing'JApplet java_instance -> unit
-  val start : javax'swing'JApplet java_instance -> unit
-  val stop : javax'swing'JApplet java_instance -> unit
-  val destroy : javax'swing'JApplet java_instance -> unit
+  val init           : swing -> unit
+  val start          : swing -> unit
+  val stop           : swing -> unit
+  val destroy        : swing -> unit
 end
 
 module Default_Swing : Swing = struct
-  let applet_info = JavaString.of_string "Swing applet"
+  let applet_info    = !@"Swing applet"
   let parameter_info = parameter_info_of_list []
-  let init _ = ()
-  let start _ = ()
-  let stop _ = ()
-  let destroy _ = ()
+  let init _         = ()
+  let start _        = ()
+  let stop _         = ()
+  let destroy _      = ()
 end
 
 
 (* Graphics-based applets *)
 
 type graphics_event = {
-  mouse_x : int;
-  mouse_y : int;
-  button : bool;
+  mouse_x    : int;
+  mouse_y    : int;
+  button     : bool;
   keypressed : bool;
-  key : char;
+  key        : char;
 }
 
 module type Graphics = sig
-  val applet_info : java'lang'String java_instance
+  val applet_info    : JavaString.t
   val parameter_info : parameter_info
-  val init : unit -> unit
-  val start : unit -> unit
-  val run : graphics_event -> unit
-  val stop : unit -> unit
-  val destroy : unit -> unit
+  val init           : unit -> unit
+  val start          : unit -> unit
+  val run            : graphics_event -> unit
+  val stop           : unit -> unit
+  val destroy        : unit -> unit
 end
 
 module Default_Graphics : Graphics = struct
-  let applet_info = JavaString.of_string "Graphics applet"
+  let applet_info    = !@"Graphics applet"
   let parameter_info = parameter_info_of_list []
-  let init () = ()
-  let start () = ()
-  let run _ = ()
-  let stop () = ()
-  let destroy () = ()
+  let init ()        = ()
+  let start ()       = ()
+  let run _          = ()
+  let stop ()        = ()
+  let destroy ()     = ()
 end

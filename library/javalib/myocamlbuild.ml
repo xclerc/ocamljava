@@ -176,6 +176,7 @@ let () =
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
         flag ["ocaml"; "doc"] (S[A"-sort"; A"-html5"; A"-t"; A"Java library"]);
+        dep ["needs-java-pervasives"] ["src/javaPervasives.cmi"];
         flag ["ocaml"; "doc"; "servlet-api"]
           (S[A"-cp"; A"../../../external-jars/servlet-api.jar"]);
         flag ["ocaml"; "compile"; "servlet-api"]

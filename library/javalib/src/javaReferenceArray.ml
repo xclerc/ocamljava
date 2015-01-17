@@ -35,7 +35,8 @@ external to_object : 'a java_reference_array -> java'lang'Object java_instance =
   "java array to_object reference"
 
 let blit src srcofs dst dstofs len =
-  Java.call "System.arraycopy(-)" (to_object src) srcofs (to_object dst) dstofs len
+  Java.call "System.arraycopy(Object,int,Object,int,int)"
+    (to_object src) srcofs (to_object dst) dstofs len
 
 let iter f a =
   let len = length a in

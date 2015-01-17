@@ -52,8 +52,10 @@ let append a1 a2 =
   let len1 = length a1 in
   let len2 = length a2 in
   let res = Java.make_array "$(java_element_type)[]" (Int32.add len1 len2) in
-  Java.call "System.arraycopy(-)" (to_object a1) 0l (to_object res) 0l len1;
-  Java.call "System.arraycopy(-)" (to_object a2) 0l (to_object res) len1 len2;
+  Java.call "System.arraycopy(Object,int,Object,int,int)"
+    (to_object a1) 0l (to_object res) 0l len1;
+  Java.call "System.arraycopy(Object,int,Object,int,int)"
+    (to_object a2) 0l (to_object res) len1 len2;
   res
 
 let concat l =
@@ -63,31 +65,33 @@ let concat l =
   List.iter
     (fun a ->
       let len = length a in
-      Java.call "System.arraycopy(-)" (to_object a) 0l (to_object res) !ofs len;
+      Java.call "System.arraycopy(Object,int,Object,int,int)"
+        (to_object a) 0l (to_object res) !ofs len;
       ofs := Int32.add !ofs len)
     l;
   res
 
 let sub a ofs len =
-  Java.call "java.util.Arrays.copyOfRange($(java_element_type)[],_,_)"
+  Java.call "java.util.Arrays.copyOfRange($(java_element_type)[],int,int)"
     a
     ofs
     (Int32.add ofs len)
 
 let copy a =
-  Java.call "java.util.Arrays.copyOf($(java_element_type)[],_)"
+  Java.call "java.util.Arrays.copyOf($(java_element_type)[],int)"
     a
     (length a)
 
 let fill a ofs len x =
-  Java.call "java.util.Arrays.fill($(java_element_type)[],_,_,_)"
+  Java.call "java.util.Arrays.fill($(java_element_type)[],int,int,$(java_element_type))"
     a
     ofs
     (Int32.add ofs len)
     x
 
 let blit src srcofs dst dstofs len =
-  Java.call "System.arraycopy(-)" (to_object src) srcofs (to_object dst) dstofs len
+  Java.call "System.arraycopy(Object,int,Object,int,int)"
+    (to_object src) srcofs (to_object dst) dstofs len
 
 let to_list a =
   let rec tl acc i =
