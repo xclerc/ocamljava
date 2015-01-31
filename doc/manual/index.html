@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>OCaml-Java: optimizer</title>
+<title>OCaml-Java: 2.0 alpha</title>
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <style>
 table {
@@ -18,62 +18,62 @@ table {
       <div class="list-group">
         
         <a href="#introduction" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Introduction
         </a>
         
         <a href="#first-steps" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;First steps
         </a>
         
         <a href="#compatibility" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Compatibility
         </a>
         
         <a href="#performance" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Performance
         </a>
         
         <a href="#optimizer" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Optimizer
         </a>
         
         <a href="#concurrency" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Concurrency
         </a>
         
         <a href="#java-access" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Java access
         </a>
         
         <a href="#applets" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Applets
         </a>
         
         <a href="#servlets" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Servlets
         </a>
         
         <a href="#scripting" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Scripting
         </a>
         
         <a href="#wrapping" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Wrapping
         </a>
         
         <a href="#contact" class="list-group-item">
-          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Contact
         </a>
         
@@ -241,22 +241,22 @@ ocamljava -o myprog.jar source.cmj</code></pre>
 <p><strong>Warning!</strong> OCaml-Java is much slower than the original OCaml in the handling of exceptions.</p>
 </div>
 <h1 id="optimizer">Optimizer</h1>
-<p>Since version 2.0-early-access5, the distribution features a post-compilation optimizer (namely <kbd>ocamljar</kbd>) that can be applied to a linked OCaml-Java program (that is, a jar file) in order to produce an optimized version of the program. An overview of the tool is available <a href="ocamljar.html">here</a>.</p>
+<p>Since version 2.0-early-access5, the distribution features a post-compilation optimizer (namely <kbd>ocamljar</kbd>) that can be applied to a linked OCaml-Java program (that is, a jar file) in order to produce an optimized version of the program. An overview of the tool is available <a href="pages/ocamljar.html">here</a>.</p>
 <h1 id="concurrency">Concurrency</h1>
-<p>The current version of OCaml-Java ships with a draft version of the <code>Concurrent</code> library which is a pack of several modules that are bare wrappers around Java classes. The <code>doc</code> directory contains the <kbd>ocamldoc</kbd>-generated documentation for these modules. An overview of the library is available <a href="concurrency.html">here</a>.</p>
+<p>The current version of OCaml-Java ships with a draft version of the <code>Concurrent</code> library which is a pack of several modules that are bare wrappers around Java classes. The <code>doc</code> directory contains the <kbd>ocamldoc</kbd>-generated documentation for these modules. An overview of the library is available <a href="pages/concurrency.html">here</a>.</p>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> by default, OCaml-Java favors compatibility with the original OCaml implementation, meaning that it is based on a global runtime lock. In order to leverage the power of the <code>concurrent</code> library, it is necessary to disable the runtime lock by linking the program with the <kbd>-runtime-parameter runtime-lock=off</kbd> command-line option.</p>
 </div>
 <h1 id="java-access">Java access</h1>
-<p>Since version 2.0-early-access8, the distribution includes a new extension to the OCaml typer that allows to create and manipulate Java instances using OCaml code. An overview of these extensions is available <a href="javaext.html">here</a>.</p>
+<p>Since version 2.0-early-access8, the distribution includes a new extension to the OCaml typer that allows to create and manipulate Java instances using OCaml code. An overview of these extensions is available <a href="pages/javaext.html">here</a>.</p>
 <h1 id="applets">Applets</h1>
-<p>Since version 2.0-early-access9, the distribution allows to write applets. Applets can be based on the Java AWT toolkit, the Java Swing toolkit, or the OCaml Graphics module. More information on how to develop and deploy applet is available <a href="applets.html">here</a>.</p>
+<p>Since version 2.0-early-access9, the distribution allows to write applets. Applets can be based on the Java AWT toolkit, the Java Swing toolkit, or the OCaml Graphics module. More information on how to develop and deploy applet is available <a href="pages/applets.html">here</a>.</p>
 <h1 id="servlets">Servlets</h1>
-<p>Since version 2.0-alpha1, the distribution allows to write servlets. Servlets can then be deployed to a container such as Apache Tomcat or Jetty. More information on how to develop and deploy servlets is available <a href="servlets.html">here</a>.</p>
+<p>Since version 2.0-alpha1, the distribution allows to write servlets. Servlets can then be deployed to a container such as Apache Tomcat or Jetty. More information on how to develop and deploy servlets is available <a href="pages/servlets.html">here</a>.</p>
 <h1 id="scripting">Scripting</h1>
-<p>Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. An overview of the support for scripting is available <a href="scripting.html">here</a>.</p>
+<p>Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. An overview of the support for scripting is available <a href="pages/scripting.html">here</a>.</p>
 <h1 id="wrapping">Wrapping</h1>
-<p>Since version 2.0-early-access6, the distribution features a tool named <kbd>ocamlwrap</kbd> that can be used to generate Java class definitions for easy access to <kbd>ocamljava</kbd>-compiled code from the Java language. An overview of the tool is available <a href="ocamlwrap.html">here</a>.</p>
+<p>Since version 2.0-early-access6, the distribution features a tool named <kbd>ocamlwrap</kbd> that can be used to generate Java class definitions for easy access to <kbd>ocamljava</kbd>-compiled code from the Java language. An overview of the tool is available <a href="pages/ocamlwrap.html">here</a>.</p>
 <h1 id="contact">Contact</h1>
 <p>The developer of OCaml-Java can be reached either by mail (<code>xclerc AT ocamljava.org</code>) or through the project bugtracker (available on <a href="https://github.com/xclerc/ocamljava">github</a>).</p>
 
