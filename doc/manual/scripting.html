@@ -2,130 +2,156 @@
 
 <html>
 <head>
-<title>OCaml-Java: scripting</title>
-<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+<title>OCaml-Java: optimizer</title>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<style>
+table {
+}
+</style>
 </head>
 <body>
 
-<br/>
-
-<div class="container-fluid">
-<div class="row-fluid">
-<div class="span1"></div>
-<div class="span2">
-<ul class="well nav nav-list">
-  <li class="nav-header">Page contents</li>
-  <li><a href="index.html"><i class="icon-home"></i>Main page</a></li>
-  <li class="divider"></li>
-  <li><a href="#interpretation"><i class="icon-tag"></i>Code interpretation</a></li>
-  <li><a href="#mapping"><i class="icon-tag"></i>Type mapping</a></li>
-  <li><a href="#compilation"><i class="icon-tag"></i>Code compilation</a></li>
-</ul>
-</div>
-<div class="span8">
-
-
-<section id="top"><div class="page-header"><h1>OCaml-Java: scripting</h1></div>
-<p>
-Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. This page first shows how the support for scripting can be used to interpret OCaml code. Then, the mapping of Java types to OCaml is presented. Finally, an example shows how the scripting framework can be used to compile code.
-</p>
-<p>
+<div class="container">
+  <div class="row">&nbsp;</row>
+  <div class="row">
+    <div class="col-xs-6 col-sm-3 sidebar">
+      <div class="list-group">
+        
+        <a href="index.html" class="list-group-item">
+          <span class="glyphicon glyphicon-home"aria-hidden="true"></span>
+          &nbsp;Main page
+        </a>
+        
+        <a href="#code-interpretation" class="list-group-item">
+          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          &nbsp;Code interpretation
+        </a>
+        
+        <a href="#type-mapping" class="list-group-item">
+          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          &nbsp;Type mapping
+        </a>
+        
+        <a href="#code-compilation" class="list-group-item">
+          <span class="glyphicon glyphicon-tag"aria-hidden="true"></span>
+          &nbsp;Code compilation
+        </a>
+        
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-9">
+      <h1>OCaml-Java: scripting</h1>
+      <hr>
+      <p>Since version 2.0-early-access5, scripting from a Java application is supported, by providing an OCaml script engine for the <code>javax.script</code> framework. This page first shows how the support for scripting can be used to interpret OCaml code. Then, the mapping of Java types to OCaml is presented. Finally, an example shows how the scripting framework can be used to compile code.</p>
 <div class="alert alert-warning">
-<strong>Warning!</strong> scripting does not currently support the typer extension allowing to access Java elements.
+<p><strong>Warning!</strong> scripting does not currently support the typer extension allowing to access Java elements.</p>
 </div>
-</p>
-</section>
-
-
-<section id="interpretation"><div class="page-header"><h1>Code interpretation</h1></div>
-<p>
-In order to be able to use the script engine, it is sufficient to add the archive <code>lib/ocamlrun-scripting.jar</code> to the classpath. It is then possible to interpret OCaml phrases from a Java application as shown by the following code sample:
-<pre>
-import javax.script.*;
+<h1 id="code-interpretation">Code interpretation</h1>
+<p>In order to be able to use the script engine, it is sufficient to add the archive <code>lib/ocamlrun-scripting.jar</code> to the classpath. It is then possible to interpret OCaml phrases from a Java application as shown by the following code sample:</p>
+<pre><code>import javax.script.*;
 import org.ocamljava.runtime.support.scripting.OCamlContext;
 
 public final class SimpleInterpreted {
 
     private static final String SCRIPT =
-        "external get_binding : string -> 'a = \"script_get_binding\";;\n" +
-        "let n = Int32.to_int (get_binding \"repetitions\");;\n" +
-        "let s : string = get_binding \"message\";;\n" +
-        "for i = 1 to n do print_endline s done;;\n";
+        &quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;;;\n&quot; +
+        &quot;let n = Int32.to_int (get_binding \&quot;repetitions\&quot;);;\n&quot; +
+        &quot;let s : string = get_binding \&quot;message\&quot;;;\n&quot; +
+        &quot;for i = 1 to n do print_endline s done;;\n&quot;;
 
     public static void main(final String[] args) throws Throwable {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("OCaml");
+        final ScriptEngine engine = manager.getEngineByName(&quot;OCaml&quot;);
         final ScriptContext ctxt = new OCamlContext();
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("repetitions", 3);
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("message", "hello!!!");
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;repetitions&quot;, 3);
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;message&quot;, &quot;hello!!!&quot;);
         engine.eval(SCRIPT, ctxt);
     }
 
-}
-</pre>
-where the external <code>get_binding</code> function allows to access bindings registered on the Java side of the application. 
-</p>
-</section>
-
-
-<section id="mapping"><div class="page-header"><h1>Type mapping</h1></div>
-<p>
-The mapping of Java types to OCaml types is given by the following table (notice that Java primitive types are necessarily promoted to their wrapper equivalents through the use of the binding API):
+}</code></pre>
+<p>where the external <code>get_binding</code> function allows to access bindings registered on the Java side of the application.</p>
+<h1 id="type-mapping">Type mapping</h1>
+<p>The mapping of Java types to OCaml types is given by the following table (notice that Java primitive types are necessarily promoted to their wrapper equivalents through the use of the binding API):</p>
 <table class="table table-condensed table-striped table-bordered">
 <thead>
-<tr><th>Java type</th><th>OCaml type</th></tr>
+<tr class="header">
+<th style="text-align: left;">Java type</th>
+<th style="text-align: left;">OCaml type</th>
+</tr>
 </thead>
 <tbody>
-<tr><td><tt>java.lang.Boolean</tt></td>    <td><tt>bool</tt></td>   </tr>
-<tr><td><tt>java.lang.Byte</tt></td>       <td><tt>int</tt></td>    </tr>
-<tr><td><tt>java.lang.Character</tt></td>  <td><tt>int</tt></td>    </tr>
-<tr><td><tt>java.lang.Double</tt></td>     <td><tt>float</tt></td>  </tr>
-<tr><td><tt>java.lang.Float</tt></td>      <td><tt>float</tt></td>  </tr>
-<tr><td><tt>java.lang.Integer</tt></td>    <td><tt>int32</tt></td>  </tr>
-<tr><td><tt>java.lang.Long</tt></td>       <td><tt>int64</tt></td>  </tr>
-<tr><td><tt>java.lang.Short</tt></td>      <td><tt>int</tt></td>    </tr>
-<tr><td><tt>java.lang.String</tt></td>     <td><tt>string</tt></td> </tr>
+<tr class="odd">
+<td style="text-align: left;"><code>java.lang.Boolean</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>java.lang.Byte</code></td>
+<td style="text-align: left;"><code>int</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>java.lang.Character</code></td>
+<td style="text-align: left;"><code>int</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>java.lang.Double</code></td>
+<td style="text-align: left;"><code>float</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>java.lang.Float</code></td>
+<td style="text-align: left;"><code>float</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>java.lang.Integer</code></td>
+<td style="text-align: left;"><code>int32</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>java.lang.Long</code></td>
+<td style="text-align: left;"><code>int64</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>java.lang.Short</code></td>
+<td style="text-align: left;"><code>int</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>java.lang.String</code></td>
+<td style="text-align: left;"><code>string</code></td>
+</tr>
 </tbody>
 </table>
-</section>
-</p>
-</section>
-
-
-<section id="compilation"><div class="page-header"><h1>Code compilation</h1></div>
-<p>
-Besides interpretation, it is also possible to compile OCaml sources in order to benefit from better performance. To do so, the archive <code>lib/ocamljava.jar</code> has to be added to the classpath in addition to the archive <code>lib/ocamlrun-scripting.jar</code>. The following code shows how to compile and then run an OCaml snippet from a Java application.
-<pre>
-import javax.script.*;
+<h1 id="code-compilation">Code compilation</h1>
+<p>Besides interpretation, it is also possible to compile OCaml sources in order to benefit from better performance. To do so, the archive <code>lib/ocamljava.jar</code> has to be added to the classpath in addition to the archive <code>lib/ocamlrun-scripting.jar</code>. The following code shows how to compile and then run an OCaml snippet from a Java application.</p>
+<pre><code>import javax.script.*;
 import org.ocamljava.runtime.support.scripting.OCamlContext;
 
 public final class SimpleCompiled {
 
     private static final String SCRIPT =
-        "external get_binding : string -> 'a = \"script_get_binding\"\n" +
-        "let () =\n" +
-        "  let n = Int32.to_int (get_binding \"repetitions\") in\n" +
-        "  let s : string = get_binding \"message\" in\n" +
-        "  for i = 1 to n do print_endline s done\n";
+        &quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;\n&quot; +
+        &quot;let () =\n&quot; +
+        &quot;  let n = Int32.to_int (get_binding \&quot;repetitions\&quot;) in\n&quot; +
+        &quot;  let s : string = get_binding \&quot;message\&quot; in\n&quot; +
+        &quot;  for i = 1 to n do print_endline s done\n&quot;;
 
     public static void main(final String[] args) throws Throwable {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("OCaml");
+        final ScriptEngine engine = manager.getEngineByName(&quot;OCaml&quot;);
         final ScriptContext ctxt = new OCamlContext();
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("repetitions", 3);
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put("message", "hello!!!");
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;repetitions&quot;, 3);
+        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;message&quot;, &quot;hello!!!&quot;);
         final CompiledScript compiled = ((Compilable) engine).compile(SCRIPT);
         compiled.eval(ctxt);
     }
 
-}
-</pre>
-</p>
-</section>
+}</code></pre>
 
+    </div>
+  </div>
+  <hr>
+<footer>
+  <p>OCaml-Java manual (version 2.0 alpha)</p>
+</footer>
 
 </div>
-</div>
-</div>
+
 </body>
 </html>
