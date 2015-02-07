@@ -85,6 +85,14 @@ let contains_dots s =
   done;
   !i >= 0
 
+let extract_class_name_from_method_descriptor s =
+  try
+    let parent_idx = String.index s '(' in
+    let dot_idx = String.rindex_from s parent_idx '.' in
+    String.sub s 0 dot_idx
+  with _ ->
+    assert false
+
 
 (* Packages *)
 
@@ -549,9 +557,27 @@ let get_method_info, java_method_of_string =
     let params = ocaml_type_of_java_type_list ~ellipsis newty false params in
     let return =
       match call_kind with
-      | Bare_call     -> ocaml_type_of_java_type newty true return
-      | Pop_result    -> ocaml_type_of_java_type newty true `Void
-      | Push_instance -> ocaml_type_of_java_type newty true (`Class cd.ClassDefinition.name) in
+      | Bare_call ->
+          ocaml_type_of_java_type newty true return
+      | Pop_result ->
+          ocaml_type_of_java_type newty true `Void
+      | Push_instance ->
+          (* the lookup process may have chosen a more general type,
+             hence the need to retrieve the given class *)
+          let original_class =
+            try
+              s
+              |> use_dots
+              |> extract_class_name_from_method_descriptor
+              |> UTF8.of_string
+              |> Lookup.for_class
+                  false
+                  ~open_packages:(get_opened_packages loc)
+                  loader
+            with Lookup.Exception e ->
+              failwith (Lookup.string_of_error e) in
+          let def = original_class.Lookup.value in
+          ocaml_type_of_java_type newty true (`Class def.ClassDefinition.name) in
     let params =
       if params = [] then
         [ Predef.type_unit ]
