@@ -1,6 +1,6 @@
 (*
  * This file is part of OCaml-Java compiler.
- * Copyright (C) 2007-2014 Xavier Clerc.
+ * Copyright (C) 2007-2015 Xavier Clerc.
  *
  * OCaml-Java compiler is free software; you can redistribute it and/or modify
  * it under the terms of the Q Public License as published by

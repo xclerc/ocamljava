@@ -1,6 +1,6 @@
 (*
  * This file is part of OCaml-Java compiler.
- * Copyright (C) 2007-2014 Xavier Clerc.
+ * Copyright (C) 2007-2015 Xavier Clerc.
  * Original file (toplevel/opttoploop.mli in the OCaml source
  * distribution) is Copyright (C) INRIA.
  *

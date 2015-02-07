@@ -2,7 +2,7 @@
 
 #
 # This file is part of OCaml-Java compiler.
-# Copyright (C) 2007-2014 Xavier Clerc.
+# Copyright (C) 2007-2015 Xavier Clerc.
 # Original file (build/camlp4-native-only.sh in the OCaml source
 # distribution) is Copyright (C) INRIA.
 #
