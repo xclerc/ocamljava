@@ -164,6 +164,12 @@ let compare x y =
 let compare_ignore_case x y =
   Int32.to_int (Java.call "String.compareToIgnoreCase(String)" x y)
 
+let equals x y =
+  Java.call "String.equals(Object)" x y
+
+let equals_ignore_case x y =
+  Java.call "String.equalsIgnoreCase(String)" x y
+
 
 (* Conversion from/to OCaml strings *)
 

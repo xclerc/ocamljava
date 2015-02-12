@@ -100,6 +100,13 @@ val compare_ignore_case : t -> t -> int
 (** Similar to [String.compare], but ignoring case when comparing
     strings. *)
 
+val equals : t -> t -> bool
+(** Tests whether the passed strings are equal. *)
+
+val equals_ignore_case : t -> t -> bool
+(** Similar to [String.equals], but ignoring case when comparing
+    strings. *)
+
 
 (** {6 Conversion from/to OCaml strings} *)
 
