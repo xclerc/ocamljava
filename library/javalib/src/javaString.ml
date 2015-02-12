@@ -228,3 +228,7 @@ let wrap x =
     None
   else
     Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null
