@@ -64,19 +64,19 @@ let array_modules = [
       "" ;
       "(** {6 String operations} *)" ;
       "" ;
-      "external to_string : e java_byte_array -> string =" ;
+      "external to_ocaml_string : e java_byte_array -> string =" ;
       "  \"string_of_byte_array\"" ;
       "(** [to_string x] returns the array [x] as wrapped into a string. *)" ;
       "" ;
-      "external of_string : string -> e java_byte_array =" ;
+      "external of_ocaml_string : string -> e java_byte_array =" ;
       "  \"byte_array_of_string\"" ;
       "(** [of_string x] returns the array wrapped inside [x]. *)" ;
     ];
     extra_impl = [
-      "external to_string : e java_byte_array -> string =" ;
+      "external to_ocaml_string : e java_byte_array -> string =" ;
       "  \"string_of_byte_array\"" ;
       "" ;
-      "external of_string : string -> e java_byte_array =" ;
+      "external of_ocaml_string : string -> e java_byte_array =" ;
       "  \"byte_array_of_string\"" ;
     ]; } ;
   { module_name = "JavaCharArray";
