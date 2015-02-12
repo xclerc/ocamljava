@@ -206,6 +206,16 @@ let to_ocaml a =
 external of_object : java'lang'Object java_instance -> e $(ocaml_java_type) =
   "java array of_object $(java_element_type)"
 
+let equals a1 a2 =
+  Java.call "java.util.Arrays.equals($(java_element_type)[],$(java_element_type)[])"
+    a1 a2
+
+let hash_code a =
+  Java.call "java.util.Arrays.hashCode($(java_element_type)[])" a
+
+let to_string a =
+  Java.call"java.util.Arrays.toString($(java_element_type)[])" a
+
 external null : unit -> e $(ocaml_java_type) =
   "java null"
 

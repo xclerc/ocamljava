@@ -79,6 +79,19 @@ let fold_right f a z =
 external of_object : java'lang'Object java_instance -> 'a java_reference_array =
   "java array of_object reference"
 
+let equals a1 a2 =
+  Java.call"java.util.Arrays.equals(java.lang.Object[],java.lang.Object[])"
+    (Java.cast "Object[]" (to_object a1))
+    (Java.cast "Object[]" (to_object a2))
+
+let hash_code a =
+  Java.call "java.util.Arrays.hashCode(Object[])"
+    (Java.cast "Object[]" (to_object a))
+
+let to_string a =
+  Java.call "java.util.Arrays.toString(Object[])"
+    (Java.cast "Object[]" (to_object a))
+
 external null : unit -> 'a java_reference_array =
   "java null"
 

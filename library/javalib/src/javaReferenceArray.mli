@@ -59,7 +59,6 @@ val iteri : (int32 -> 'a -> unit) -> 'a java_reference_array -> unit
 
     @raise Java_exception if [a] is [null] *)
 
-
 val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b java_reference_array -> 'a
 (** [fold_left f z a] returns [f (... (f (f z a_0) a_1))] where [a_i] is
     the element of [a] at index [i].
@@ -84,6 +83,18 @@ external of_object : java'lang'Object java_instance -> 'a java_reference_array =
 (** [of_object o] casts object [o] to array.
 
     @raise Java_exception if cast fails *)
+
+val equals : 'a t -> 'a t -> bool
+(** [equals a1 a2] tests whether [a1] and [a2] are equal; see
+    {java java.util.Arrays#equals(java.lang.Object[], java.lang.Object[])}. *)
+
+val hash_code : 'a t -> int32
+(** [hash_code a] returns the hash code of [a]; see
+    {java java.util.Arrays#hashCode(Object[])}. *)
+
+val to_string : 'a t -> JavaString.t
+(** [to_string a] returns the string representation of [a]; see
+    {java java.util.Arrays#toString(Object[])}. *)
 
 val null : 'a java_reference_array
 (** The [null] value. *)

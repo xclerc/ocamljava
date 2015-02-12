@@ -163,6 +163,18 @@ external of_object : java'lang'Object java_instance -> e $(ocaml_java_type) =
 
     @raise Java_exception if cast fails *)
 
+val equals : e $(ocaml_java_type) -> e $(ocaml_java_type) -> bool
+(** [equals a1 a2] tests whether [a1] and [a2] are equal; see
+    {java java.util.Arrays#equals($(java_element_type)[], $(java_element_type)[])}. *)
+
+val hash_code : e $(ocaml_java_type) -> int32
+(** [hash_code a] returns the hash code of [a]; see
+    {java java.util.Arrays#hashCode($(java_element_type)[])}. *)
+
+val to_string : e $(ocaml_java_type) -> JavaString.t
+(** [to_string a] returns the string representation of [a]; see
+    {java java.util.Arrays#toString($(java_element_type)[])}. *)
+
 val null : e $(ocaml_java_type)
 (** The [null] value. *)
 
@@ -178,6 +190,7 @@ val wrap : e $(ocaml_java_type) -> e $(ocaml_java_type) option
 (** [wrap x] wraps the array [x] into an option type:
     - [Some x] if [x] is not [null];
     - [None] if [x] is [null]. *)
+
 val unwrap : e $(ocaml_java_type) option -> e $(ocaml_java_type)
 (** [unwrap x] unwraps the option [x] into a bare reference:
     - [Some x] is mapped to [x];
