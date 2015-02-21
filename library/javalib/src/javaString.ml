@@ -20,7 +20,8 @@
 (* String operations, with an interface compatible with [String] *)
 
 let length s =
-  Int32.to_int (Java.call "String.length()" s)
+  Java.call "String.length()" s
+  |> Int32.to_int
 
 let get s i =
   Java.call "String.charAt(int)" s (Int32.of_int i)
@@ -101,16 +102,20 @@ let escaped s =
   Java.call "StringBuilder.toString()" res
 
 let index s c =
-  Int32.to_int (Java.call "String.indexOf(int)" s (Int32.of_int c))
+  Java.call "String.indexOf(int)" s (Int32.of_int c)
+  |> Int32.to_int
 
 let rindex s c =
-  Int32.to_int (Java.call "String.lastIndexOf(int)" s (Int32.of_int c))
+  Java.call "String.lastIndexOf(int)" s (Int32.of_int c)
+  |> Int32.to_int
 
 let index_from s i c =
-  Int32.to_int (Java.call "String.indexOf(int,int)" s (Int32.of_int c) (Int32.of_int i))
+  Java.call "String.indexOf(int,int)" s (Int32.of_int c) (Int32.of_int i)
+  |> Int32.to_int
 
 let rindex_from s i c =
-  Int32.to_int (Java.call "String.lastIndexOf(int,int)" s (Int32.of_int c) (Int32.of_int i))
+  Java.call "String.lastIndexOf(int,int)" s (Int32.of_int c) (Int32.of_int i)
+  |> Int32.to_int
 
 let contains_from s i c =
   let len = length s in
@@ -159,10 +164,12 @@ let uncapitalize s =
 type t = java'lang'String java_instance
 
 let compare x y =
-  Int32.to_int (Java.call "String.compareTo(String)" x y)
+  Java.call "String.compareTo(String)" x y
+  |> Int32.to_int
 
 let compare_ignore_case x y =
-  Int32.to_int (Java.call "String.compareToIgnoreCase(String)" x y)
+  Java.call "String.compareToIgnoreCase(String)" x y
+  |> Int32.to_int
 
 let equals x y =
   Java.call "String.equals(Object)" x y
