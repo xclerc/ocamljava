@@ -233,8 +233,8 @@ diff -aur original/odoc_html.ml patched/odoc_html.ml
 +          | None -> add text
 +          | Some idx ->
 +              try
-+                let idx_dot = String.rindex text '#' in
-+                let meth = String.sub text (succ idx_dot) (idx - idx_dot - 1) in
++                let idx_sharp = String.rindex text '#' in
++                let meth = String.sub text (succ idx_sharp) (idx - idx_sharp - 1) in
 +                add meth;
 +                add "(...)"
 +              with _ ->
