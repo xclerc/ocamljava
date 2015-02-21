@@ -20,47 +20,78 @@ open Ocamlbuild_plugin
 
 let odocl_file = Pathname.pwd / "javalib.odocl"
 let mllib_file = Pathname.pwd / "javalib.mllib"
-let src_path = Pathname.pwd / "src"
+let src_path   = Pathname.pwd / "src"
 let excluded_modules = []
 
 type array_module = {
-    module_name : string;
-    java_element_type : string;
+    module_name        : string;
+    java_element_type  : string;
     ocaml_element_type : string;
-    ocaml_java_type : string;
-    zero : string;
-    zero_value : string;
-    extra_intf : string list;
-    extra_impl : string list;
+    ocaml_java_type    : string;
+    zero               : string;
+    zero_value         : string;
+    extra_intf         : string list;
+    extra_impl         : string list;
   }
 
-let subst_of_array_module am = function
-  | "module_name" -> am.module_name
-  | "java_element_type" -> am.java_element_type
+let array_module
+    ~module_name
+    ~java_element_type
+    ?(ocaml_element_type = "")
+    ?(ocaml_java_type = "")
+    ?(zero = "zero")
+    ~zero_value
+    ?(extra_intf = [])
+    ?(extra_impl = [])
+    () =
+  let ocaml_element_type =
+    if ocaml_element_type = "" then
+      "java_" ^ java_element_type
+    else
+      ocaml_element_type in
+  let ocaml_java_type =
+    if ocaml_java_type = "" then
+      "java_" ^ java_element_type ^ "_array"
+    else
+      ocaml_java_type in
+  { module_name;
+    java_element_type;
+    ocaml_element_type;
+    ocaml_java_type;
+    zero;
+    zero_value;
+    extra_intf;
+    extra_impl }
+
+let subst_of_array_module am name =
+  let concat l =
+    if l <> [] then
+      "\n" ^ (String.concat "\n" l) ^ "\n"
+    else
+      "" in
+  match name with
+  | "module_name"        -> am.module_name
+  | "java_element_type"  -> am.java_element_type
   | "ocaml_element_type" -> am.ocaml_element_type
-  | "ocaml_java_type" -> am.ocaml_java_type
-  | "zero" -> am.zero
-  | "zero_value" -> am.zero_value
-  | "extra_intf" -> if am.extra_intf = [] then "" else ("\n" ^ (String.concat "\n" am.extra_intf) ^ "\n")
-  | "extra_impl" -> if am.extra_impl = [] then "" else ("\n" ^ (String.concat "\n" am.extra_impl) ^ "\n")
-  | _ -> assert false
+  | "ocaml_java_type"    -> am.ocaml_java_type
+  | "zero"               -> am.zero
+  | "zero_value"         -> am.zero_value
+  | "extra_intf"         -> concat am.extra_intf
+  | "extra_impl"         -> concat am.extra_impl
+  | _                    -> failwith ("unknown variable '" ^ name ^ "'")
 
 let array_modules = [
-  { module_name = "JavaBooleanArray";
-    java_element_type = "boolean";
-    ocaml_element_type = "bool";
-    ocaml_java_type = "java_boolean_array";
-    zero = "[false]";
-    zero_value = "false";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaByteArray";
-    java_element_type = "byte";
-    ocaml_element_type = "int";
-    ocaml_java_type = "java_byte_array";
-    zero = "zero";
-    zero_value = "0";
-    extra_intf = [
+  array_module
+    ~module_name:"JavaBooleanArray"
+    ~java_element_type:"boolean"
+    ~zero:"[false]"
+    ~zero_value:"false"
+    () ;
+  array_module
+    ~module_name:"JavaByteArray"
+    ~java_element_type:"byte"
+    ~zero_value:"0"
+    ~extra_intf:[
       "" ;
       "(** {6 String operations} *)" ;
       "" ;
@@ -71,62 +102,45 @@ let array_modules = [
       "external of_ocaml_string : string -> e java_byte_array =" ;
       "  \"byte_array_of_string\"" ;
       "(** [of_string x] returns the array wrapped inside [x]. *)" ;
-    ];
-    extra_impl = [
+    ]
+    ~extra_impl:[
       "external to_ocaml_string : e java_byte_array -> string =" ;
       "  \"string_of_byte_array\"" ;
       "" ;
       "external of_ocaml_string : string -> e java_byte_array =" ;
       "  \"byte_array_of_string\"" ;
-    ]; } ;
-  { module_name = "JavaCharArray";
-    java_element_type = "char";
-    ocaml_element_type = "java_char";
-    ocaml_java_type = "java_char_array";
-    zero = "zero";
-    zero_value = "0";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaDoubleArray";
-    java_element_type = "double";
-    ocaml_element_type = "java_double";
-    ocaml_java_type = "java_double_array";
-    zero = "zero";
-    zero_value = "0.";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaFloatArray";
-    java_element_type = "float";
-    ocaml_element_type = "java_float";
-    ocaml_java_type = "java_float_array";
-    zero = "zero";
-    zero_value = "0.";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaIntArray";
-    java_element_type = "int";
-    ocaml_element_type = "java_int";
-    ocaml_java_type = "java_int_array";
-    zero = "zero";
-    zero_value = "0l";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaLongArray";
-    java_element_type = "long";
-    ocaml_element_type = "java_long";
-    ocaml_java_type = "java_long_array";
-    zero = "zero";
-    zero_value = "0L";
-    extra_intf = [];
-    extra_impl = []; } ;
-  { module_name = "JavaShortArray";
-    java_element_type = "short";
-    ocaml_element_type = "java_short";
-    ocaml_java_type = "java_short_array";
-    zero = "zero";
-    zero_value = "0";
-    extra_intf = [];
-    extra_impl = []; }
+    ]
+    () ;
+  array_module
+    ~module_name:"JavaCharArray"
+    ~java_element_type:"char"
+    ~zero_value:"0"
+    () ;
+  array_module
+    ~module_name:"JavaDoubleArray"
+    ~java_element_type:"double"
+    ~zero_value:"0."
+    () ;
+  array_module
+    ~module_name:"JavaFloatArray"
+    ~java_element_type:"float"
+    ~zero_value:"0."
+    () ;
+  array_module
+    ~module_name:"JavaIntArray"
+    ~java_element_type:"int"
+    ~zero_value:"0l"
+    () ;
+  array_module
+    ~module_name:"JavaLongArray"
+    ~java_element_type:"long"
+    ~zero_value:"0L"
+    () ;
+  array_module
+    ~module_name:"JavaShortArray"
+    ~java_element_type:"short"
+    ~zero_value:"0"
+    ()
 ]
 
 let () =
@@ -175,7 +189,6 @@ let () =
   dispatch begin function
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
-        flag ["ocaml"; "doc"] (S[A"-sort"; A"-html5"; A"-t"; A"Java library"]);
         dep ["needs-java-pervasives"] ["src/javaPervasives.cmi"];
         flag ["ocaml"; "doc"; "servlet-api"]
           (S[A"-cp"; A"../../../external-jars/servlet-api.jar"]);

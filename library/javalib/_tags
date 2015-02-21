@@ -25,6 +25,5 @@ true: -traverse
 <src/**/*.ml{,i}>: java-extensions
 "src/javaString.ml": needs-java-pervasives
 <src/javaServlet.ml{,i}>: servlet-api
-<**/*.docdir>: servlet-api, java-extensions
+<**/*.docdir>: servlet-api, java-extensions, sort, html5, title(Java library)
 <src/**/*.{cmj,jar}>: java-package(org.ocamljava.library.javalib)
-
