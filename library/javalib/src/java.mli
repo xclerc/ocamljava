@@ -112,28 +112,28 @@
                    {header OCaml type}
                    {header OCaml module}}
               {row {data [boolean[]]}
-                   {data [bool java_boolean_array]}
+                   {data [java_boolean java_boolean_array]}
                    {data [JavaBooleanArray]}}
               {row {data [byte[]]}
-                   {data [int java_byte_array]}
+                   {data [java_byte java_byte_array]}
                    {data [JavaByteArray]}}
               {row {data [char[]]}
-                   {data [int java_char_array]}
+                   {data [java_char java_char_array]}
                    {data [JavaCharArray]}}
               {row {data [double[]]}
-                   {data [float java_double_array]}
+                   {data [java_double java_double_array]}
                    {data [JavaDoubleArray]}}
               {row {data [float[]]}
-                   {data [float java_float_array]}
+                   {data [java_float java_float_array]}
                    {data [JavaFloatArray]}}
               {row {data [int[]]}
-                   {data [int32 java_int_array]}
+                   {data [java_int java_int_array]}
                    {data [JavaIntArray]}}
               {row {data [long[]]}
-                   {data [int64 java_long_array]}
+                   {data [java_long java_long_array]}
                    {data [JavaLongArray]}}
               {row {data [short[]]}
-                   {data [int java_short_array]}
+                   {data [java_short java_short_array]}
                    {data [JavaShortArray]}}
               {row {data [reference[]]}
                    {data ['a java_reference_array]}
