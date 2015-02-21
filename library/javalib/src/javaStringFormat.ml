@@ -26,12 +26,12 @@ let eprintf x y = fprintf x y
 let sprintf () str =
   JavaString.to_string str
 
-let asprintf x y = fprintf x y
+let asprintf  x y = fprintf x y
 
-let ifprintf x y = fprintf x y
+let ifprintf  x y = fprintf x y
 
-let kfprintf x y = fprintf x y
+let kfprintf  x y = fprintf x y
 
 let ikfprintf x y = fprintf x y
 
-let ksprintf x y = sprintf x y
+let ksprintf  x y = sprintf x y

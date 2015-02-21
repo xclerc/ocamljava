@@ -32,10 +32,10 @@ let bprintf buff str =
 let ifprintf _dummy _str =
   ()
 
-let kfprintf x y = fprintf x y
+let kfprintf  x y = fprintf x y
 
-let ikfprintf x y  = fprintf x y
+let ikfprintf x y = fprintf x y
 
-let ksprintf x y = sprintf x y
+let ksprintf  x y = sprintf x y
 
-let kbprintf x y = bprintf x y
+let kbprintf  x y = bprintf x y
