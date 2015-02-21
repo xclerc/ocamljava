@@ -25,25 +25,25 @@ type 'a t = 'a java_reference_array
 
 (** {6 Usual operations} *)
 
-external length : 'a java_reference_array -> int32 =
+external length : 'a java_reference_array -> java_int =
   "java array length reference"
 (** [length a] returns the length of [a].
 
     @raise Java_exception if [a] is [null] *)
 
-external get : 'a java_reference_array -> int32 -> 'a =
+external get : 'a java_reference_array -> java_int -> 'a =
   "java array get reference"
 (** [get a i] returns the element at index [i] in [a].
 
     @raise Java_exception if [a] is [null], or [i] is out of bounds *)
 
-external set : 'a java_reference_array -> int32 -> 'a -> unit =
+external set : 'a java_reference_array -> java_int -> 'a -> unit =
   "java array set reference"
 (** [set a i x] changes the element at index [i] in [a] to [x].
 
     @raise Java_exception if [a] is [null], or [i] is out of bounds *)
 
-val blit : 'a java_reference_array -> int32 -> 'a java_reference_array -> int32 -> int32 -> unit
+val blit : 'a java_reference_array -> java_int -> 'a java_reference_array -> java_int -> java_int -> unit
 (** [blit src srcofs dst dstofs len] copies [len] elements from [src] at
     offset [srcofs] to [dst] at offset [dstofs].
 
@@ -54,7 +54,7 @@ val iter : ('a -> unit) -> 'a java_reference_array -> unit
 
     @raise Java_exception if [a] is [null] *)
 
-val iteri : (int32 -> 'a -> unit) -> 'a java_reference_array -> unit
+val iteri : (java_int -> 'a -> unit) -> 'a java_reference_array -> unit
 (** [iter f a] applies [f] to each element of [a] (also passing element index).
 
     @raise Java_exception if [a] is [null] *)
@@ -88,7 +88,7 @@ val equals : 'a t -> 'a t -> bool
 (** [equals a1 a2] tests whether [a1] and [a2] are equal; see
     {java java.util.Arrays#equals(java.lang.Object[], java.lang.Object[])}. *)
 
-val hash_code : 'a t -> int32
+val hash_code : 'a t -> java_int
 (** [hash_code a] returns the hash code of [a]; see
     {java java.util.Arrays#hashCode(Object[])}. *)
 

@@ -134,7 +134,7 @@ module type HTTP = sig
   (** [do_trace v inst req resp] handles the {i TRACE} request [req]
       through the servlet instance [inst] (associated to value [v]). The
       parameter [resp] is used to send the response. *)
-  val get_last_modified : t -> http -> http_request -> int64
+  val get_last_modified : t -> http -> http_request -> java_long
   (** [get_last_modified v inst req] handles the request [req] through
       the servlet instance [inst] (associated to value [v]), returning
       the time the underlying information was last modified (in
@@ -157,7 +157,7 @@ module Default_HTTP : sig
   val do_post           : 'a -> http -> http_request -> http_response -> unit
   val do_put            : 'a -> http -> http_request -> http_response -> unit
   val do_trace          : 'a -> http -> http_request -> http_response -> unit
-  val get_last_modified : 'a -> http -> http_request -> int64
+  val get_last_modified : 'a -> http -> http_request -> java_long
   val destroy           : 'a -> http -> unit
 end
 (** Default implementation for HTTP servlets. *)

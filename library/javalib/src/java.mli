@@ -253,7 +253,7 @@ external call : 'a java_method_call -> 'a =
     - a closing parenthesis ({i i.e.} [)]);
     - optionally, a colon ({i i.e.} [:]) followed by a type.
 
-    For example, the following code compares strings [s1] and [s2]:
+    For example, the following code compares two strings [s1] and [s2]:
     {[
       call "java.lang.String.compareTo(java.lang.String):int" s1 s2
     ]}

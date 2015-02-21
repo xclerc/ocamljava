@@ -20,23 +20,23 @@
 module type T = sig
   type e
   type 'a t
-  val make : int32 -> e t
-  val init : int32 -> (int32 -> e) -> e t
-  val length : e t -> int32
-  val get : e t -> int32 -> e
-  val set : e t -> int32 -> e -> unit
+  val make : java_int -> e t
+  val init : java_int -> (java_int -> e) -> e t
+  val length : e t -> java_int
+  val get : e t -> java_int -> e
+  val set : e t -> java_int -> e -> unit
   val append : e t -> e t -> e t
   val concat : e t list -> e t
-  val sub : e t -> int32 -> int32 -> e t
+  val sub : e t -> java_int -> java_int -> e t
   val copy : e t -> e t
-  val fill : e t -> int32 -> int32 -> e -> unit
-  val blit : e t -> int32 -> e t -> int32 -> int32 -> unit
+  val fill : e t -> java_int -> java_int -> e -> unit
+  val blit : e t -> java_int -> e t -> java_int -> java_int -> unit
   val to_list : e t -> e list
   val of_list : e list -> e t
   val iter : (e -> unit) -> e t -> unit
   val map : (e -> e) -> e t -> e t
-  val iteri : (int32 -> e -> unit) -> e t -> unit
-  val mapi : (int32 -> e -> e) -> e t -> e t
+  val iteri : (java_int -> e -> unit) -> e t -> unit
+  val mapi : (java_int -> e -> e) -> e t -> e t
   val fold_left : ('a -> e -> 'a) -> 'a -> e t -> 'a
   val fold_right : (e -> 'a -> 'a) -> e t -> 'a -> 'a
   val of_ocaml : e array -> e t

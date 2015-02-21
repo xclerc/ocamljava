@@ -56,7 +56,7 @@ module type HTTP = sig
   val do_post           : t -> http -> http_request -> http_response -> unit
   val do_put            : t -> http -> http_request -> http_response -> unit
   val do_trace          : t -> http -> http_request -> http_response -> unit
-  val get_last_modified : t -> http -> http_request -> int64
+  val get_last_modified : t -> http -> http_request -> java_long
   val destroy           : t -> http -> unit
 end
 

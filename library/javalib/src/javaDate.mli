@@ -27,14 +27,14 @@ type t = java'util'Date java_instance
 val now : unit -> t
 (** Returns a new {java java.util.Date} instance for the current time. *)
 
-val make : int64 -> t
+val make : java_long -> t
 (** Returns a new {java java.util.Date} instance for the passed time,
     as the number of milliseconds since {i 1970-01-01 00:00:00}. *)
 
 
 (** {6 Properties} *)
 
-val get_time : t -> int64
+val get_time : t -> java_long
 (** [get_time date] returns the time of the passed date, as the number of
     milliseconds since {i 1970-01-01 00:00:00}; see
     {java java.util.Date#getTime()}. *)

@@ -28,31 +28,31 @@ type 'a t = 'a $(ocaml_java_type)
 
 (** {6 Usual operations} *)
 
-val make : int32 -> e $(ocaml_java_type)
+val make : java_int -> e $(ocaml_java_type)
 (** [make len] creates and returns an array of [len] elements.
     All elements are set to $(zero).
 
     @raise Java_exception if [len] is negative *)
 
-val init : int32 -> (int32 -> e) -> e $(ocaml_java_type)
+val init : java_int -> (java_int -> e) -> e $(ocaml_java_type)
 (** [init len f] creates and returns an array of [len] elements.
     The element at index [i] is initialized with value [f i].
 
     @raise Java_exception if [len] is negative *)
 
-external length : e $(ocaml_java_type) -> int32 =
+external length : e $(ocaml_java_type) -> java_int =
   "java array length $(java_element_type)"
 (** [length a] returns the length of [a].
 
     @raise Java_exception if [a] is [null] *)
 
-external get : e $(ocaml_java_type) -> int32 -> e =
+external get : e $(ocaml_java_type) -> java_int -> e =
   "java array get $(java_element_type)"
 (** [get a i] returns the element at index [i] in [a].
 
     @raise Java_exception if [a] is [null], or [i] is out of bounds *)
 
-external set : e $(ocaml_java_type) -> int32 -> e -> unit =
+external set : e $(ocaml_java_type) -> java_int -> e -> unit =
   "java array set $(java_element_type)"
 (** [set a i x] changes the element at index [i] in [a] to [x].
 
@@ -68,7 +68,7 @@ val concat : e $(ocaml_java_type) list -> e $(ocaml_java_type)
 
     @raise Java_exception if any of the arrays in [l] is [null] *)
 
-val sub : e $(ocaml_java_type) -> int32 -> int32 -> e $(ocaml_java_type)
+val sub : e $(ocaml_java_type) -> java_int -> java_int -> e $(ocaml_java_type)
 (** [sub a ofs len] returns an array of [len] elements, copying elements
     from [a] starting at offset [ofs].
 
@@ -79,13 +79,13 @@ val copy : e $(ocaml_java_type) -> e $(ocaml_java_type)
 
     @raise Java_exception if [a] is [null] *)
 
-val fill : e $(ocaml_java_type) -> int32 -> int32 -> e -> unit
+val fill : e $(ocaml_java_type) -> java_int -> java_int -> e -> unit
 (** [fill a ofs len x] sets [len] elements of [a] to [x], starting at
     offset [ofs].
 
     @raise Java_exception if [a] is [null] *)
 
-val blit : e $(ocaml_java_type) -> int32 -> e $(ocaml_java_type) -> int32 -> int32 -> unit
+val blit : e $(ocaml_java_type) -> java_int -> e $(ocaml_java_type) -> java_int -> java_int -> unit
 (** [blit src srcofs dst dstofs len] copies [len] elements from [src] at
     offset [srcofs] to [dst] at offset [dstofs].
 
@@ -100,7 +100,7 @@ val of_list : e list -> e $(ocaml_java_type)
 (** [of_list l] returns the elements of [l] as an array.
 
     @raise Invalid_argument if [l] has more elements than can be
-                            represented by an [int32] value *)
+                            represented by an [java_int] value *)
 
 val iter : (e -> unit) -> e $(ocaml_java_type) -> unit
 (** [iter f a] applies [f] to each element of [a].
@@ -113,12 +113,12 @@ val map : (e -> e) -> e $(ocaml_java_type) -> e $(ocaml_java_type)
 
     @raise Java_exception if [a] is [null] *)
 
-val iteri : (int32 -> e -> unit) -> e $(ocaml_java_type) -> unit
+val iteri : (java_int -> e -> unit) -> e $(ocaml_java_type) -> unit
 (** [iter f a] applies [f] to each element of [a] (also passing element index).
 
     @raise Java_exception if [a] is [null] *)
 
-val mapi : (int32 -> e -> e) -> e $(ocaml_java_type) -> e $(ocaml_java_type)
+val mapi : (java_int -> e -> e) -> e $(ocaml_java_type) -> e $(ocaml_java_type)
 (** [map f a] returns an array with elements [f 0 a_0, f 1 a_1, ...] where
     [a_i] is the element of [a] at index [i].
 
@@ -143,7 +143,7 @@ val of_ocaml : e array -> e $(ocaml_java_type)
 (** [of_ocaml a] returns a Java array equivalent to [a].
 
     @raise Invalid_argument if [a] has more elements than can be
-                            represented by an [int32] value *)
+                            represented by an [java_int] value *)
 
 val to_ocaml : e $(ocaml_java_type) -> e array
 (** [to_ocaml a] returns an OCaml array equivalent to [a].
@@ -167,7 +167,7 @@ val equals : e $(ocaml_java_type) -> e $(ocaml_java_type) -> bool
 (** [equals a1 a2] tests whether [a1] and [a2] are equal; see
     {java java.util.Arrays#equals($(java_element_type)[], $(java_element_type)[])}. *)
 
-val hash_code : e $(ocaml_java_type) -> int32
+val hash_code : e $(ocaml_java_type) -> java_int
 (** [hash_code a] returns the hash code of [a]; see
     {java java.util.Arrays#hashCode($(java_element_type)[])}. *)
 

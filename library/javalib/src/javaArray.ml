@@ -18,24 +18,24 @@
 
 
 type (_, _, _) t =
-  | Boolean_array :    bool java_boolean_array -> (bool,  int32, bool java_boolean_array) t
-  | Byte_array :       int java_byte_array     -> (int,   int32, int java_byte_array) t
-  | Char_array :       int java_char_array     -> (int,   int32, int java_char_array) t
-  | Double_array :     float java_double_array -> (float, int32, float java_double_array) t
-  | Float_array :      float java_float_array  -> (float, int32, float java_float_array) t
-  | Int_array :        int32 java_int_array    -> (int32, int32, int32 java_int_array) t
-  | Long_array :       int64 java_long_array   -> (int64, int32, int64 java_long_array) t
-  | Short_array :      int java_short_array    -> (int,   int32, int java_short_array) t
-  | Reference_array :  'a java_reference_array -> ('a,    int32, 'a java_reference_array) t
-  | Boolean_array2 :   bool java_boolean_array java_reference_array -> (bool,  int32 * int32, bool java_boolean_array java_reference_array) t
-  | Byte_array2 :      int java_byte_array java_reference_array     -> (int,   int32 * int32, int java_byte_array java_reference_array) t
-  | Char_array2 :      int java_char_array java_reference_array     -> (int,   int32 * int32, int java_char_array java_reference_array) t
-  | Double_array2 :    float java_double_array java_reference_array -> (float, int32 * int32, float java_double_array java_reference_array) t
-  | Float_array2 :     float java_float_array java_reference_array  -> (float, int32 * int32, float java_float_array java_reference_array) t
-  | Int_array2 :       int32 java_int_array java_reference_array    -> (int32, int32 * int32, int32 java_int_array java_reference_array) t
-  | Long_array2 :      int64 java_long_array java_reference_array   -> (int64, int32 * int32, int64 java_long_array java_reference_array) t
-  | Short_array2 :     int java_short_array java_reference_array    -> (int,   int32 * int32, int java_short_array java_reference_array) t
-  | Reference_array2 : 'a java_reference_array java_reference_array -> ('a,    int32 * int32, 'a java_reference_array java_reference_array) t
+  | Boolean_array :    java_boolean java_boolean_array -> (java_boolean, java_int, java_boolean java_boolean_array) t
+  | Byte_array :       java_byte java_byte_array       -> (java_byte,    java_int, java_byte java_byte_array)       t
+  | Char_array :       java_char java_char_array       -> (java_char,    java_int, java_char java_char_array)       t
+  | Double_array :     java_double java_double_array   -> (java_double,  java_int, java_double java_double_array)   t
+  | Float_array :      java_float java_float_array     -> (java_float,   java_int, java_float java_float_array)     t
+  | Int_array :        java_int java_int_array         -> (java_int,     java_int, java_int java_int_array)         t
+  | Long_array :       java_long java_long_array       -> (java_long,    java_int, java_long java_long_array)       t
+  | Short_array :      java_short java_short_array     -> (java_short,   java_int, java_short java_short_array)     t
+  | Reference_array :  'a java_reference_array         -> ('a,           java_int, 'a java_reference_array)         t
+  | Boolean_array2 :   java_boolean java_boolean_array java_reference_array -> (java_boolean, java_int * java_int, java_boolean java_boolean_array java_reference_array) t
+  | Byte_array2 :      java_byte java_byte_array java_reference_array       -> (java_byte,    java_int * java_int, java_byte java_byte_array java_reference_array)       t
+  | Char_array2 :      java_char java_char_array java_reference_array       -> (java_char,    java_int * java_int, java_char java_char_array java_reference_array)       t
+  | Double_array2 :    java_double java_double_array java_reference_array   -> (java_double,  java_int * java_int, java_double java_double_array java_reference_array)   t
+  | Float_array2 :     java_float java_float_array java_reference_array     -> (java_float,   java_int * java_int, java_float java_float_array java_reference_array)     t
+  | Int_array2 :       java_int java_int_array java_reference_array         -> (java_int,     java_int * java_int, java_int java_int_array java_reference_array)         t
+  | Long_array2 :      java_long java_long_array java_reference_array       -> (java_long,    java_int * java_int, java_long java_long_array java_reference_array)       t
+  | Short_array2 :     java_short java_short_array java_reference_array     -> (java_short,   java_int * java_int, java_short java_short_array java_reference_array)     t
+  | Reference_array2 : 'a java_reference_array java_reference_array         -> ('a,           java_int * java_int, 'a java_reference_array java_reference_array)         t
 
 let wrap_boolean_array a = Boolean_array a
 
@@ -73,7 +73,7 @@ let wrap_short_array2 a = Short_array2 a
 
 let wrap_reference_array2 a = Reference_array2 a
 
-let length : type e i r . (e, i, r) t -> int32 = function
+let length : type e i r . (e, i, r) t -> java_int = function
   | Boolean_array a    -> JavaBooleanArray.length   a
   | Byte_array a       -> JavaByteArray.length      a
   | Char_array a       -> JavaCharArray.length      a
@@ -93,7 +93,7 @@ let length : type e i r . (e, i, r) t -> int32 = function
   | Short_array2 a     -> JavaReferenceArray.length a
   | Reference_array2 a -> JavaReferenceArray.length a
 
-let length_sub : type e r . (e, int32 * int32, r) t -> int32 -> int32 = fun a i ->
+let length_sub : type e r . (e, java_int * java_int, r) t -> java_int -> java_int = fun a i ->
   match a with
   | Boolean_array2 a   -> JavaBooleanArray.length   @@ JavaReferenceArray.get a i
   | Byte_array2 a      -> JavaByteArray.length      @@ JavaReferenceArray.get a i

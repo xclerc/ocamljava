@@ -27,13 +27,13 @@ type 'a t = 'a $(ocaml_java_type)
 let make len =
   Java.make_array "$(java_element_type)[]" len
 
-external length : e $(ocaml_java_type) -> int32 =
+external length : e $(ocaml_java_type) -> java_int =
   "java array length $(java_element_type)"
 
-external get : e $(ocaml_java_type) -> int32 -> e =
+external get : e $(ocaml_java_type) -> java_int -> e =
   "java array get $(java_element_type)"
 
-external set : e $(ocaml_java_type) -> int32 -> e -> unit =
+external set : e $(ocaml_java_type) -> java_int -> e -> unit =
   "java array set $(java_element_type)"
 
 let init len f =

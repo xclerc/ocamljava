@@ -57,14 +57,14 @@ val to_string : java'lang'Object java_extends -> JavaString.t
 
 (** {6 Synchronization} *)
 
-val notify : java'lang'Object java_extends -> java_void
+val notify : java'lang'Object java_extends -> unit
 (** [notify obj] wakes up a thread waiting on the monitor of [obj]; see
     {java java.lang.Object#notify()}.
 
     @raise Java_exception if [obj] is [null]
     @raise Java_exception if the current thread does not hold the monitor *)
 
-val notify_all : java'lang'Object java_extends -> java_void
+val notify_all : java'lang'Object java_extends -> unit
 (** [notify_all obj] wakes up all the threads waiting on the monitor of [obj]; see
     {java java.lang.Object#notifyAll()}.
 
@@ -72,7 +72,7 @@ val notify_all : java'lang'Object java_extends -> java_void
     @raise Java_exception if the current thread does not hold the monitor *)
 
 
-val wait : java'lang'Object java_extends -> java_void
+val wait : java'lang'Object java_extends -> unit
 (** [wait obj] waits for a notification on the monitor of [obj]; see
     {java java.lang.Object#wait()}.
 
@@ -80,7 +80,7 @@ val wait : java'lang'Object java_extends -> java_void
     @raise Java_exception if the current thread does not hold the monitor
     @raise Java_exception if the thread is interrupted during wait *)
 
-val wait_timeout : java'lang'Object java_extends -> java_long -> java_void
+val wait_timeout : java'lang'Object java_extends -> java_long -> unit
 (** [wait_timeout obj ms] waits for a notification on the monitor of [obj],
     or a time of [ms] milliseconds has elapsed; see
     {java java.lang.Object#wait(long)}.
@@ -90,7 +90,7 @@ val wait_timeout : java'lang'Object java_extends -> java_long -> java_void
     @raise Java_exception if the thread is interrupted during wait
     @raise Java_exception if [ms] is negative *)
 
-val wait_timeout_nanos : java'lang'Object java_extends -> java_long -> java_int -> java_void
+val wait_timeout_nanos : java'lang'Object java_extends -> java_long -> java_int -> unit
 (** [wait_timeout_nanos obj ms ns] waits for a notification on the monitor of [obj],
     or a time of [to] milliseconds and [na] nanoseconds has elapsed; see
     {java java.lang.Object#wait(long, int)}.

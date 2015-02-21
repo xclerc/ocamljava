@@ -63,30 +63,30 @@ type day =
 (** The different day values. *)
 
 type _ field =
-  | Era                  : int32 field (** BC/AD in gregorian calendar. *)
-  | Year                 : int32 field (** Year (including century). *)
-  | Month                : month field (** Month. *)
-  | Week_of_month        : int32 field (** Range: 0..6 (1 is the first full week). *)
-  | Week_of_year         : int32 field (** Range: 1..53. *)
-  | Date                 : int32 field (** Synonym for [Day_of_month]. *)
-  | Day_of_month         : int32 field (** Starts at 1. *)
-  | Day_of_week          : day   field (** Day. *)
-  | Day_of_week_in_month : int32 field (** Starts at 1. *)
-  | Day_of_year          : int32 field (** Starts at 1. *)
-  | AM_PM                : am_pm field (** Whether AM or PM. *)
-  | Hour                 : int32 field (** Range: 0..11. *)
-  | Hour_of_day          : int32 field (** Range: 0..23. *)
-  | Minute               : int32 field (** Range: 0..59. *)
-  | Second               : int32 field (** Range: 0..59. *)
-  | Millisecond          : int32 field (** Range: 0..999. *)
-  | Dst_offset           : int32 field (** Raw offset of daylight saving in milliseconds. *)
-  | Zone_offset          : int32 field (** Raw offset from GMT in milliseconds. *)
+  | Era                  : java_int field (** BC/AD in gregorian calendar. *)
+  | Year                 : java_int field (** Year (including century). *)
+  | Month                : month    field (** Month. *)
+  | Week_of_month        : java_int field (** Range: 0..6 (1 is the first full week). *)
+  | Week_of_year         : java_int field (** Range: 1..53. *)
+  | Date                 : java_int field (** Synonym for [Day_of_month]. *)
+  | Day_of_month         : java_int field (** Starts at 1. *)
+  | Day_of_week          : day      field (** Day. *)
+  | Day_of_week_in_month : java_int field (** Starts at 1. *)
+  | Day_of_year          : java_int field (** Starts at 1. *)
+  | AM_PM                : am_pm    field (** Whether AM or PM. *)
+  | Hour                 : java_int field (** Range: 0..11. *)
+  | Hour_of_day          : java_int field (** Range: 0..23. *)
+  | Minute               : java_int field (** Range: 0..59. *)
+  | Second               : java_int field (** Range: 0..59. *)
+  | Millisecond          : java_int field (** Range: 0..999. *)
+  | Dst_offset           : java_int field (** Raw offset of daylight saving in milliseconds. *)
+  | Zone_offset          : java_int field (** Raw offset from GMT in milliseconds. *)
 (** The different fields of a calendar. *)
 
 
 (** {6 Properties} *)
 
-val get_time : t -> int64
+val get_time : t -> java_long
 (** [get_time cal] returns the time of the passed calendar, as the number
     of milliseconds since {i 1970-01-01 00:00:00}; see
     {java java.util.Calendar#getTimeInMillis()}. *)
@@ -113,7 +113,7 @@ val get_time_zone : t -> JavaTimeZone.t
 
 (** {6 Creation of new calendar values} *)
 
-val add : t -> 'a field -> int32 -> t
+val add : t -> 'a field -> java_int -> t
 (** [add cal f delta] returns a new instance that is equal to [cal], with
     the field [f] modified by adding [delta]; see
     {java java.util.Calendar#add(int, int)}. *)

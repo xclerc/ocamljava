@@ -26,84 +26,84 @@ type (_, _, _) t
     - the type of array indexes;
     - the type of the array that is wrapped. *)
 
-val wrap_boolean_array : bool java_boolean_array -> (bool, int32, bool java_boolean_array) t
+val wrap_boolean_array : java_boolean java_boolean_array -> (java_boolean, java_int, java_boolean java_boolean_array) t
 (** [wrap_boolean_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_byte_array : int java_byte_array -> (int, int32, int java_byte_array) t
+val wrap_byte_array : java_byte java_byte_array -> (java_byte, java_int, java_byte java_byte_array) t
 (** [wrap_byte_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_char_array : int java_char_array -> (int, int32, int java_char_array) t
+val wrap_char_array : java_char java_char_array -> (java_char, java_int, java_char java_char_array) t
 (** [wrap_char_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_double_array : float java_double_array -> (float, int32, float java_double_array) t
+val wrap_double_array : java_double java_double_array -> (java_double, java_int, java_double java_double_array) t
 (** [wrap_double_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_float_array : float java_float_array -> (float, int32, float java_float_array) t
+val wrap_float_array : java_double java_float_array -> (java_double, java_int, java_double java_float_array) t
 (** [wrap_float_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_int_array : int32 java_int_array -> (int32, int32, int32 java_int_array) t
+val wrap_int_array : java_int java_int_array -> (java_int, java_int, java_int java_int_array) t
 (** [wrap_int_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_long_array : int64 java_long_array -> (int64, int32, int64 java_long_array) t
+val wrap_long_array : java_long java_long_array -> (java_long, java_int, java_long java_long_array) t
 (** [wrap_long_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_short_array : int java_short_array -> (int, int32, int java_short_array) t
+val wrap_short_array : java_short java_short_array -> (java_short, java_int, java_short java_short_array) t
 (** [wrap_short_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_reference_array : 'a java_reference_array -> ('a, int32, 'a java_reference_array) t
+val wrap_reference_array : 'a java_reference_array -> ('a, java_int, 'a java_reference_array) t
 (** [wrap_reference_array a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_boolean_array2 : bool java_boolean_array java_reference_array -> (bool, int32 * int32, bool java_boolean_array java_reference_array) t
+val wrap_boolean_array2 : java_boolean java_boolean_array java_reference_array -> (java_boolean, java_int * java_int, java_boolean java_boolean_array java_reference_array) t
 (** [wrap_boolean_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_byte_array2 : int java_byte_array java_reference_array -> (int, int32 * int32, int java_byte_array java_reference_array) t
+val wrap_byte_array2 : java_byte java_byte_array java_reference_array -> (java_byte, java_int * java_int, java_byte java_byte_array java_reference_array) t
 (** [wrap_byte_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_char_array2 : int java_char_array java_reference_array -> (int, int32 * int32, int java_char_array java_reference_array) t
+val wrap_char_array2 : java_char java_char_array java_reference_array -> (java_char, java_int * java_int, java_char java_char_array java_reference_array) t
 (** [wrap_byte_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_double_array2 : float java_double_array java_reference_array -> (float, int32 * int32, float java_double_array java_reference_array) t
+val wrap_double_array2 : java_double java_double_array java_reference_array -> (java_double, java_int * java_int, java_double java_double_array java_reference_array) t
 (** [wrap_double_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_float_array2 : float java_float_array java_reference_array -> (float, int32 * int32, float java_float_array java_reference_array) t
+val wrap_float_array2 : java_float java_float_array java_reference_array -> (java_float, java_int * java_int, java_float java_float_array java_reference_array) t
 (** [wrap_float_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_int_array2 : int32 java_int_array java_reference_array -> (int32, int32 * int32, int32 java_int_array java_reference_array) t
+val wrap_int_array2 : java_int java_int_array java_reference_array -> (java_int, java_int * java_int, java_int java_int_array java_reference_array) t
 (** [wrap_int_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_long_array2 : int64 java_long_array java_reference_array -> (int64, int32 * int32, int64 java_long_array java_reference_array) t
+val wrap_long_array2 : java_long java_long_array java_reference_array -> (java_long, java_int * java_int, java_long java_long_array java_reference_array) t
 (** [wrap_long_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_short_array2 : int java_short_array java_reference_array -> (int, int32 * int32, int java_short_array java_reference_array) t
+val wrap_short_array2 : java_short java_short_array java_reference_array -> (java_short, java_int * java_int, java_short java_short_array java_reference_array) t
 (** [wrap_short_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val wrap_reference_array2 : 'a java_reference_array java_reference_array -> ('a, int32 * int32, 'a java_reference_array java_reference_array) t
+val wrap_reference_array2 : 'a java_reference_array java_reference_array -> ('a, java_int * java_int, 'a java_reference_array java_reference_array) t
 (** [wrap_reference_array2 a] wraps the passed specialized array into an
    unspecialized one. *)
 
-val length : (_, _, _) t -> int32
+val length : (_, _, _) t -> java_int
 (** [length a] returns the length of [a].
 
     @raise Java_exception if [a] is [null] *)
 
-val length_sub : (_, int32 * int32, _) t -> int32 -> int32
+val length_sub : (_, java_int * java_int, _) t -> java_int -> java_int
 (** [length_sub a i] returns the length of the sub array at index [i] of
     [a].
 

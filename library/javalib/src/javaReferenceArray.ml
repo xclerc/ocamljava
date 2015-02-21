@@ -22,13 +22,13 @@ type 'a t = 'a java_reference_array
 
 (* Usual operations *)
 
-external length : 'a java_reference_array -> int32 =
+external length : 'a java_reference_array -> java_int =
   "java array length reference"
 
-external get : 'a java_reference_array -> int32 -> 'a =
+external get : 'a java_reference_array -> java_int -> 'a =
   "java array get reference"
 
-external set : 'a java_reference_array -> int32 -> 'a -> unit =
+external set : 'a java_reference_array -> java_int -> 'a -> unit =
   "java array set reference"
 
 external to_object : 'a java_reference_array -> java'lang'Object java_instance =

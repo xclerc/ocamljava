@@ -37,7 +37,7 @@ val get_available_locales : unit -> t list
 val get_default : unit -> t
 (** Returns the default locale. *)
 
-val set_default : t -> java_void
+val set_default : t -> unit
 (** [set_default loc] changes the default locale to [loc].
 
     @raise Java_exception if [loc] is [null] *)

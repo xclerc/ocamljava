@@ -44,14 +44,14 @@ type am_pm =
   | AM
   | PM
 
-let int32_of_am_pm = function
+let java_int_of_am_pm = function
   | AM -> Java.get "java.util.Calendar.AM" ()
   | PM -> Java.get "java.util.Calendar.PM" ()
 
-let am_pm_of_int32 = function
+let am_pm_of_java_int = function
   | 0l -> AM
   | 1l -> PM
-  | _  -> invalid_arg "JavaCalendar.am_pm_of_int32"
+  | _  -> invalid_arg "JavaCalendar.am_pm_of_java_int"
 
 type month =
   | January
@@ -68,7 +68,7 @@ type month =
   | December
   | Undecimber
 
-let int32_of_month = function
+let java_int_of_month = function
   | January    -> Java.get "java.util.Calendar.JANUARY"    ()
   | February   -> Java.get "java.util.Calendar.FEBRUARY"   ()
   | March      -> Java.get "java.util.Calendar.MARCH"      ()
@@ -83,7 +83,7 @@ let int32_of_month = function
   | December   -> Java.get "java.util.Calendar.DECEMBER"   ()
   | Undecimber -> Java.get "java.util.Calendar.UNDECIMBER" ()
 
-let month_of_int32 = function
+let month_of_java_int = function
   | 0l  -> January
   | 1l  -> February
   | 2l  -> March
@@ -97,7 +97,7 @@ let month_of_int32 = function
   | 10l -> November
   | 11l -> December
   | 12l -> Undecimber
-  | _  -> invalid_arg "JavaCalendar.month_of_int32"
+  | _  -> invalid_arg "JavaCalendar.month_of_java_int"
 
 type day =
   | Monday
@@ -108,7 +108,7 @@ type day =
   | Saturday
   | Sunday
 
-let int32_of_day = function
+let java_int_of_day = function
   | Monday    -> Java.get "java.util.Calendar.MONDAY"    ()
   | Tuesday   -> Java.get "java.util.Calendar.TUESDAY"   ()
   | Wednesday -> Java.get "java.util.Calendar.WEDNESDAY" ()
@@ -117,7 +117,7 @@ let int32_of_day = function
   | Saturday  -> Java.get "java.util.Calendar.SATURDAY"  ()
   | Sunday    -> Java.get "java.util.Calendar.SUNDAY"    ()
 
-let day_of_int32 = function
+let day_of_java_int = function
   | 1l -> Sunday
   | 2l -> Monday
   | 3l -> Tuesday
@@ -125,29 +125,29 @@ let day_of_int32 = function
   | 5l -> Thursday
   | 6l -> Friday
   | 7l -> Saturday
-  | _  -> invalid_arg "JavaCalendar.day_of_int32"
+  | _  -> invalid_arg "JavaCalendar.day_of_java_int"
 
 type _ field =
-  | Era                  : int32 field
-  | Year                 : int32 field
-  | Month                : month field
-  | Week_of_month        : int32 field
-  | Week_of_year         : int32 field
-  | Date                 : int32 field
-  | Day_of_month         : int32 field
-  | Day_of_week          : day   field
-  | Day_of_week_in_month : int32 field
-  | Day_of_year          : int32 field
-  | AM_PM                : am_pm field
-  | Hour                 : int32 field
-  | Hour_of_day          : int32 field
-  | Minute               : int32 field
-  | Second               : int32 field
-  | Millisecond          : int32 field
-  | Dst_offset           : int32 field
-  | Zone_offset          : int32 field
+  | Era                  : java_int field
+  | Year                 : java_int field
+  | Month                : month    field
+  | Week_of_month        : java_int field
+  | Week_of_year         : java_int field
+  | Date                 : java_int field
+  | Day_of_month         : java_int field
+  | Day_of_week          : day      field
+  | Day_of_week_in_month : java_int field
+  | Day_of_year          : java_int field
+  | AM_PM                : am_pm    field
+  | Hour                 : java_int field
+  | Hour_of_day          : java_int field
+  | Minute               : java_int field
+  | Second               : java_int field
+  | Millisecond          : java_int field
+  | Dst_offset           : java_int field
+  | Zone_offset          : java_int field
 
-let int32_of_field : type a . a field -> int32 = function
+let java_int_of_field : type a . a field -> java_int = function
   | Era                  -> Java.get "java.util.Calendar.ERA"                  ()
   | Year                 -> Java.get "java.util.Calendar.YEAR"                 ()
   | Month                -> Java.get "java.util.Calendar.MONTH"                ()
@@ -184,26 +184,26 @@ let compare_to cal1 cal2 =
   |> Int32.to_int
 
 let get : type a . t -> a field -> a = fun cal f ->
-  let f' = int32_of_field f in
+  let f' = java_int_of_field f in
   match f with
-  | Era                  -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Year                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Month                -> (Java.call "java.util.Calendar.get(int)" cal f' |>   month_of_int32)
-  | Week_of_month        -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Week_of_year         -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Date                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Day_of_month         -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Day_of_week          -> (Java.call "java.util.Calendar.get(int)" cal f' |>     day_of_int32)
-  | Day_of_week_in_month -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Day_of_year          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | AM_PM                -> (Java.call "java.util.Calendar.get(int)" cal f' |>   am_pm_of_int32)
-  | Hour                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Hour_of_day          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Minute               -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Second               -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Millisecond          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Dst_offset           -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
-  | Zone_offset          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> int32)
+  | Era                  -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Year                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Month                -> (Java.call "java.util.Calendar.get(int)" cal f' |> month_of_java_int)
+  | Week_of_month        -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Week_of_year         -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Date                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Day_of_month         -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Day_of_week          -> (Java.call "java.util.Calendar.get(int)" cal f' |> day_of_java_int)
+  | Day_of_week_in_month -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Day_of_year          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | AM_PM                -> (Java.call "java.util.Calendar.get(int)" cal f' |> am_pm_of_java_int)
+  | Hour                 -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Hour_of_day          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Minute               -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Second               -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Millisecond          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Dst_offset           -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
+  | Zone_offset          -> (Java.call "java.util.Calendar.get(int)" cal f' : java_int :> a)
 
 let get_time_zone cal =
   Java.call "java.util.Calendar.getTimeZone()" cal
@@ -215,9 +215,9 @@ let copy cal =
   Java.call "java.util.Calendar.clone()" cal
   |> Java.cast "java.util.Calendar"
 
-let add : type a . t -> a field -> int32 -> t = fun cal f delta ->
+let add : type a . t -> a field -> java_int -> t = fun cal f delta ->
   let cal = copy cal in
-  let f' = int32_of_field f in
+  let f' = java_int_of_field f in
   match f with
   | Era                  -> Java.chain "java.util.Calendar.add(int,int)" cal f' delta
   | Year                 -> Java.chain "java.util.Calendar.add(int,int)" cal f' delta
@@ -240,30 +240,30 @@ let add : type a . t -> a field -> int32 -> t = fun cal f delta ->
 
 let set : type a . t -> a field -> a -> t = fun cal f v ->
   let cal = copy cal in
-  let f' = int32_of_field f in
+  let f' = java_int_of_field f in
   match f with
-  | Era                  -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Year                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Month                -> Java.chain "java.util.Calendar.set(int,int)" cal f' (int32_of_month v)
-  | Week_of_month        -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Week_of_year         -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Date                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Day_of_month         -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Day_of_week          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (int32_of_day v)
-  | Day_of_week_in_month -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Day_of_year          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | AM_PM                -> Java.chain "java.util.Calendar.set(int,int)" cal f' (int32_of_am_pm v)
-  | Hour                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Hour_of_day          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Minute               -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Second               -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Millisecond          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Dst_offset           -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
-  | Zone_offset          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v :> int32)
+  | Era                  -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Year                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Month                -> Java.chain "java.util.Calendar.set(int,int)" cal f' (java_int_of_month v)
+  | Week_of_month        -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Week_of_year         -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Date                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Day_of_month         -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Day_of_week          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (java_int_of_day v)
+  | Day_of_week_in_month -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Day_of_year          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | AM_PM                -> Java.chain "java.util.Calendar.set(int,int)" cal f' (java_int_of_am_pm v)
+  | Hour                 -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Hour_of_day          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Minute               -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Second               -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Millisecond          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Dst_offset           -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
+  | Zone_offset          -> Java.chain "java.util.Calendar.set(int,int)" cal f' (v : a :> java_int)
 
 let clear cal f =
   copy cal
-  |> Java.chain "java.util.Calendar.clear(int)" |. (int32_of_field f)
+  |> Java.chain "java.util.Calendar.clear(int)" |. (java_int_of_field f)
 
 let clear_all cal =
   copy cal
