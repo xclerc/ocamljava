@@ -190,10 +190,6 @@ let () =
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
         dep ["needs-java-pervasives"] ["src/javaPervasives.cmi"];
-        flag ["ocaml"; "doc"; "servlet-api"]
-          (S[A"-cp"; A"../../../external-jars/servlet-api.jar"]);
-        flag ["ocaml"; "compile"; "servlet-api"]
-          (S[A"-cp"; A"../../../external-jars/servlet-api.jar"]);
         List.iter
           (fun am ->
             let apply_template in_chan out_chan subst =

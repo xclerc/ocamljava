@@ -17,6 +17,7 @@
 #
 
 include ../config/Makefile
+include ../../Makefile.versions
 
 EXECUTABLES=ocamlbuildlight.byte ocamlbuildlight.native ocamlbuildlight.jar \
 	ocamlbuild.byte ocamlbuild.native ocamlbuild.jar
@@ -29,6 +30,7 @@ prepare:
 	patch -f -p1 < ocamlbuild-patch
 	rm -fr _build
 	cp ../myocamlbuild_config.ml ocamlbuild_Myocamlbuild_config.ml
+	echo 'let servlet_version = $(SERVLET_VERSION);;' >> ocamlbuild_Myocamlbuild_config.ml
 	../_build/ocamlbuild/ocamlbuild.byte ocamlbuild.byte
 	cp _build/ocamlbuild.byte ocamlbuild.tmp
 	rm -fr _build

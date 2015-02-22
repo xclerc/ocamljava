@@ -61,6 +61,8 @@ let main_applet_class = "ocamljavaApplet"
 
 let main_servlet_class = "ocamljavaServlet"
 
+let servlet_version = "%%SERVLET_VERSION%%"
+
 let get_runtime_jar () =
   let default =
     Filename.concat Config.standard_library runtime_support_jar in
@@ -104,6 +106,7 @@ let print_config chan =
   print_string "main_class" main_class;
   print_string "main_applet_class" main_applet_class;
   print_string "main_servlet_class" main_servlet_class;
+  print_string "servlet_version" servlet_version;
   print_string "runtime_support_jar" runtime_support_jar;
   print_bool   "systhread_supported" true;
   print_string "cmi_magic_number" Config.cmi_magic_number;

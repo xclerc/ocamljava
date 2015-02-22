@@ -17,6 +17,7 @@
 #
 
 include ../Makefile.config
+include ../Makefile.versions
 include ./Makefile-ocamljava.modules
 include config/Makefile
 
@@ -287,7 +288,7 @@ preprocessor/java_pp.cmo: preprocessor/java_pp.ml
 PP_INCLUDES=-I $(PREFIX)/lib/ocaml/zip -I $(PREFIX)/lib/ocaml/barista
 PP_CMA_FILES=bigarray.cma camomile.cma unix.cma zip.cma baristaLibrary.cma
 PP_RUNTIME_JAR=$(PREFIX)/lib/ocaml/ocamlrun.jar
-PP_SERVLET_JAR=../external-jars/servlet-api.jar
+PP_SERVLET_JAR=../external-jars/javax.servlet-api-$(SERVLET_VERSION).jar
 PP_SWITCH=-pp '$(PREFIX)/bin/camlp4o $(PP_INCLUDES) $(PP_CMA_FILES) preprocessor/java_pp.cmo -jar $(PP_RUNTIME_JAR) -jar $(PP_SERVLET_JAR)'
 
 javacomp/bytecodeutils.cmo: preprocessor/java_pp.cmo
@@ -306,7 +307,8 @@ utils/jconfig.ml: utils/jconfig.mlp
 	cat utils/jconfig.mlp | \
 	  sed -e "s/%%VERSION%%/$(VERSION)/" | \
 	  sed -e "s/%%OCAML_INTS_ARE_63_BIT_LONG%%/$$ints_are_63_bits/" | \
-	  sed -e "s/%%GIT_SHA1%%/$$git_sha1/" \
+	  sed -e "s/%%GIT_SHA1%%/$$git_sha1/" | \
+	  sed -e "s/%%SERVLET_VERSION%%/$(SERVLET_VERSION)/" \
 	  > utils/jconfig.ml
 
 utils/jconfig.cmo: utils/jconfig.cmi utils/jconfig.ml

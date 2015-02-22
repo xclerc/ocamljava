@@ -64,7 +64,7 @@ step00-extract-third-party-jar-files:
 	cp ../third-party/swank.tar.gz . && \
 	tar xfz swank.tar.gz && \
 	cp swank/*.jar external-jars && \
-	cp ../third-party/servlet-api.jar external-jars
+	cp ../third-party/javax.servlet-api-$(SERVLET_VERSION).jar external-jars
 
 step01-build-and-install-ocaml:
 	touch timestamps/step01-build-and-install-ocaml
@@ -308,7 +308,7 @@ step21-generate-and-copy-documentation:
 	  -html -html5 -sort \
 	  -t 'OCaml-Java library' \
 	  -java-extensions \
-	  -cp ../external-jars/servlet-api.jar \
+	  -cp ../external-jars/javax.servlet-api-$(SERVLET_VERSION).jar \
 	  -d $(PREFIX)/doc/ocamljava/ocjlib \
 	  -I stdlib \
 	  -I otherlibs/bigarray \

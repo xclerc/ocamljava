@@ -82,6 +82,9 @@ val main_applet_class : string
 val main_servlet_class : string
 (** The simple name of the main class of a servlet. *)
 
+val servlet_version : string
+(** The version of the servlet API. *)
+
 val get_runtime_jar : unit -> string
 (** Returns the absolute path of the runtime jar. *)
 

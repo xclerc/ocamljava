@@ -35,10 +35,12 @@ let get_class_loader () =
       let class_path_elements = (Jconfig.get_runtime_jar ()) :: (List.rev !Jclflags.classpath) in
       let class_path_elements =
         if !Jclflags.servlet <> None then
+          let servlet_basename =
+            Printf.sprintf "javax.servlet-api-%s.jar" Jconfig.servlet_version in
           let servlet_jar =
             Filename.concat
               Config.standard_library
-              (Filename.concat "external-jars" "servlet-api.jar") in
+              (Filename.concat "external-jars" servlet_basename) in
           servlet_jar :: class_path_elements
         else
           class_path_elements in
