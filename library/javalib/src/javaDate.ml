@@ -44,6 +44,86 @@ let compare_to date1 date2 =
   |> Int32.to_int
 
 
+(* Conversions *)
+
+type format = java'text'DateFormat java_instance
+
+type format_style =
+  | Full
+  | Long
+  | Medium
+  | Short
+
+let java_int_of_format_style = function
+  | Full   -> Java.get "java.text.DateFormat.FULL"   ()
+  | Long   -> Java.get "java.text.DateFormat.LONG"   ()
+  | Medium -> Java.get "java.text.DateFormat.MEDIUM" ()
+  | Short  -> Java.get "java.text.DateFormat.SHORT"  ()
+
+let make_date_format ?(date_style = Medium) ?(locale = JavaLocale.null) ?(time_zone = JavaTimeZone.null) () =
+  let res =
+    if JavaLocale.is_not_null locale then
+      Java.call "java.text.DateFormat.getDateInstance(int,java.util.Locale)"
+        (java_int_of_format_style date_style)
+        locale
+    else
+      Java.call "java.text.DateFormat.getDateInstance(int)"
+        (java_int_of_format_style date_style) in
+  if JavaTimeZone.is_not_null time_zone then
+    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+      res
+      time_zone
+  else
+    res
+
+let make_date_time_format ?(date_style = Medium) ?(time_style = Medium) ?(locale = JavaLocale.null) ?(time_zone = JavaTimeZone.null) () =
+  let res =
+    if JavaLocale.is_not_null locale then
+      Java.call "java.text.DateFormat.getDateTimeInstance(int,int,java.util.Locale)"
+        (java_int_of_format_style date_style)
+        (java_int_of_format_style time_style)
+        locale
+    else
+      Java.call "java.text.DateFormat.getDateTimeInstance(int,int)"
+        (java_int_of_format_style date_style)
+        (java_int_of_format_style time_style) in
+  if JavaTimeZone.is_not_null time_zone then
+    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+      res
+      time_zone
+  else
+    res
+
+let make_simple_format ?(pattern = JavaString.null) ?(locale = JavaLocale.null) ?(time_zone = JavaTimeZone.null) () =
+  let res =
+    if JavaString.is_not_null pattern then begin
+      if JavaLocale.is_not_null locale then
+        Java.make "java.text.SimpleDateFormat(String,java.util.Locale)"
+          pattern locale
+      else
+        Java.make "java.text.SimpleDateFormat(String)"
+          pattern
+    end else
+      Java.make "java.text.SimpleDateFormat()" () in
+  if JavaTimeZone.is_not_null time_zone then
+    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+      res
+      time_zone
+  else
+    res
+    |> Java.cast "java.text.DateFormat"
+
+let to_string fmt date =
+  Java.call "java.text.SimpleDateFormat.format(Object)"
+    fmt
+    date
+
+let of_string fmt str =
+  Java.call "java.text.SimpleDateFormat.parse(String)"
+    fmt
+    str
+
+
 (* Null value *)
 
 external null : unit -> 'a java_instance =

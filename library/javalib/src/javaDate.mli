@@ -52,6 +52,43 @@ val compare_to : t -> t -> int
     {java java.util.Date#compareTo(java.util.Date)}. *)
 
 
+(** {6 Conversions} *)
+
+type format = java'text'DateFormat java_instance
+(** The type of date formats. *)
+
+type format_style =
+  | Full   (** Format containing all available information. *)
+  | Long   (** Usual format - {i e.g.} January 2, 2003. *)
+  | Medium (** Abbreviated format - {i e.g.} Jan 2, 2003. *)
+  | Short  (** Purely numeric format - {i e.g.} 01-02-03. *)
+(** The type of format styles. *)
+
+val make_date_format : ?date_style:format_style -> ?locale:JavaLocale.t -> ?time_zone:JavaTimeZone.t -> unit -> format
+(** Creates a date format from the passed style, locale, and time
+    zone. *)
+
+val make_date_time_format : ?date_style:format_style -> ?time_style:format_style -> ?locale:JavaLocale.t -> ?time_zone:JavaTimeZone.t -> unit -> format
+(** Creates a date/time format from the passed styles, locale, and time
+    zone. *)
+
+val make_simple_format : ?pattern:JavaString.t -> ?locale:JavaLocale.t -> ?time_zone:JavaTimeZone.t -> unit -> format
+(** Creates a format from the passed pattern, locale, and time zone. The
+    locale is actually used iff the pattern is not [null]. The pattern
+    format is described in the javadoc for
+    {java java.text.SimpleDateFormat}.
+
+    @raise Java_exception if the pattern is invalid. *)
+
+val to_string : format -> t -> JavaString.t
+(** Converts the passed date into a string. *)
+
+val of_string : format -> JavaString.t -> t
+(** Converts the passed string into a date.
+
+    @raise Java_exception if the string does not conform to the format *)
+
+
 (** {6 Null value} *)
 
 val null : t
