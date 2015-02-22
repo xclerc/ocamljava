@@ -147,6 +147,15 @@ val to_date : t -> JavaDate.t
 val of_date : JavaDate.t -> t
 (** Converts the passed date into a calendar. *)
 
+val to_iso8601 : t -> JavaString.t
+(** Converts the passed calendar into a string. *)
+
+val of_iso8601 : JavaString.t -> t
+(** Converts the passed string into a calendar.
+
+    @raise Java_exception if the passed string does not conform to the
+                          ISO8601 format *)
+
 
 (** {6 Null value} *)
 

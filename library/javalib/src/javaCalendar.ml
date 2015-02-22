@@ -283,6 +283,12 @@ let of_date date =
   now ()
   |> Java.chain "java.util.Calendar.setTime(java.util.Date)" |. date
 
+let to_iso8601 cal =
+  Java.call "javax.xml.bind.DatatypeConverter.printDateTime(java.util.Calendar)" cal
+
+let of_iso8601 s =
+  Java.call "javax.xml.bind.DatatypeConverter.parseDateTime(String)" s
+
 
 (* Null value *)
 
