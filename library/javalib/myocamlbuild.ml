@@ -24,7 +24,7 @@ let src_path   = Pathname.pwd / "src"
 let excluded_modules = []
 
 type array_module = {
-    module_name        : string;
+    array_module_name  : string;
     java_element_type  : string;
     ocaml_element_type : string;
     ocaml_java_type    : string;
@@ -54,7 +54,7 @@ let array_module
       "java_" ^ java_element_type ^ "_array"
     else
       ocaml_java_type in
-  { module_name;
+  { array_module_name = module_name;
     java_element_type;
     ocaml_element_type;
     ocaml_java_type;
@@ -70,7 +70,7 @@ let subst_of_array_module am name =
     else
       "" in
   match name with
-  | "module_name"        -> am.module_name
+  | "module_name"        -> am.array_module_name
   | "java_element_type"  -> am.java_element_type
   | "ocaml_element_type" -> am.ocaml_element_type
   | "ocaml_java_type"    -> am.ocaml_java_type
@@ -143,16 +143,189 @@ let array_modules = [
     ()
 ]
 
+type number_module = {
+    number_module_name    : string;
+    java_primitive        : string;
+    java_wrapper          : string;
+    ocaml_type            : string;
+    name                  : string;
+    extra_constants_intf  : string list;
+    extra_constants_impl  : string list;
+    extra_operations_intf : string list;
+    extra_operations_impl : string list;
+  }
+
+let number_module
+    ~module_name
+    ?(is_fp = false)
+    ~java_primitive
+    ?(java_wrapper = "")
+    ?(ocaml_type = "")
+    ?(name = "")
+    ?(extra_constants_intf = [])
+    ?(extra_constants_impl = [])
+    ?(extra_operations_intf = [])
+    ?(extra_operations_impl = [])
+    () =
+  let java_wrapper =
+    if java_wrapper = "" then
+      String.capitalize java_primitive
+    else
+      java_wrapper in
+  let ocaml_type =
+    if ocaml_type = "" then
+      "java_" ^ java_primitive
+    else
+      ocaml_type in
+  let name =
+    if name = "" then
+      java_primitive
+    else
+      name in
+  let extra_constants_intf,
+      extra_constants_impl,
+      extra_operations_intf,
+      extra_operations_impl =
+    let java_primitive_capitalized = String.capitalize java_primitive in
+    if is_fp then
+      [ "val nan : " ^ ocaml_type ;
+        "(** The not-a-number constant. *)" ;
+        "" ;
+        "val negative_infinity : " ^ ocaml_type ;
+        "(** The constant for the negative infinity. *)" ;
+        "" ;
+        "val positive_infinity : " ^ ocaml_type ;
+        "(** The constant for the positive infinity. *)" ]
+      @ extra_constants_intf,
+      [ "let nan = Java.get \"" ^ java_wrapper ^ ".NaN\" ()" ;
+        "" ;
+        "let negative_infinity = Java.get \"" ^ java_wrapper ^ ".NEGATIVE_INFINITY\" ()" ;
+        "" ;
+        "let positive_infinity = Java.get \"" ^ java_wrapper ^ ".POSITIVE_INFINITY\" ()" ]
+      @ extra_constants_impl,
+      [ "val parse_" ^ java_primitive ^ " : JavaString.t -> " ^ ocaml_type ;
+        "(** Converts the passed string into a " ^ name ^ " wrapper; see" ;
+        "    {java java.lang." ^ java_wrapper ^ "#parse" ^ java_primitive_capitalized ^ "(java.lang.String)}." ;
+        "" ;
+        "    @raise Java_exception if the string is invalid *)" ;
+        "" ;
+        "val value_of_string : JavaString.t -> t" ;
+        "(** Converts the passed string into a " ^ name ^ " wrapper; see" ;
+        "    {java java.lang." ^ java_wrapper ^ "#valueOf(java.lang.String)}." ;
+        "" ;
+        "    @raise Java_exception if the string is invalid *)" ]
+      @ extra_operations_intf,
+      [ "let parse_" ^ java_primitive ^ " str=" ;
+        "  Java.call \"" ^ java_wrapper ^ ".parse" ^ java_primitive_capitalized ^ "(String)\" str" ;
+        "" ;
+        "let value_of_string str =" ;
+        "  Java.call \"" ^ java_wrapper ^ ".valueOf(String)\" str" ]
+      @ extra_operations_impl
+    else
+      extra_constants_intf,
+      extra_constants_impl,
+      [ "val parse_" ^ java_primitive ^ " : ?radix:java_int -> JavaString.t -> " ^ ocaml_type ;
+        "(** Converts the passed string into a " ^ name ^ " wrapper, using the passed" ;
+        "    radix (defaulting to [10l]); see" ;
+        "    {java java.lang." ^ java_wrapper ^ "#parse" ^ java_primitive_capitalized ^ "(java.lang.String, int)}." ;
+        "" ;
+        "    @raise Java_exception if the string is invalid *)" ;
+        "" ;
+        "val decode : JavaString.t -> t" ;
+        "(** Converts the passed string into a " ^ name ^ " wrapper; see" ;
+        "    {java java.lang." ^ java_wrapper ^ "#decode(java.lang.String)}." ;
+        "" ;
+        "    @raise Java_exception if the string is invalid *)" ;
+        "" ;
+        "val value_of_string : ?radix:java_int -> JavaString.t -> t" ;
+        "(** Converts the passed string into a " ^ name ^ " wrapper, using the passed" ;
+        "    radix (defaulting to [10l]); see" ;
+        "    {java java.lang." ^ java_wrapper ^ "#valueOf(java.lang.String, int)}." ;
+        "" ;
+        "    @raise Java_exception if the string is invalid *)" ]
+      @ extra_operations_intf,
+      [ "let parse_" ^ java_primitive ^ " ?(radix = 10l) str=" ;
+        "  Java.call \"" ^ java_wrapper ^ ".parse" ^ java_primitive_capitalized ^ "(String,int)\" str radix" ;
+        "" ;
+        "let decode str =" ;
+        "  Java.call \"" ^ java_wrapper ^ ".decode(String)\" str" ;
+        "" ;
+        "let value_of_string ?(radix = 10l) str =" ;
+        "  Java.call \"" ^ java_wrapper ^ ".valueOf(String,int)\" str radix" ]
+      @ extra_operations_impl in
+  { number_module_name = module_name;
+    java_primitive;
+    java_wrapper;
+    ocaml_type;
+    name;
+    extra_constants_intf;
+    extra_constants_impl;
+    extra_operations_intf;
+    extra_operations_impl }
+
+let subst_of_number_module nm name =
+  let concat l =
+    if l <> [] then
+      "\n" ^ (String.concat "\n" l) ^ "\n"
+    else
+      "" in
+  match name with
+  | "module_name"                -> nm.number_module_name
+  | "java_primitive"             -> nm.java_primitive
+  | "java_primitive_capitalized" -> String.capitalize nm.java_primitive
+  | "java_wrapper"               -> nm.java_wrapper
+  | "ocaml_type"                 -> nm.ocaml_type
+  | "name"                       -> nm.name
+  | "extra_constants_intf"       -> concat nm.extra_constants_intf
+  | "extra_constants_impl"       -> concat nm.extra_constants_impl
+  | "extra_operations_intf"      -> concat nm.extra_operations_intf
+  | "extra_operations_impl"      -> concat nm.extra_operations_impl
+  | _                            -> failwith ("unknown variable '" ^ name ^ "'")
+
+let number_modules = [
+  number_module
+    ~module_name:"JavaByte"
+    ~java_primitive:"byte"
+    () ;
+  number_module
+    ~module_name:"JavaDouble"
+    ~is_fp:true
+    ~java_primitive:"double"
+    () ;
+  number_module
+    ~module_name:"JavaFloat"
+    ~is_fp:true
+    ~java_primitive:"float"
+    () ;
+  number_module
+    ~module_name:"JavaInt"
+    ~java_primitive:"int"
+    ~java_wrapper:"Integer"
+    ~name:"integer"
+    () ;
+  number_module
+    ~module_name:"JavaLong"
+    ~java_primitive:"long"
+    () ;
+  number_module
+    ~module_name:"JavaShort"
+    ~java_primitive:"short"
+    ()
+]
+
 let () =
   let odocl_chan = open_out odocl_file in
   let mllib_chan = open_out mllib_file in
+  let generated_modules =
+    (List.map (fun { array_module_name; _ } -> array_module_name) array_modules)
+    @ (List.map (fun { number_module_name; _ } -> number_module_name) number_modules) in
   List.iter
-    (fun { module_name; _ } ->
+    (fun module_name ->
       output_string odocl_chan module_name;
       output_char odocl_chan '\n';
       output_string mllib_chan module_name;
       output_char mllib_chan '\n')
-    array_modules;
+    generated_modules;
   let add_file filename =
     if (Pathname.check_extension filename "mli")
       || (Pathname.check_extension filename "mly")
@@ -186,25 +359,25 @@ let () =
     let cmd = Printf.sprintf "mkdir -p %s" (Pathname.to_string dir) in
     if Sys.command cmd <> 0 then failwith ("cannot run " ^ cmd);
     cp src dst in
+  let apply_template in_chan out_chan subst =
+    try
+      while true do
+        let line = input_line in_chan in
+        let buff = Buffer.create ((String.length line) * 2) in
+        Buffer.add_substitute buff subst line;
+        output_string out_chan (Buffer.contents buff);
+        output_char out_chan '\n'
+      done
+    with End_of_file -> () in
   dispatch begin function
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
         dep ["needs-java-pervasives"] ["src/javaPervasives.cmi"];
         List.iter
           (fun am ->
-            let apply_template in_chan out_chan subst =
-              try
-                while true do
-                  let line = input_line in_chan in
-                  let buff = Buffer.create ((String.length line) * 2) in
-                  Buffer.add_substitute buff subst line;
-                  output_string out_chan (Buffer.contents buff);
-                  output_char out_chan '\n'
-                done
-              with End_of_file -> () in
             let make_rule suffix =
               let file_path =
-                "src/" ^ (String.uncapitalize am.module_name) ^ suffix in
+                "src/" ^ (String.uncapitalize am.array_module_name) ^ suffix in
               rule file_path
                 ~prod:file_path
                 ~insert:`bottom
@@ -217,5 +390,22 @@ let () =
             make_rule ".ml";
             make_rule ".mli")
           array_modules;
+        List.iter
+          (fun nm ->
+            let make_rule suffix =
+              let file_path =
+                "src/" ^ (String.uncapitalize nm.number_module_name) ^ suffix in
+              rule file_path
+                ~prod:file_path
+                ~insert:`bottom
+                (fun _ _ ->
+                  let name, chan = Filename.open_temp_file "number" suffix in
+                  let template = open_in ("../templates/number-template" ^ suffix) in
+                  apply_template template chan (subst_of_number_module nm);
+                  close_out_noerr chan;
+                  safe_cp name file_path) in
+            make_rule ".ml";
+            make_rule ".mli")
+          number_modules;
     | _ -> ()
   end
