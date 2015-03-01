@@ -31,7 +31,7 @@ external get : 'a java_reference_array -> java_int -> 'a =
 external set : 'a java_reference_array -> java_int -> 'a -> unit =
   "java array set reference"
 
-external to_object : 'a java_reference_array -> java'lang'Object java_instance =
+external to_object : 'a java_reference_array -> _'Object java_instance =
   "java array to_object reference"
 
 let blit src srcofs dst dstofs len =
@@ -76,20 +76,22 @@ let fold_right f a z =
 
 (* Java operations *)
 
-external of_object : java'lang'Object java_instance -> 'a java_reference_array =
+open Class'java'util'Arrays
+
+external of_object : _'Object java_instance -> 'a java_reference_array =
   "java array of_object reference"
 
 let equals a1 a2 =
-  Java.call"java.util.Arrays.equals(java.lang.Object[],java.lang.Object[])"
+  Java.call"Arrays.equals(Object[],Object[])"
     (Java.cast "Object[]" (to_object a1))
     (Java.cast "Object[]" (to_object a2))
 
 let hash_code a =
-  Java.call "java.util.Arrays.hashCode(Object[])"
+  Java.call "Arrays.hashCode(Object[])"
     (Java.cast "Object[]" (to_object a))
 
 let to_string a =
-  Java.call "java.util.Arrays.toString(Object[])"
+  Java.call "Arrays.toString(Object[])"
     (Java.cast "Object[]" (to_object a))
 
 external null : unit -> 'a java_reference_array =

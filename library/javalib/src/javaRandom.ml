@@ -19,64 +19,68 @@
 
 (* Instance creation *)
 
-type t = java'util'Random java_instance
+open Class'java'security'SecureRandom
+open Class'java'util'Random
+open Class'java'util'concurrent'ThreadLocalRandom
+
+type t = _'Random java_instance
 
 let make () =
-  Java.make "java.util.Random()" ()
+  Java.make "Random()" ()
 
 let make_of_seed seed =
-  Java.make "java.util.Random(long)" seed
+  Java.make "Random(long)" seed
 
 let make_secure ?(algorithm = JavaString.null) ?(provider = JavaString.null) () =
   if Java.is_not_null algorithm then begin
     if Java.is_not_null provider then
-      Java.call "java.security.SecureRandom.getInstance(String,String)"
+      Java.call "SecureRandom.getInstance(String,String)"
         algorithm provider
-      |> Java.cast "java.util.Random"
+      |> Java.cast "Random"
     else
-      Java.call "java.security.SecureRandom.getInstance(String)"
+      Java.call "SecureRandom.getInstance(String)"
         algorithm
-      |> Java.cast "java.util.Random"
+      |> Java.cast "Random"
   end else
-    Java.make "java.security.SecureRandom()" ()
-    |> Java.cast "java.util.Random"
+    Java.make "SecureRandom()" ()
+    |> Java.cast "Random"
 
 let current_thread_local () =
-  Java.call "java.util.concurrent.ThreadLocalRandom.current()" ()
-  |> Java.cast "java.util.Random"
+  Java.call "ThreadLocalRandom.current()" ()
+  |> Java.cast "Random"
 
 
 (* Numbers generation *)
 
 let next_boolean random =
-  Java.call "java.util.Random.nextBoolean()" random
+  Java.call "Random.nextBoolean()" random
 
 let next_bytes random bytes =
-  Java.call "java.util.Random.nextBytes(byte[])" random bytes
+  Java.call "Random.nextBytes(byte[])" random bytes
 
 let next_double random =
-  Java.call "java.util.Random.nextDouble()" random
+  Java.call "Random.nextDouble()" random
 
 let next_float random =
-  Java.call "java.util.Random.nextFloat()" random
+  Java.call "Random.nextFloat()" random
 
 let next_gaussian random =
-  Java.call "java.util.Random.nextGaussian()" random
+  Java.call "Random.nextGaussian()" random
 
 let next_int random =
-  Java.call "java.util.Random.nextInt()" random
+  Java.call "Random.nextInt()" random
 
 let next_int_bound random bound =
-  Java.call "java.util.Random.nextInt(int)" random bound
+  Java.call "Random.nextInt(int)" random bound
 
 let next_long random =
-  Java.call "java.util.Random.nextLong()" random
+  Java.call "Random.nextLong()" random
 
 
 (* Generator seed *)
 
 let set_seed random seed =
-  Java.call "java.util.Random.setSeed(long)" random seed
+  Java.call "Random.setSeed(long)" random seed
 
 
 (* Null value *)

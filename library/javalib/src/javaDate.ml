@@ -19,28 +19,32 @@
 
 (* Instance creation *)
 
-type t = java'util'Date java_instance
+open Class'java'util'Date
+open Class'java'util'Locale
+open Class'java'util'TimeZone
+
+type t = _'Date java_instance
 
 let now () =
-  Java.make "java.util.Date()" ()
+  Java.make "Date()" ()
 
 let make ms =
-  Java.make "java.util.Date(long)" ms
+  Java.make "Date(long)" ms
 
 
 (* Properties *)
 
 let get_time date =
-  Java.call "java.util.Date.getTime()" date
+  Java.call "Date.getTime()" date
 
 let after date when_ =
-  Java.call "java.util.Date.after(java.util.Date)" date when_
+  Java.call "Date.after(Date)" date when_
 
 let before date when_ =
-  Java.call "java.util.Date.before(java.util.Date)" date when_
+  Java.call "Date.before(Date)" date when_
 
 let compare_to date1 date2 =
-  Java.call "java.util.Date.compareTo(java.util.Date)" date1 date2
+  Java.call "Date.compareTo(Date)" date1 date2
   |> Int32.to_int
 
 
@@ -63,14 +67,14 @@ let java_int_of_format_style = function
 let make_date_format ?(date_style = Medium) ?(locale = JavaLocale.null) ?(time_zone = JavaTimeZone.null) () =
   let res =
     if JavaLocale.is_not_null locale then
-      Java.call "java.text.DateFormat.getDateInstance(int,java.util.Locale)"
+      Java.call "java.text.DateFormat.getDateInstance(int,Locale)"
         (java_int_of_format_style date_style)
         locale
     else
       Java.call "java.text.DateFormat.getDateInstance(int)"
         (java_int_of_format_style date_style) in
   if JavaTimeZone.is_not_null time_zone then
-    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+    Java.chain "java.text.DateFormat.setTimeZone(TimeZone)"
       res
       time_zone
   else
@@ -79,7 +83,7 @@ let make_date_format ?(date_style = Medium) ?(locale = JavaLocale.null) ?(time_z
 let make_date_time_format ?(date_style = Medium) ?(time_style = Medium) ?(locale = JavaLocale.null) ?(time_zone = JavaTimeZone.null) () =
   let res =
     if JavaLocale.is_not_null locale then
-      Java.call "java.text.DateFormat.getDateTimeInstance(int,int,java.util.Locale)"
+      Java.call "java.text.DateFormat.getDateTimeInstance(int,int,Locale)"
         (java_int_of_format_style date_style)
         (java_int_of_format_style time_style)
         locale
@@ -88,7 +92,7 @@ let make_date_time_format ?(date_style = Medium) ?(time_style = Medium) ?(locale
         (java_int_of_format_style date_style)
         (java_int_of_format_style time_style) in
   if JavaTimeZone.is_not_null time_zone then
-    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+    Java.chain "java.text.DateFormat.setTimeZone(TimeZone)"
       res
       time_zone
   else
@@ -98,7 +102,7 @@ let make_simple_format ?(pattern = JavaString.null) ?(locale = JavaLocale.null) 
   let res =
     if JavaString.is_not_null pattern then begin
       if JavaLocale.is_not_null locale then
-        Java.make "java.text.SimpleDateFormat(String,java.util.Locale)"
+        Java.make "java.text.SimpleDateFormat(String,Locale)"
           pattern locale
       else
         Java.make "java.text.SimpleDateFormat(String)"
@@ -106,7 +110,7 @@ let make_simple_format ?(pattern = JavaString.null) ?(locale = JavaLocale.null) 
     end else
       Java.make "java.text.SimpleDateFormat()" () in
   if JavaTimeZone.is_not_null time_zone then
-    Java.chain "java.text.DateFormat.setTimeZone(java.util.TimeZone)"
+    Java.chain "java.text.DateFormat.setTimeZone(TimeZone)"
       res
       time_zone
   else

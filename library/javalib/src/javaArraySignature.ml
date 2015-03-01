@@ -41,8 +41,8 @@ module type T = sig
   val fold_right : (e -> 'a -> 'a) -> e t -> 'a -> 'a
   val of_ocaml : e array -> e t
   val to_ocaml : e t -> e array
-  val to_object : e t -> java'lang'Object java_instance
-  val of_object : java'lang'Object java_instance -> e t
+  val to_object : e t -> _'Object java_instance
+  val of_object : _'Object java_instance -> e t
   val equals : e t -> e t -> java_boolean
   val hash_code : e t -> java_int
   val to_string : e t -> JavaString.t

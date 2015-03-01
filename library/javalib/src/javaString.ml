@@ -161,7 +161,7 @@ let uncapitalize s =
   done;
   Java.call "StringBuilder.toString()" res
 
-type t = java'lang'String java_instance
+type t = _'String java_instance
 
 let compare x y =
   Java.call "String.compareTo(String)" x y
@@ -180,10 +180,10 @@ let equals_ignore_case x y =
 
 (* Conversion from/to OCaml strings *)
 
-external of_string : string -> java'lang'String java_instance =
+external of_string : string -> _'String java_instance =
   "ocamljava_javastring_of_string"
 
-external to_string : java'lang'String java_instance -> string =
+external to_string : _'String java_instance -> string =
   "ocamljava_javastring_to_string"
 
 
@@ -194,37 +194,37 @@ external null : unit -> 'a java_instance =
 
 let null = null ()
 
-external is_null : java'lang'String java_instance -> bool =
+external is_null : _'String java_instance -> bool =
   "java is_null"
 
-external is_not_null : java'lang'String java_instance -> bool =
+external is_not_null : _'String java_instance -> bool =
   "java is_not_null"
 
 
 (* Output functions *)
 
-external print_string : java'lang'String java_instance -> unit =
+external print_string : _'String java_instance -> unit =
   "ocamljava_javastring_print_string"
 
-external print_endline : java'lang'String java_instance -> unit =
+external print_endline : _'String java_instance -> unit =
   "ocamljava_javastring_print_endline"
 
-external prerr_string : java'lang'String java_instance -> unit =
+external prerr_string : _'String java_instance -> unit =
   "ocamljava_javastring_prerr_string"
 
-external prerr_endline : java'lang'String java_instance -> unit =
+external prerr_endline : _'String java_instance -> unit =
   "ocamljava_javastring_prerr_endline"
 
-external output_string : out_channel -> java'lang'String java_instance -> unit =
+external output_string : out_channel -> _'String java_instance -> unit =
   "ocamljava_javastring_output_string"
 
 
 (* Input functions *)
 
-external read_line : unit -> java'lang'String java_instance =
+external read_line : unit -> _'String java_instance =
   "ocamljava_javastring_read_line"
 
-external input_line : in_channel -> java'lang'String java_instance =
+external input_line : in_channel -> _'String java_instance =
   "ocamljava_javastring_input_line"
 
 

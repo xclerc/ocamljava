@@ -40,11 +40,15 @@ end
 
 (* HTTP servlets *)
 
-type http = javax'servlet'http'HttpServlet java_instance
+open Class'javax'servlet'http'HttpServlet
+open Class'javax'servlet'http'HttpServletRequest
+open Class'javax'servlet'http'HttpServletResponse
 
-type http_request = javax'servlet'http'HttpServletRequest java_instance
+type http = _'HttpServlet java_instance
 
-type http_response = javax'servlet'http'HttpServletResponse java_instance
+type http_request = _'HttpServletRequest java_instance
+
+type http_response = _'HttpServletResponse java_instance
 
 module type HTTP = sig
   type t
@@ -72,20 +76,20 @@ let options resp l =
         | `TRACE   -> !@"TRACE"
         | `OPTIONS -> !@"OPTIONS")
   |> JavaString.concat !@", "
-  |> Java.call "javax.servlet.http.HttpServletResponse.setHeader(String,String)"
+  |> Java.call "HttpServletResponse.setHeader(String,String)"
       resp !@"Allow"
 
 module Default_HTTP = struct
   let error meth req resp =
-    let protocol = Java.call "javax.servlet.http.HttpServletRequest.getProtocol()" req in
+    let protocol = Java.call "HttpServletRequest.getProtocol()" req in
     let code =
       if Java.call "String.endsWith(String)" protocol !@"1.1" then
-        Java.get "javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED" ()
+        Java.get "HttpServletResponse.SC_METHOD_NOT_ALLOWED" ()
       else
-        Java.get "javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST" () in
+        Java.get "HttpServletResponse.SC_BAD_REQUEST" () in
     Printf.sprintf "HTTP method %s is not supported by this URL" meth
     |> JavaString.of_string
-    |> Java.call "javax.servlet.http.HttpServletResponse.sendError(int,String)" resp code
+    |> Java.call "HttpServletResponse.sendError(int,String)" resp code
   let do_delete _ _ req resp = error "delete" req resp
   let do_get    _ _ req resp = error "get"    req resp
   let do_head   _ _ req resp = error "head"   req resp
@@ -95,16 +99,16 @@ module Default_HTTP = struct
     let append buff x =
       Java.exec "StringBuilder.append(String):StringBuilder" buff x in
     let buff = Java.make "StringBuilder(String)" !@"TRACE " in
-    append buff (Java.call "javax.servlet.http.HttpServletRequest.getRequestURI()" req);
+    append buff (Java.call "HttpServletRequest.getRequestURI()" req);
     append buff !@" ";
-    append buff (Java.call "javax.servlet.http.HttpServletRequest.getProtocol()" req);
-    let headers = Java.call "javax.servlet.http.HttpServletRequest.getHeaderNames()" req in
+    append buff (Java.call "HttpServletRequest.getProtocol()" req);
+    let headers = Java.call "HttpServletRequest.getHeaderNames()" req in
     while Java.call "java.util.Enumeration.hasMoreElements()" headers do
       let header_name =
         Java.call "java.util.Enumeration.nextElement()" headers
         |> Java.cast "String" in
       let header_value =
-        Java.call "javax.servlet.http.HttpServletRequest.getHeader(String)"
+        Java.call "HttpServletRequest.getHeader(String)"
           req header_name in
       append buff !@"\r\n";
       append buff header_name;
@@ -113,9 +117,9 @@ module Default_HTTP = struct
     done;
     append buff !@"\r\n";
     let length = Java.call "StringBuilder.length()" buff in
-    Java.call "javax.servlet.http.HttpServletResponse.setContentType(String)" resp !@"message/http";
-    Java.call "javax.servlet.http.HttpServletResponse.setContentLength(int)" resp length;
-    let out = Java.call "javax.servlet.http.HttpServletResponse.getOutputStream()" resp in
+    Java.call "HttpServletResponse.setContentType(String)" resp !@"message/http";
+    Java.call "HttpServletResponse.setContentLength(int)" resp length;
+    let out = Java.call "HttpServletResponse.getOutputStream()" resp in
     buff
     |> Java.call "StringBuilder.toString()"
     |> Java.call "javax.servlet.ServletOutputStream.print(String)" out;

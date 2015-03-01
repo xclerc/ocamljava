@@ -19,7 +19,7 @@
 
 external (|.) : ('a -> 'b) -> 'a -> 'b = "%apply"
 
-external (!@) : string -> java'lang'String java_instance =
+external (!@) : string -> _'String java_instance =
   "ocamljava_javastring_of_string"
 
 let (^^^) str1 str2 =

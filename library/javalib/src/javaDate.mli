@@ -78,7 +78,7 @@ val make_simple_format : ?pattern:JavaString.t -> ?locale:JavaLocale.t -> ?time_
     format is described in the javadoc for
     {java java.text.SimpleDateFormat}.
 
-    @raise Java_exception if the pattern is invalid. *)
+    @raise Java_exception if the pattern is invalid *)
 
 val to_string : format -> t -> JavaString.t
 (** Converts the passed date into a string. *)

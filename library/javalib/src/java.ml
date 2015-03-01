@@ -84,13 +84,13 @@ external cast : 'a java_reference_type -> 'b java_instance -> 'a =
 
 (* Class retrieval *)
 
-external get_class : 'a java_any_type -> java'lang'Class java_instance =
+external get_class : 'a java_any_type -> _'Class java_instance =
   "java class"
 
 
 (* Exception throw *)
 
-external throw : java'lang'Throwable java_extends -> 'a =
+external throw : _'Throwable java_extends -> 'a =
   "java throw"
 
 
@@ -102,7 +102,7 @@ external synchronized : 'a java_instance -> (unit -> unit) -> unit =
 
 (* Interface implementation *)
 
-external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> 'a =
+external proxy_loader : 'a java_proxy -> _'ClassLoader java_extends -> 'a =
   "java proxy loader"
 
 external proxy_system : 'a java_proxy -> 'a =

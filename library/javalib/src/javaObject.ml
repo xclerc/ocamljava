@@ -19,7 +19,7 @@
 
 (* Instance creation *)
 
-type t = java'lang'Object java_instance
+type t = _'Object java_instance
 
 let make () =
   Java.make "Object()" ()
@@ -74,7 +74,7 @@ external is_not_null : 'a java_instance -> bool =
 
 (* Miscellaneous *)
 
-external cast : java'lang'Object java_extends -> t =
+external cast : _'Object java_extends -> t =
   "%identity"
 
 let wrap x =
