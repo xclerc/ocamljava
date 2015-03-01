@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-external in_channel_of_input_stream : java'io'InputStream java_instance -> in_channel =
+external in_channel_of_input_stream : java'io'InputStream java_extends -> in_channel =
   "ocamljava_in_channel_of_input_stream"
 
-external out_channel_of_output_stream : java'io'OutputStream java_instance -> out_channel =
+external out_channel_of_output_stream : java'io'OutputStream java_extends -> out_channel =
   "ocamljava_out_channel_of_output_stream"
 
 external input_stream_of_in_channel : in_channel -> java'io'InputStream java_instance =

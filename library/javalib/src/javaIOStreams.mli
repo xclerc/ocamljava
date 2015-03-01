@@ -18,13 +18,13 @@
 
 (** Conversions between Java streams and OCaml channels. *)
 
-external in_channel_of_input_stream : java'io'InputStream java_instance -> in_channel =
+external in_channel_of_input_stream : java'io'InputStream java_extends -> in_channel =
   "ocamljava_in_channel_of_input_stream"
 (** [in_channel_of_input_stream is] converts the input stream [is] into a
     new input channel. The returned channel is added to the list of
     opened channels. *)
 
-external out_channel_of_output_stream : java'io'OutputStream java_instance -> out_channel =
+external out_channel_of_output_stream : java'io'OutputStream java_extends -> out_channel =
   "ocamljava_out_channel_of_output_stream"
 (** [out_channel_of_output_stream os] converts the output stream [os]
     into a new output channel. The returned channel is added to the list
