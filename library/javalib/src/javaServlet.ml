@@ -96,12 +96,11 @@ module Default_HTTP = struct
   let do_post   _ _ req resp = error "post"   req resp
   let do_put    _ _ req resp = error "put"    req resp
   let do_trace _ _ req resp =
-    let append buff x =
-      Java.exec "StringBuilder.append(String):StringBuilder" buff x in
-    let buff = Java.make "StringBuilder(String)" !@"TRACE " in
-    append buff (Java.call "HttpServletRequest.getRequestURI()" req);
-    append buff !@" ";
-    append buff (Java.call "HttpServletRequest.getProtocol()" req);
+    let buff = 
+      JavaStringBuilder.(make_of_string !@"TRACE "
+      |> append_string |. (Java.call "HttpServletRequest.getRequestURI()" req)
+      |> append_string |. !@" "
+      |> append_string |.(Java.call "HttpServletRequest.getProtocol()" req)) in
     let headers = Java.call "HttpServletRequest.getHeaderNames()" req in
     while Java.call "java.util.Enumeration.hasMoreElements()" headers do
       let header_name =
@@ -110,18 +109,20 @@ module Default_HTTP = struct
       let header_value =
         Java.call "HttpServletRequest.getHeader(String)"
           req header_name in
-      append buff !@"\r\n";
-      append buff header_name;
-      append buff !@": ";
-      append buff header_value
+      JavaStringBuilder.(buff
+      |> append_string |. !@"\r\n"
+      |> append_string |. header_name
+      |> append_string |. !@": "
+      |> append_string |. header_value
+      |> ignore)
     done;
-    append buff !@"\r\n";
+    ignore (JavaStringBuilder.append_string buff !@"\r\n");
     let length = Java.call "StringBuilder.length()" buff in
     Java.call "HttpServletResponse.setContentType(String)" resp !@"message/http";
     Java.call "HttpServletResponse.setContentLength(int)" resp length;
     let out = Java.call "HttpServletResponse.getOutputStream()" resp in
     buff
-    |> Java.call "StringBuilder.toString()"
+    |> JavaStringBuilder.to_string
     |> Java.call "javax.servlet.ServletOutputStream.print(String)" out;
     Java.call "java.io.OutputStream.close()" out
   let get_last_modified _ _ _ = -1L
