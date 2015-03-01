@@ -16,7 +16,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** Conversions between Java streams and OCaml channels. *)
+(** Utility functions for Java streams, and conversions between Java
+    streams and OCaml channels. *)
+
+
+(** {6 Instance creation} *)
+
+val open_in : ?buffered:bool -> JavaString.t -> java'io'InputStream java_instance
+(** [open_in ?buffered str] returns a new {java java.io.InputStream}
+    instance reading data from the file whose path is [str]. The
+    [buffered] parameter (defaulting to [true]) indicates whether the
+    stream is buffered.
+
+    @raise Java_exception if an error occurs *)
+
+val open_out : ?buffered:bool -> JavaString.t -> java'io'OutputStream java_instance
+(** [open_out ?buffered str] returns a new {java java.io.OutputStream}
+    instance writing data to the file whose path is [str]. The [buffered]
+    parameter (defaulting to [true]) indicates whether the
+    stream is buffered.
+
+    @raise Java_exception if an error occurs *)
+
+
+(** {6 Closing} *)
+
+val close_in : java'io'InputStream java_extends -> unit
+(** Closes the passed stream.
+
+    @raise Java_exception if an error occurs *)
+
+val close_in_noerr : java'io'InputStream java_extends -> unit
+(** Closes the passed stream, discarding any error. *)
+
+val close_out : java'io'InputStream java_extends -> unit
+(** Closes the passed stream.
+
+    @raise Java_exception if an error occurs *)
+
+val close_out_noerr : java'io'InputStream java_extends -> unit
+(** Closes the passed stream, discarding any error. *)
+
+
+(** {6 Conversions} *)
 
 external in_channel_of_input_stream : java'io'InputStream java_extends -> in_channel =
   "ocamljava_in_channel_of_input_stream"
