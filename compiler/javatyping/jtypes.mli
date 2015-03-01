@@ -33,32 +33,15 @@ val is_special_primitive : string -> bool
     {i i.e.} one that takes as its first parameter a literal format-string
     describing the referenced Java element that should be erased. *)
 
-val use_dots : string -> string
-(** [use_dots s] returns a copy of [s] where all single quotes have been
-    replaced by dots. *)
-
-val use_single_quotes : string -> string
-(** [use_single_quotes s] returns a copy of [s] where all dots and
-    dollars have been replaced by single quotes. *)
-
-
-(** {6 Packages} *)
-
-val reset_opened_packages : unit -> unit
-(** Reset the list of opened packages. *)
-
-val open_package : string -> Location.t -> unit
-(** [open_package pack loc] indicates that package [pack] is opened at
-    the source point [loc]. *)
-
 
 (** {6 Conversions between classes and tags} *)
 
-val tags_of_class : string -> Location.t -> string list
-(** [tags_of_class class_name location] converts the class whose name is
-    [class_names] into a set of tags representing all its parents classes
-    and interfaces. The [location] parameter is usedto handle opened
-    packages.
+val tags_of_class : string -> Location.t -> Env.t -> string list
+(** [tags_of_class class_name location env] converts the class whose name
+    is [class_name] into a set of tags representing all its parents
+    classes and interfaces. The environment [env] is used to handle
+    opened classes/packages. The location [location] is used for error
+    messages.
 
     Raises [Not_found] if the class whose name is passed cannot be found.
 
@@ -83,12 +66,13 @@ type identifier = int
     The mapping from the [int] value to the actuel typing information
     being stored inside this module. *)
 
-type conversion_function = (Types.type_desc -> Types.type_expr) -> string -> Location.t -> Types.type_expr * identifier
+type conversion_function = (Types.type_desc -> Types.type_expr) -> string -> Location.t -> Env.t -> Types.type_expr * identifier
 (** The type of functions converting format-strings to typing
     information, where parameters are:
     - type creation function (typically [Ctype.newty]);
     - format-string to convert;
     - format-string location;
+    - environment;
     and returned elements:
     - type expression for the passed string;
     - identifier to retrieved the complete typing information.

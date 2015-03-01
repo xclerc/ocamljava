@@ -75,3 +75,32 @@ let is_subtype x y = (* true iff x is a subtype of y *)
     |> ClassLoader.find_class_name loader
     |> Hierarchy.all_parent_class_names true loader
     |> List.exists (fun cn -> Name.equal_for_class cn y)
+
+let use_dots s =
+  let len = String.length s in
+  let res = Buffer.create len in
+  let i = ref 0 in
+  while !i < len do
+    match s.[!i] with
+    | '\'' when (!i + 1 < len) && (s.[!i + 1] = '\'') ->
+        Buffer.add_char res '$';
+        i := !i + 2
+    | '\'' ->
+        Buffer.add_char res '.';
+        incr i
+    | ch ->
+        Buffer.add_char res ch;
+        incr i
+  done;
+  Buffer.contents res
+
+let use_single_quotes s =
+  let len = String.length s in
+  let res = Buffer.create len in
+  for i = 0 to pred len do
+    match s.[i] with
+    | '.' -> Buffer.add_char res '\''
+    | '$' -> Buffer.add_char res '\''; Buffer.add_char res '\''
+    | ch  -> Buffer.add_char res ch
+  done;
+  Buffer.contents res

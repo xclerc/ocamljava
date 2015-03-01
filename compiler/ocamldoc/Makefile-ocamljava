@@ -159,10 +159,10 @@ OCAMLCMJFILES=$(OCAMLSRCDIR)/parsing/printast.cmj \
 	$(OCAMLSRCDIR)/typing/subst.cmj \
 	$(OCAMLSRCDIR)/typing/cmi_format.cmj \
 	$(OCAMLSRCDIR)/utils/jclflags.cmj \
-	$(OCAMLSRCDIR)/typing/env.cmj \
-	$(OCAMLSRCDIR)/typing/primitive.cmj \
 	$(OCAMLSRCDIR)/utils/jconfig.cmj \
 	$(OCAMLSRCDIR)/javatyping/jutils.cmj \
+	$(OCAMLSRCDIR)/typing/env.cmj \
+	$(OCAMLSRCDIR)/typing/primitive.cmj \
 	$(OCAMLSRCDIR)/javatyping/jtypes.cmj \
 	$(OCAMLSRCDIR)/typing/ctype.cmj \
 	$(OCAMLSRCDIR)/typing/oprint.cmj \

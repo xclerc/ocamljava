@@ -2323,37 +2323,34 @@ diff -aur original/ocamldoc/Makefile patched/ocamldoc/Makefile
  	-I $(OCAMLSRCDIR)/driver \
  	-I $(OCAMLSRCDIR)/bytecomp \
  	-I $(OCAMLSRCDIR)/tools \
-@@ -137,6 +140,20 @@
+@@ -137,6 +140,8 @@
  LIBCMXFILES= $(LIBCMOFILES:.cmo=.cmx)
  LIBCMIFILES= $(LIBCMOFILES:.cmo=.cmi)
  
-+OCAMLJAVA_CMO_FILES=$(OCAMLSRCDIR)/utils/jclflags.cmo \
-+	$(OCAMLSRCDIR)/typing/primitive.cmo \
-+	$(OCAMLSRCDIR)/utils/jconfig.cmo \
-+	$(OCAMLSRCDIR)/javatyping/jutils.cmo \
-+	$(OCAMLSRCDIR)/javatyping/jtypes.cmo \
-+	$(OCAMLSRCDIR)/typing/ctype.cmo \
-+	$(OCAMLSRCDIR)/typing/oprint.cmo \
-+	$(OCAMLSRCDIR)/typing/printtyp.cmo \
-+	$(OCAMLSRCDIR)/typing/includeclass.cmo \
-+	$(OCAMLSRCDIR)/typing/mtype.cmo \
-+	$(OCAMLSRCDIR)/typing/includecore.cmo \
-+	$(OCAMLSRCDIR)/typing/includemod.cmo \
-+	$(OCAMLSRCDIR)/javacomp/jcompilenv.cmo
++OCAMLJAVA_CMO_FILES=
 +
  # Les cmo et cmx de la distrib OCAML
  OCAMLCMOFILES=$(OCAMLSRCDIR)/parsing/printast.cmo \
  	$(OCAMLSRCDIR)/typing/ident.cmo \
-@@ -161,11 +178,7 @@
+@@ -160,12 +165,20 @@
+ 	$(OCAMLSRCDIR)/typing/datarepr.cmo \
  	$(OCAMLSRCDIR)/typing/subst.cmo \
  	$(OCAMLSRCDIR)/typing/cmi_format.cmo \
++	$(OCAMLSRCDIR)/utils/jclflags.cmo \
++	$(OCAMLSRCDIR)/utils/jconfig.cmo \
++	$(OCAMLSRCDIR)/javatyping/jutils.cmo \
  	$(OCAMLSRCDIR)/typing/env.cmo \
 -	$(OCAMLSRCDIR)/typing/ctype.cmo \
--	$(OCAMLSRCDIR)/typing/primitive.cmo \
--	$(OCAMLSRCDIR)/typing/oprint.cmo \
--	$(OCAMLSRCDIR)/typing/printtyp.cmo \
--	$(OCAMLSRCDIR)/typing/includecore.cmo \
-+	$(OCAMLJAVA_CMO_FILES) \
+ 	$(OCAMLSRCDIR)/typing/primitive.cmo \
++	$(OCAMLSRCDIR)/javatyping/jtypes.cmo \
++	$(OCAMLSRCDIR)/typing/ctype.cmo \
+ 	$(OCAMLSRCDIR)/typing/oprint.cmo \
+ 	$(OCAMLSRCDIR)/typing/printtyp.cmo \
++	$(OCAMLSRCDIR)/typing/includeclass.cmo \
++	$(OCAMLSRCDIR)/typing/mtype.cmo \
+ 	$(OCAMLSRCDIR)/typing/includecore.cmo \
++	$(OCAMLSRCDIR)/typing/includemod.cmo \
++	$(OCAMLSRCDIR)/javacomp/jcompilenv.cmo \
  	$(OCAMLSRCDIR)/typing/typetexp.cmo \
  	$(OCAMLSRCDIR)/typing/typedtree.cmo \
  	$(OCAMLSRCDIR)/typing/parmatch.cmo \
@@ -2617,6 +2614,186 @@ diff -aur original/typing/ctype.ml patched/typing/ctype.ml
    with
      Unify trace ->
        raise (Unify (expand_trace !env trace))
+diff -aur original/typing/env.ml patched/typing/env.ml
+--- original/typing/env.ml	2013-07-23 16:48:47.000000000 +0200
++++ patched/typing/env.ml	2013-07-23 16:48:47.000000000 +0200
+@@ -57,6 +57,8 @@
+   | Illegal_renaming of string * string * string
+   | Inconsistent_import of string * string * string
+   | Need_recursive_types of string * string
++  | Invalid_java_class_name of string
++  | Invalid_java_package_name of string
+ 
+ exception Error of error
+ 
+@@ -109,6 +111,8 @@
+   | Env_class of summary * Ident.t * class_declaration
+   | Env_cltype of summary * Ident.t * class_type_declaration
+   | Env_open of summary * Path.t
++  | Env_open_java_class of summary * string
++  | Env_open_java_package of summary * string
+ 
+ module EnvTbl =
+   struct
+@@ -174,6 +178,8 @@
+   local_constraints: bool;
+   gadt_instances: (int * TypeSet.t ref) list;
+   in_signature: bool;
++  opened_java_classes: string list;
++  opened_java_packages: string list;
+ }
+ 
+ and module_components =
+@@ -216,6 +222,8 @@
+   cltypes = EnvTbl.empty;
+   summary = Env_empty; local_constraints = false; gadt_instances = [];
+   in_signature = false;
++  opened_java_classes = [];
++  opened_java_packages = [ "java.lang" ];
+  }
+ 
+ let in_signature env = {env with in_signature = true}
+@@ -1587,6 +1595,82 @@
+     in_signature = env.in_signature;
+   }
+ 
++(* Opening of Java classes/packages *)
++
++let open_java_class class_name env =
++  { env with opened_java_classes = class_name :: env.opened_java_classes;
++             summary = Env_open_java_class(env.summary, class_name) }
++
++let open_java_package package_name env =
++  { env with opened_java_packages = package_name :: env.opened_java_packages;
++             summary = Env_open_java_package(env.summary, package_name) }
++
++let opened_java_classes_and_packages env =
++  List.rev env.opened_java_classes,
++  List.rev env.opened_java_packages
++
++let java_open_package_prefix = "Package'"
++
++let java_open_class_prefix = "Class'"
++
++let starts_with_java_open_prefix ~prefix s =
++  let prefix_len = String.length prefix in
++  if String.length s > prefix_len then
++    let i = ref 0 in
++    while (!i < prefix_len)
++        && (s.[!i] = prefix.[!i]) do
++      incr i;
++    done;
++    !i = prefix_len
++  else
++    false
++
++let starts_with_java_open_prefix ~package s =
++  let prefix =
++    if package then
++      java_open_package_prefix
++    else
++      java_open_class_prefix in
++  starts_with_java_open_prefix ~prefix s
++
++let extract_java_name prefix s =
++  let prefix_len = String.length prefix in
++  String.sub
++    s
++    prefix_len
++    (String.length s - prefix_len)
++
++let open_java ~package name env =
++  let prefix =
++    if package then
++      java_open_package_prefix
++    else
++      java_open_class_prefix in
++  let name =
++    name
++    |> extract_java_name prefix
++    |> Jutils.use_dots in
++  if package then begin
++    try
++      name
++      |> BaristaLibrary.UTF8.of_string
++      |> BaristaLibrary.Name.make_for_package_from_external
++      |> ignore;
++      open_java_package name env
++    with _ ->
++      raise (Error (Invalid_java_package_name name))
++  end else begin
++    try
++      name
++      |> BaristaLibrary.UTF8.of_string
++      |> BaristaLibrary.Name.make_for_class_from_external
++      |> ignore;
++      open_java_class name env
++    with _ ->      
++      raise (Error (Invalid_java_class_name name))
++  end
++
++
+ (* Error report *)
+ 
+ open Format
+@@ -1603,3 +1687,7 @@
+       fprintf ppf
+         "@[<hov>Unit %s imports from %s, which uses recursive types.@ %s@]"
+         export import "The compilation flag -rectypes is required"
++  | Invalid_java_class_name s ->
++      fprintf ppf "`%s' ts not a valid class name" s
++  | Invalid_java_package_name s ->
++      fprintf ppf "`%s' ts not a valid package name" s
+diff -aur original/typing/env.mli patched/typing/env.mli
+--- original/typing/env.mli	2013-07-23 16:48:47.000000000 +0200
++++ patched/typing/env.mli	2013-07-23 16:48:47.000000000 +0200
+@@ -24,6 +24,8 @@
+   | Env_class of summary * Ident.t * class_declaration
+   | Env_cltype of summary * Ident.t * class_type_declaration
+   | Env_open of summary * Path.t
++  | Env_open_java_class of summary * string
++  | Env_open_java_package of summary * string
+ 
+ type t
+ 
+@@ -111,6 +113,14 @@
+       signature -> t -> t
+ val open_pers_signature: string -> t -> t
+ 
++(* Opening of Java classes/packages *)
++
++val open_java_class : string -> t -> t
++val open_java_package : string -> t -> t
++val opened_java_classes_and_packages : t -> string list * string list
++val starts_with_java_open_prefix : package:bool -> string -> bool
++val open_java : package:bool -> string -> t -> t
++
+ (* Insertion by name *)
+ 
+ val enter_value:
+@@ -173,6 +183,8 @@
+   | Illegal_renaming of string * string * string
+   | Inconsistent_import of string * string * string
+   | Need_recursive_types of string * string
++  | Invalid_java_class_name of string
++  | Invalid_java_package_name of string
+ 
+ exception Error of error
+ 
+diff -aur original/typing/envaux.ml patched/typing/envaux.ml
+--- original/typing/envaux.ml	2013-07-23 16:48:47.000000000 +0200
++++ patched/typing/envaux.ml	2013-07-23 16:48:47.000000000 +0200
+@@ -71,6 +71,10 @@
+               raise (Error (Module_not_found path'))
+           in
+           Env.open_signature Asttypes.Override path' (extract_sig env mty) env
++      | Env_open_java_class(s, class_name) ->
++          Env.open_java_class class_name (env_from_summary s subst)
++      | Env_open_java_package(s, package_name) ->
++          Env.open_java_package package_name (env_from_summary s subst)
+     in
+       Hashtbl.add env_cache (sum, subst) env;
+       env
 diff -aur original/typing/parmatch.ml patched/typing/parmatch.ml
 --- original/typing/parmatch.ml	2013-04-25 15:32:17.000000000 +0200
 +++ patched/typing/parmatch.ml	2013-04-25 15:32:17.000000000 +0200
@@ -3084,7 +3261,7 @@ diff -aur original/typing/printtyp.ml patched/typing/printtyp.ml
 +                 let labels = List.map fst var.row_fields in
 +                 let classes =
 +                   Jtypes.classes_of_tags labels
-+                   |> List.map Jtypes.use_single_quotes in
++                   |> List.map Jutils.use_single_quotes in
 +                 let name = String.concat "&" classes in
 +                 [ Otyp_constr (Oide_ident name, []) ], closed
 +             | [ { desc = Tvar _; _ } as ty ] ->
@@ -3170,7 +3347,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
 +              exp_env = env } in
 +      let return_int category func =
 +        try
-+          let ty, id = func loc in
++          let ty, id = func loc env in
 +          rue { exp_desc = Texp_constant (Const_int id);
 +                exp_loc = loc;
 +                exp_extra = [];
@@ -3240,7 +3417,24 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
        rue {
          exp_desc = Texp_apply(funct, args);
          exp_loc = loc; exp_extra = [];
-@@ -3110,7 +3168,7 @@
+@@ -2702,6 +2760,16 @@
+         exp_loc = loc; exp_extra = [];
+         exp_type = newty (Tpackage (p, nl, tl'));
+         exp_env = env }
++  | Pexp_open (ovf, { txt = Longident.Lident package; _ }, e)
++    when !Jclflags.java_extensions
++      && Env.starts_with_java_open_prefix ~package:true package ->
++      let newenv = Env.open_java ~package:true package env in
++      type_expect newenv e ty_expected
++  | Pexp_open (ovf, { txt = Longident.Lident class_; _ }, e)
++    when !Jclflags.java_extensions
++      && Env.starts_with_java_open_prefix ~package:false class_ ->
++      let newenv = Env.open_java ~package:false class_ env in
++      type_expect newenv e ty_expected
+   | Pexp_open (ovf, lid, e) ->
+       let (path, newenv) = !type_open ovf env sexp.pexp_loc lid in
+       let exp = type_expect newenv e ty_expected in
+@@ -3110,7 +3178,7 @@
    begin match ty.desc with
    | Tarrow _ ->
        Location.prerr_warning loc Warnings.Partial_application
@@ -3249,7 +3443,7 @@ diff -aur original/typing/typecore.ml patched/typing/typecore.ml
    | Tvar _ when ty.level > tv.level ->
        Location.prerr_warning loc Warnings.Nonreturning_statement
    | Tvar _ ->
-@@ -3640,6 +3698,8 @@
+@@ -3640,6 +3708,8 @@
        fprintf ppf "@[The GADT constructor %s of type %a@ %s.@]"
          name path tpath
          "must be qualified in this pattern"
@@ -3272,54 +3466,54 @@ diff -aur original/typing/typecore.mli patched/typing/typecore.mli
 diff -aur original/typing/typemod.ml patched/typing/typemod.ml
 --- original/typing/typemod.ml	2014-04-13 09:05:24.000000000 +0200
 +++ patched/typing/typemod.ml	2014-04-13 09:05:24.000000000 +0200
-@@ -37,6 +37,7 @@
-   | Not_a_packed_module of type_expr
-   | Incomplete_packed_module of type_expr
-   | Scoping_pack of Longident.t * type_expr
-+  | Invalid_java_package_name of string
- 
- exception Error of Location.t * Env.t * error
- 
-@@ -840,6 +841,27 @@
- 
- (* Type a module value expression *)
- 
-+let java_open_package_prefix = "Package'"
-+
-+let java_open_package_prefix_length = String.length java_open_package_prefix
-+
-+let starts_with_java_open_package_prefix s =
-+  if String.length s > java_open_package_prefix_length then
-+    let i = ref 0 in
-+    while (!i < java_open_package_prefix_length)
-+        && (s.[!i] = java_open_package_prefix.[!i]) do
-+      incr i;
-+    done;
-+    !i = java_open_package_prefix_length
-+  else
-+    false
-+
-+let extract_package_name s =
-+  String.sub
-+    s
-+    java_open_package_prefix_length
-+    (String.length s - java_open_package_prefix_length)
-+
- let rec type_module sttn funct_body anchor env smod =
-   match smod.pmod_desc with
-     Pmod_ident lid ->
-@@ -1065,6 +1087,14 @@
+@@ -315,6 +315,16 @@
+           let info = approx_modtype_info env sinfo in
+           let (id, newenv) = Env.enter_modtype name.txt info env in
+           Sig_modtype(id, info) :: approx_sig newenv srem
++      | Psig_open (ovf, { txt = Longident.Lident package; _ })
++        when !Jclflags.java_extensions
++          && Env.starts_with_java_open_prefix ~package:true package ->
++          let mty = Env.open_java ~package:true package env in
++          approx_sig mty srem
++      | Psig_open (ovf, { txt = Longident.Lident class_; _ })
++        when !Jclflags.java_extensions
++          && Env.starts_with_java_open_prefix ~package:false class_ ->
++          let mty = Env.open_java ~package:false class_ env in
++          approx_sig mty srem
+       | Psig_open (ovf, lid) ->
+           let (path, mty) = type_open ovf env item.psig_loc lid in
+           approx_sig mty srem
+@@ -525,6 +535,16 @@
+             mksig (Tsig_modtype (id, name, tinfo)) env loc :: trem,
+             Sig_modtype(id, info) :: rem,
+             final_env
++        | Psig_open (ovf, { txt = Longident.Lident package; _ })
++          when !Jclflags.java_extensions
++            && Env.starts_with_java_open_prefix ~package:true package ->
++            let newenv = Env.open_java ~package:true package env in
++            transl_sig newenv srem
++        | Psig_open (ovf, { txt = Longident.Lident class_; _ })
++          when !Jclflags.java_extensions
++            && Env.starts_with_java_open_prefix ~package:false class_ ->
++            let newenv = Env.open_java ~package:false class_ env in
++            transl_sig newenv srem
+         | Psig_open (ovf, lid) ->
+             let (path, newenv) = type_open ovf env item.psig_loc lid in
+             let (trem, rem, final_env) = transl_sig newenv srem in
+@@ -1065,6 +1085,16 @@
          (item :: str_rem,
           Sig_modtype(id, Modtype_manifest mty.mty_type) :: sig_rem,
           final_env)
-+    | Pstr_open (_, ({ txt = Longident.Lident package; _ } as lid))
-+      when !Jclflags.java_extensions && starts_with_java_open_package_prefix package ->
-+        let package_name = extract_package_name package in
-+        (try
-+          Jtypes.open_package package_name lid.loc
-+        with _ ->
-+          raise (Error (lid.loc, env, Invalid_java_package_name package_name)));
-+        type_struct env srem
++    | Pstr_open (_, { txt = Longident.Lident package; _ })
++      when !Jclflags.java_extensions
++        && Env.starts_with_java_open_prefix ~package:true package ->
++        let newenv = Env.open_java ~package:true package env in
++        type_struct newenv srem
++    | Pstr_open (_, { txt = Longident.Lident class_; _ })
++      when !Jclflags.java_extensions
++        && Env.starts_with_java_open_prefix ~package:false class_ ->
++        let newenv = Env.open_java ~package:false class_ env in
++        type_struct newenv srem
      | Pstr_open (ovf, lid) ->
          let (path, newenv) = type_open ovf ~toplevel env loc lid in
          let item = mk (Tstr_open (ovf, path, lid)) in
@@ -3331,26 +3525,6 @@ diff -aur original/typing/typemod.ml patched/typing/typemod.ml
        let dclsig = Env.read_signature modulename intf_file in
        let coercion = Includemod.compunit sourcefile sg intf_file dclsig in
        Typecore.force_delayed_checks ();
-@@ -1477,6 +1508,8 @@
-         "The type %a in this module cannot be exported.@ " longident lid;
-       fprintf ppf
-         "Its type contains local dependencies:@ %a" type_expr ty
-+  | Invalid_java_package_name s ->
-+      fprintf ppf "`%s' ts not a valid package name" s
- 
- let report_error env ppf err =
-   Printtyp.wrap_printing_env env (fun () -> report_error ppf err)
-diff -aur original/typing/typemod.mli patched/typing/typemod.mli
---- original/typing/typemod.mli	2014-04-13 09:05:24.000000000 +0200
-+++ patched/typing/typemod.mli	2014-04-13 09:05:24.000000000 +0200
-@@ -58,6 +58,7 @@
-   | Not_a_packed_module of type_expr
-   | Incomplete_packed_module of type_expr
-   | Scoping_pack of Longident.t * type_expr
-+  | Invalid_java_package_name of string
- 
- exception Error of Location.t * Env.t * error
- 
 diff -aur original/typing/typetexp.ml patched/typing/typetexp.ml
 --- original/typing/typetexp.ml	2014-04-13 09:05:24.000000000 +0200
 +++ patched/typing/typetexp.ml	2014-04-13 09:05:24.000000000 +0200
@@ -3396,7 +3570,7 @@ diff -aur original/typing/typetexp.ml patched/typing/typetexp.ml
 +                      Type_arity_mismatch(cn_lid.txt, 0, List.length sub_list)));
 +        let classes =
 +          try
-+            Jtypes.tags_of_class class_name loc
++            Jtypes.tags_of_class class_name loc env
 +          with
 +          | Not_found ->
 +              raise(Error(cn_lid.loc, env, Invalid_java_instance(cn_lid.txt, None)))

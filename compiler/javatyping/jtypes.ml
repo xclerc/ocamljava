@@ -48,34 +48,6 @@ let is_special_primitive = function
   | "java proxy runtime" -> true
   | _ -> false
 
-let use_dots s =
-  let len = String.length s in
-  let res = Buffer.create len in
-  let i = ref 0 in
-  while !i < len do
-    match s.[!i] with
-    | '\'' when (!i + 1 < len) && (s.[!i + 1] = '\'') ->
-        Buffer.add_char res '$';
-        i := !i + 2
-    | '\'' ->
-        Buffer.add_char res '.';
-        incr i
-    | ch ->
-        Buffer.add_char res ch;
-        incr i
-  done;
-  Buffer.contents res
-
-let use_single_quotes s =
-  let len = String.length s in
-  let res = Buffer.create len in
-  for i = 0 to pred len do
-    match s.[i] with
-    | '.' -> Buffer.add_char res '\''
-    | '$' -> Buffer.add_char res '\''; Buffer.add_char res '\''
-    | ch  -> Buffer.add_char res ch
-  done;
-  Buffer.contents res
 
 let contains_dots s =
   let i = ref (String.length s - 3) in
@@ -94,41 +66,14 @@ let extract_class_name_from_method_descriptor s =
     assert false
 
 
-(* Packages *)
-
-let before_any =
-  let pos = { Lexing.pos_fname = "";
-  	      Lexing.pos_lnum = 0;
-  	      Lexing.pos_bol = 0;
-  	      Lexing.pos_cnum = 0; } in
-  { Location.loc_start = pos;
-    Location.loc_end = pos;
-    Location.loc_ghost = false; }
+(* Imports *)
 
 open BaristaLibrary
 
-let java_lang = UTF8.of_string "java.lang"
-
-let opened_packages : (UTF8.t * Location.t) list ref =
-  ref [ java_lang, before_any ]
-
-let reset_opened_packages () =
-  opened_packages := [ java_lang, before_any ]
-
-let open_package package location =
-  opened_packages := (UTF8.of_string (use_dots package), location) :: !opened_packages
-
-let get_opened_packages location =
-  (* due to (weird) line directives, packages may not be ordered *)
-  let (>=) loc1 loc2 =
-    let open Location in
-    let open Lexing in
-    (loc1.loc_start.pos_lnum > loc2.loc_start.pos_lnum)
-    || ((loc1.loc_start.pos_lnum = loc2.loc_start.pos_lnum)
-          && (loc1.loc_start.pos_cnum > loc2.loc_start.pos_cnum)) in
-  !opened_packages
-  |> List.filter (fun (_pack, loc) -> location >= loc)
-  |> List.map fst
+let get_opened_classes_and_packages env =
+  let classes, packages = Env.opened_java_classes_and_packages env in
+  List.map (fun cn -> UTF8.of_string cn) classes,
+  List.map (fun pn -> UTF8.of_string pn) packages
 
 
 (* Conversions between classes and tags *)
@@ -177,8 +122,8 @@ let rec add_all_parents cl cd acc =
   let name =
     cd.ClassDefinition.name
     |> Name.external_utf8_for_class
-    |>  UTF8.to_string
-    |> use_single_quotes in
+    |> UTF8.to_string
+    |> Jutils.use_single_quotes in
   let acc =
     acc
     |> StringSet.add name
@@ -203,29 +148,29 @@ and add_all_parents_list cl l acc =
     acc
     l
 
-let tags_of_class class_name location =
+let tags_of_class class_name location env =
   let len = String.length class_name in
   let implicit_package_prefix =
     (len > 2)
       && (class_name.[0] = '_')
       && (class_name.[1] = '\'') in
-  let open_packages =
+  let imports =
     if implicit_package_prefix then
-      get_opened_packages location
+      get_opened_classes_and_packages env
     else
-      [] in
+      [], [] in
   let class_name =
     if implicit_package_prefix then
       String.sub class_name 2 (len - 2)
     else
       class_name in
-  let class_name = use_dots class_name in
+  let class_name = Jutils.use_dots class_name in
   let class_loader = Jutils.get_class_loader () in
   try
     let results =
       Lookup.for_classes
         false
-        ~open_packages
+        ~imports
         class_loader
         (UTF8.of_string class_name) in
     match results with
@@ -256,22 +201,22 @@ let classes_of_tags tags =
         let result =
           Lookup.for_class
             false
-            ~open_packages:[] (* because fully-qualified name are used in tags *)
+            ~imports:([], []) (* because fully-qualified name are used in tags *)
             class_loader
-            (UTF8.of_string (use_dots tag)) in
+            (UTF8.of_string (Jutils.use_dots tag)) in
         let def = result.Lookup.value in
         add_all_parents class_loader def (StringSet.singleton tag)
         |> StringSet.remove tag)
   |> List.fold_left StringSet.union StringSet.empty
   |> StringSet.diff set_of_tags
   |> StringSet.elements
-  |> List.map use_dots
+  |> List.map Jutils.use_dots
 
 (* Conversion from literal format-strings to typing information *)
 
 type identifier = int
 
-type conversion_function = (Types.type_desc -> Types.type_expr) -> string -> Location.t -> Types.type_expr * identifier
+type conversion_function = (Types.type_desc -> Types.type_expr) -> string -> Location.t -> Env.t -> Types.type_expr * identifier
 
 let rec ocaml_type_of_java_type ?(ellipsis=false) newty closed (desc : Descriptor.java_type) =
   match desc with
@@ -353,16 +298,17 @@ type constructor_info = {
   }
 
 let get_constructor_info, java_constructor_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add newty s loc env ->
     let loader = Jutils.get_class_loader () in
+    let imports = get_opened_classes_and_packages env in
     let result =
       try
         s
-        |> use_dots
+        |> Jutils.use_dots
         |> UTF8.of_string
         |> Lookup.for_constructor
             false
-            ~open_packages:(get_opened_packages loc)
+            ~imports
             loader
       with Lookup.Exception e ->
         failwith (Lookup.string_of_error e) in
@@ -431,7 +377,7 @@ type array_info = {
   }
 
 let get_array_info, java_array_shape_of_string =
-  make_container (fun length add specify_dimensions newty s loc ->
+  make_container (fun length add specify_dimensions newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s, array_total_dimensions, array_init_dimensions =
       if specify_dimensions then
@@ -452,15 +398,16 @@ let get_array_info, java_array_shape_of_string =
       | "long"    -> `Long
       | "short"   -> `Short
       | _ ->
+          let imports = get_opened_classes_and_packages env in
           let result =
             try
               s
-              |> use_dots
+              |> Jutils.use_dots
               |> UTF8.of_string
               |> Lookup.for_class
                 false
-                ~open_packages:(get_opened_packages loc)
-                loader
+                  ~imports
+                  loader
           with Lookup.Exception e ->
             failwith (Lookup.string_of_error e) in
           let cd = result.Lookup.value in
@@ -511,17 +458,18 @@ let add_implicit_type s =
     s ^ ":_"
 
 let get_method_info, java_method_of_string =
-  make_container (fun length add call_kind newty s loc ->
+  make_container (fun length add call_kind newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s = add_implicit_type s in
+    let imports = get_opened_classes_and_packages env in
     let result =
       try
         s
-        |> use_dots
+        |> Jutils.use_dots
         |> UTF8.of_string
         |> Lookup.for_regular_method
             false
-            ~open_packages:(get_opened_packages loc)
+            ~imports
             loader
       with Lookup.Exception e ->
         failwith (Lookup.string_of_error e) in
@@ -564,15 +512,16 @@ let get_method_info, java_method_of_string =
       | Push_instance ->
           (* the lookup process may have chosen a more general type,
              hence the need to retrieve the given class *)
+          let imports = get_opened_classes_and_packages env in
           let original_class =
             try
               s
-              |> use_dots
+              |> Jutils.use_dots
               |> extract_class_name_from_method_descriptor
               |> UTF8.of_string
               |> Lookup.for_class
                   false
-                  ~open_packages:(get_opened_packages loc)
+                  ~imports
                   loader
             with Lookup.Exception e ->
               failwith (Lookup.string_of_error e) in
@@ -600,17 +549,18 @@ type field_info = {
   }
 
 let get_field_get_info, java_field_get_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s = add_implicit_type s in
+    let imports = get_opened_classes_and_packages env in
     let result =
       try
         s
-        |> use_dots
+        |> Jutils.use_dots
         |> UTF8.of_string
         |> Lookup.for_field
             false
-            ~open_packages:(get_opened_packages loc)
+            ~imports
             loader
       with Lookup.Exception e ->
         failwith (Lookup.string_of_error e) in
@@ -634,17 +584,18 @@ let get_field_get_info, java_field_get_of_string =
     id)
 
 let get_field_set_info, java_field_set_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s = add_implicit_type s in
+    let imports = get_opened_classes_and_packages env in
     let result =
       try
         s
-        |> use_dots
+        |> Jutils.use_dots
         |> UTF8.of_string
         |> Lookup.for_field
             false
-            ~open_packages:(get_opened_packages loc)
+            ~imports
             loader
       with Lookup.Exception e ->
         failwith (Lookup.string_of_error e) in
@@ -677,7 +628,7 @@ type type_info = {
   }
 
 let get_reference_type_info, java_reference_type_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s, dims = split_array_shape s in
     let base =
@@ -691,14 +642,15 @@ let get_reference_type_info, java_reference_type_of_string =
       | "long" when dims > 0 -> `Long
       | "short" when dims > 0 -> `Short
       | _ ->
+          let imports = get_opened_classes_and_packages env in
           let result =
             try
               s
-              |> use_dots
+              |> Jutils.use_dots
               |> UTF8.of_string
               |> Lookup.for_class
                   false
-                  ~open_packages:(get_opened_packages loc)
+                  ~imports
                   loader
             with Lookup.Exception e ->
               failwith (Lookup.string_of_error e) in
@@ -724,7 +676,7 @@ type any_type_info = {
   }
 
 let get_any_type_info, java_any_type_of_string =
-  make_container (fun length add newty s loc ->
+  make_container (fun length add newty s loc env ->
     let loader = Jutils.get_class_loader () in
     let s, dims = split_array_shape s in
     let typ =
@@ -739,14 +691,15 @@ let get_any_type_info, java_any_type_of_string =
       | "short"   -> if dims = 0 then `Short   else `Array (make_array `Short   (pred dims))
       | "void"    -> if dims = 0 then `Void    else failwith "void cannot be used as an array element type"
       | _ ->
+          let imports = get_opened_classes_and_packages env in
           let result =
             try
               s
-              |> use_dots
+              |> Jutils.use_dots
               |> UTF8.of_string
               |> Lookup.for_class
                   false
-                  ~open_packages:(get_opened_packages loc)
+                  ~imports
                   loader
             with Lookup.Exception e ->
               failwith (Lookup.string_of_error e) in
@@ -981,7 +934,7 @@ let compute_mapping loader classes additional_methods newty =
   methods, mapping
 
 let get_proxy_info, java_proxy_of_string =
-  make_container (fun length add newobj newty sl loc ->
+  make_container (fun length add newobj newty sl loc env ->
     let loader = Jutils.get_class_loader () in
     let defs, obj_meths =
       sl
@@ -992,13 +945,14 @@ let get_proxy_info, java_proxy_of_string =
             | (".toString" | ".equals" | ".hashCode") as name ->
                 acc_defs, (String.sub name 1 (pred (String.length name))) :: acc_obj_methds
             | cn ->
+                let imports = get_opened_classes_and_packages env in
                 (try
                   cn
-                  |> use_dots
+                  |> Jutils.use_dots
                   |> UTF8.of_string
                   |> Lookup.for_class
                       false
-                      ~open_packages:(get_opened_packages loc)
+                      ~imports
                       loader
                   |> (fun x -> x.Lookup.value)
                 with Lookup.Exception e ->

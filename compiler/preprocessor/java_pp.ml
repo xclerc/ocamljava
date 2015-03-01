@@ -39,7 +39,7 @@
      parents of the given class.
 
    Class names should be fully qualified, unless in one of the packages
-   listed by the 'open_packages' variable. *)
+   listed by the 'imported_packages' variable. *)
 
 open Camlp4
 open BaristaLibrary
@@ -70,7 +70,7 @@ type method_kind =
   | Virtual
   | Special
 
-let open_packages =
+let imported_packages =
   [ "java.io" ;
     "java.lang" ;
     "java.lang.invoke" ;
@@ -84,6 +84,8 @@ let open_packages =
     "org.ocamljava.runtime.support.servlet" ;
     "org.ocamljava.runtime.values" ]
   |> List.map UTF8.of_string
+
+let imports = [], imported_packages
 
 module Make (Syntax : Sig.Camlp4Syntax) = struct
   open Sig
@@ -209,7 +211,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
         let found =
           class_name
           |> UTF8.of_string
-          |> Lookup.for_class false ~open_packages loader in
+          |> Lookup.for_class false ~imports loader in
         make_class_name' false found.Lookup.value.ClassDefinition.name)
 
   (* Implementation for 'JAVA_{GET,PUT}_{STATIC,FIELD}'. *)
@@ -219,7 +221,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
         let found =
           (field_desc ^ ":_")
           |> UTF8.of_string
-          |> Lookup.for_field false ~open_packages loader in
+          |> Lookup.for_field false ~imports loader in
         let declaring_class, field = found.Lookup.value in
         if (AccessFlag.mem_field `Static field.Field.flags) <> static then
           failwith "invalid field staticness";
@@ -247,7 +249,12 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
           match kind with
           | Static | Virtual ->
               let static = kind = Static in
-              let found = Lookup.for_regular_method false ~open_packages loader method_desc in
+              let found =
+                Lookup.for_regular_method
+                  false
+                  ~imports
+                  loader
+                  method_desc in
               let declaring_class, meth = found.Lookup.value in
               if (AccessFlag.mem_method `Static meth.Method.flags) <> static then
                 failwith "invalid method staticness";
@@ -259,7 +266,12 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
               else
                 <:expr< Instruction.INVOKEVIRTUAL (`Class_or_interface $cn$, $mn$, $md$) >>
           | Special ->
-              let found = Lookup.for_constructor false ~open_packages loader method_desc in
+              let found =
+                Lookup.for_constructor
+                  false
+                  ~imports
+                  loader
+                  method_desc in
               let declaring_class, meth = found.Lookup.value in
               let cn = make_class_name' true declaring_class.ClassDefinition.name in
               let mn = make_method_name "<init>" in
@@ -274,7 +286,10 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
         let found =
           class_name
           |> UTF8.of_string
-          |> Lookup.for_class false ~open_packages loader in
+          |> Lookup.for_class
+              false
+              ~imports
+              loader in
         let parents = Hierarchy.parent_class_names false loader found.Lookup.value in
         make_list
           (fun cn ->

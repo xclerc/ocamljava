@@ -34,3 +34,11 @@ val get_unifier : unit -> BaristaLibrary.StackState.instance BaristaLibrary.Stac
 
 val is_subtype : BaristaLibrary.Name.for_class -> BaristaLibrary.Name.for_class -> bool
 (** [is_subtype x y] returns [true] iff [x] is a subtype of [y]. *)
+
+val use_dots : string -> string
+(** [use_dots s] returns a copy of [s] where all single quotes have been
+    replaced by dots. *)
+
+val use_single_quotes : string -> string
+(** [use_single_quotes s] returns a copy of [s] where all dots and
+    dollars have been replaced by single quotes. *)

@@ -35,7 +35,6 @@ let initial_env () =
 let interface ppf sourcefile outputprefix =
   Location.input_name := sourcefile;
   Compmisc.init_path true;
-  Jtypes.reset_opened_packages ();
   let modulename =
     String.capitalize(Filename.basename(Misc.chop_extension_if_any sourcefile)) in
   Compenv.check_unit_name ppf sourcefile modulename;
@@ -79,7 +78,6 @@ let (+++) (x, y) f = (x, f y)
 let implementation ppf sourcefile outputprefix =
   Location.input_name := sourcefile;
   Compmisc.init_path true;
-  Jtypes.reset_opened_packages ();
   let modulename =
     String.capitalize(Filename.basename(Misc.chop_extension_if_any sourcefile)) in
   Compenv.check_unit_name ppf sourcefile modulename;
