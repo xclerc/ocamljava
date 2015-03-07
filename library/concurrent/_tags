@@ -21,7 +21,6 @@ true: -traverse
 <src/**>: include
 
 # Options
-<src/**>: for-pack(Concurrent)
 <src/**/*.ml{,i}>: warnings
 <src/**/*.{cmj,jar}>: java-package(org.ocamljava.library.concurrent)
 

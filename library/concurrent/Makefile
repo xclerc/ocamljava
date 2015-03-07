@@ -29,7 +29,7 @@ default:
 
 clean:
 	$(OCAMLBUILD) -clean
-	rm -f $(LIBRARY_NAME).mlpack $(LIBRARY_NAME).odocl
+	rm -f $(LIBRARY_NAME).mllib $(LIBRARY_NAME).odocl
 
 build:
 	$(OCAMLBUILD) $(LIBRARY_NAME).cmja
