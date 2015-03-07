@@ -20,6 +20,7 @@ include ../../Makefile.config
 
 LIBRARY_NAME=javalib
 OCAMLBUILD=$(PREFIX)/bin/ocamlbuild -classic-display -no-links
+INSTALL_PATH=$(PREFIX)/lib/ocaml/$(LIBRARY_NAME)
 
 default:
 	@echo "available targets:"
@@ -36,7 +37,8 @@ build:
 	$(OCAMLBUILD) $(LIBRARY_NAME).docdir/index.html
 
 install:
-	cp _build/$(LIBRARY_NAME).cm* _build/$(LIBRARY_NAME).j* $(PREFIX)/lib/ocaml
-	cp _build/src/*.cm* _build/src/*.j* $(PREFIX)/lib/ocaml
+	mkdir -p $(INSTALL_PATH)
+	cp _build/$(LIBRARY_NAME).cm* _build/$(LIBRARY_NAME).j* $(INSTALL_PATH)
+	cp `find _build/src -name '*.cm*' -o -name '*.j*'` $(INSTALL_PATH)
 
 .PHONY: default clean build install
