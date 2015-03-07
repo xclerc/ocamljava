@@ -352,7 +352,7 @@ let () =
   close_out_noerr mllib_chan
 
 let () =
-  let safe_cp src dst =
+  let safe_mv src dst =
     let src = Pathname.mk src in
     let dst = Pathname.mk dst in
     let dir = Pathname.dirname dst in
@@ -386,7 +386,7 @@ let () =
                   let template = open_in ("../templates/array-template" ^ suffix) in
                   apply_template template chan (subst_of_array_module am);
                   close_out_noerr chan;
-                  safe_cp name file_path) in
+                  safe_mv name file_path) in
             make_rule ".ml";
             make_rule ".mli")
           array_modules;
@@ -403,7 +403,7 @@ let () =
                   let template = open_in ("../templates/number-template" ^ suffix) in
                   apply_template template chan (subst_of_number_module nm);
                   close_out_noerr chan;
-                  safe_cp name file_path) in
+                  safe_mv name file_path) in
             make_rule ".ml";
             make_rule ".mli")
           number_modules;
