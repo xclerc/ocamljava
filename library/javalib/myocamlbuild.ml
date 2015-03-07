@@ -316,29 +316,26 @@ let number_modules = [
 let () =
   let odocl_chan = open_out odocl_file in
   let mllib_chan = open_out mllib_file in
+  let add_module module_name =
+    output_string odocl_chan module_name;
+    output_char odocl_chan '\n';
+    output_string mllib_chan module_name;
+    output_char mllib_chan '\n' in
   let generated_modules =
-    (List.map (fun { array_module_name; _ } -> array_module_name) array_modules)
-    @ (List.map (fun { number_module_name; _ } -> number_module_name) number_modules) in
-  List.iter
-    (fun module_name ->
-      output_string odocl_chan module_name;
-      output_char odocl_chan '\n';
-      output_string mllib_chan module_name;
-      output_char mllib_chan '\n')
-    generated_modules;
+      (List.map (fun am -> am.array_module_name)  array_modules)
+    @ (List.map (fun nm -> nm.number_module_name) number_modules) in
+  List.iter add_module generated_modules;
   let add_file filename =
     if (Pathname.check_extension filename "mli")
       || (Pathname.check_extension filename "mly")
       || (Pathname.check_extension filename "mll") then begin
-          let modulename = Pathname.remove_extension filename in
-          let modulename = Pathname.basename modulename in
-          let modulename = String.capitalize modulename in
-          if not (List.mem modulename excluded_modules) then begin
-            output_string odocl_chan modulename;
-            output_char odocl_chan '\n';
-            output_string mllib_chan modulename;
-            output_char mllib_chan '\n'
-          end
+          let module_name =
+            filename
+            |> Pathname.remove_extension 
+            |> Pathname.basename
+            |> String.capitalize in
+          if not (List.mem module_name excluded_modules) then
+            add_module module_name
       end in
   Array.iter
     (fun path ->
@@ -369,43 +366,37 @@ let () =
         output_char out_chan '\n'
       done
     with End_of_file -> () in
+  let make_rules get_name get_subst template_base modules =
+    List.iter
+      (fun modul ->
+        let make_rule suffix =
+          let file_path =
+            "src/" ^ (String.uncapitalize (get_name modul)) ^ suffix in
+          rule file_path
+            ~prod:file_path
+            ~insert:`bottom
+            (fun _ _ ->
+              let name, chan = Filename.open_temp_file "template" suffix in
+              let template = open_in (template_base ^ suffix) in
+              apply_template template chan (get_subst modul);
+              close_out_noerr chan;
+              safe_mv name file_path) in
+        make_rule ".ml";
+        make_rule ".mli")
+      modules in
   dispatch begin function
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
-        dep ["needs-java-pervasives"] ["src/javaPervasives.cmi"];
-        List.iter
-          (fun am ->
-            let make_rule suffix =
-              let file_path =
-                "src/" ^ (String.uncapitalize am.array_module_name) ^ suffix in
-              rule file_path
-                ~prod:file_path
-                ~insert:`bottom
-                (fun _ _ ->
-                  let name, chan = Filename.open_temp_file "array" suffix in
-                  let template = open_in ("../templates/array-template" ^ suffix) in
-                  apply_template template chan (subst_of_array_module am);
-                  close_out_noerr chan;
-                  safe_mv name file_path) in
-            make_rule ".ml";
-            make_rule ".mli")
+        dep  ["needs-java-pervasives"]        ["src/javaPervasives.cmi"];
+        make_rules
+          (fun am -> am.array_module_name)
+          subst_of_array_module
+          "../templates/array-template"
           array_modules;
-        List.iter
-          (fun nm ->
-            let make_rule suffix =
-              let file_path =
-                "src/" ^ (String.uncapitalize nm.number_module_name) ^ suffix in
-              rule file_path
-                ~prod:file_path
-                ~insert:`bottom
-                (fun _ _ ->
-                  let name, chan = Filename.open_temp_file "number" suffix in
-                  let template = open_in ("../templates/number-template" ^ suffix) in
-                  apply_template template chan (subst_of_number_module nm);
-                  close_out_noerr chan;
-                  safe_mv name file_path) in
-            make_rule ".ml";
-            make_rule ".mli")
+        make_rules
+          (fun nm -> nm.number_module_name)
+          subst_of_number_module
+          "../templates/number-template"
           number_modules;
     | _ -> ()
   end
