@@ -19,13 +19,13 @@
 open Ocamlbuild_plugin
 
 let odocl_file = Pathname.pwd / "concurrent.odocl"
-let mlpack_file = Pathname.pwd / "concurrent.mlpack"
-let src_path = Pathname.pwd / "src"
+let mllib_file = Pathname.pwd / "concurrent.mllib"
+let src_path   = Pathname.pwd / "src"
 let excluded_modules = []
 
 let () =
   let odocl_chan = open_out odocl_file in
-  let mlpack_chan = open_out mlpack_file in
+  let mllib_chan = open_out mllib_file in
   let add_file filename =
     if (Pathname.check_extension filename "mli")
       || (Pathname.check_extension filename "mly")
@@ -36,8 +36,8 @@ let () =
           if not (List.mem modulename excluded_modules) then begin
             output_string odocl_chan modulename;
             output_char odocl_chan '\n';
-            output_string mlpack_chan modulename;
-            output_char mlpack_chan '\n'
+            output_string mllib_chan modulename;
+            output_char mllib_chan '\n'
           end
       end in
   Array.iter
@@ -49,12 +49,12 @@ let () =
         add_file path)
     (Pathname.readdir src_path);
   close_out_noerr odocl_chan;
-  close_out_noerr mlpack_chan
+  close_out_noerr mllib_chan
 
 let () =
   dispatch begin function
     | After_rules ->
         flag ["ocaml"; "compile"; "warnings"] (S[A"-w"; A"Ae"; A"-warn-error"; A"A"]);
-        flag ["ocaml"; "doc"] (S[A"-sort"; A"-html5"; A"-t"; A"Concurrent library"]);
+        dep ["needs-runtime"] ["src/runtime.cmj"];
     | _ -> ()
   end
