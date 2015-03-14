@@ -36,16 +36,3 @@ external (!@) : string -> java'lang'String java_instance =
 
 val (^^^) : java'lang'String java_instance -> java'lang'String java_instance -> java'lang'String java_instance
 (** Concatenation of Java strings. *)
-
-external java_char_of_char : char -> java_char = "%identity"
-(** Converts a plain OCaml [char] into a [java_char]. *)
-
-val char_of_java_char : java_char -> char
-(** Converts a [java_char] into a plain OCaml [char].
-
-    @raise Invalid_argument if the passed [java_char] cannot be
-           represented as a [char]. *)
-
-(**/**)
-
-external unsafe_char_of_java_char : java_char -> char = "%identity"

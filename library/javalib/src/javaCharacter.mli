@@ -90,6 +90,17 @@ val value_of : java_char -> t
     see {java java.lang.Character#valueOf(char)}. *)
 
 
+(** {6 Conversion from/to OCaml characters} *)
+
+external of_char : char -> java_char = "%identity"
+(** Converts a plain OCaml [char] into a [java_char]. *)
+
+val to_char : java_char -> char
+(** Converts a [java_char] into a plain OCaml [char].
+
+    @raise Invalid_argument if the passed [java_char] cannot be
+           represented as a [char]. *)
+
 (** {6 Null value} *)
 
 val null : t
@@ -115,3 +126,7 @@ val unwrap : t option -> t
 (** [unwrap obj] unwraps the option [obj] into a bare reference:
     - [Some x] is mapped to [x];
     - [None] is mapped to [null]. *)
+
+(**/**)
+
+external unsafe_to_char : java_char -> char = "%identity"

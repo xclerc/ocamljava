@@ -27,13 +27,3 @@ let (^^^) str1 str2 =
   |> Java.call "StringBuilder.append(String):StringBuilder" |. str1
   |> Java.call "StringBuilder.append(String):StringBuilder" |. str2
   |> Java.call "StringBuilder.toString()"
-
-external java_char_of_char : char -> java_char = "%identity"
-
-external unsafe_char_of_java_char : java_char -> char = "%identity"
-
-let char_of_java_char ch =
-  if (ch >= 0) && (ch <= 255) then
-    unsafe_char_of_java_char ch
-  else
-    invalid_arg "JavaPervasives.char_of_java_char"

@@ -74,6 +74,18 @@ let value_of char =
   Java.call "Character.valueOf(char)" char
 
 
+(* Conversion from/to OCaml characters *)
+
+external of_char : char -> java_char = "%identity"
+
+external unsafe_to_char : java_char -> char = "%identity"
+
+let to_char ch =
+  if (ch >= 0) && (ch <= 255) then
+    unsafe_to_char ch
+  else
+    invalid_arg "JavaCharacter.to_char"
+
 (* Null value *)
 
 external null : unit -> 'a java_instance =
