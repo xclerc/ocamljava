@@ -64,20 +64,31 @@ module type HTTP = sig
   val destroy           : t -> http -> unit
 end
 
+let string_of_option = function
+  | `GET     -> !@"GET"
+  | `HEAD    -> !@"HEAD"
+  | `POST    -> !@"POST"
+  | `PUT     -> !@"PUT"
+  | `DELETE  -> !@"DELETE"
+  | `TRACE   -> !@"TRACE"
+  | `OPTIONS -> !@"OPTIONS"
+
 let options resp l =
-  l
-  |> List.map
-      (function
-        | `GET     -> !@"GET"
-        | `HEAD    -> !@"HEAD"
-        | `POST    -> !@"POST"
-        | `PUT     -> !@"PUT"
-        | `DELETE  -> !@"DELETE"
-        | `TRACE   -> !@"TRACE"
-        | `OPTIONS -> !@"OPTIONS")
-  |> JavaString.concat !@", "
-  |> Java.call "HttpServletResponse.setHeader(String,String)"
-      resp !@"Allow"
+  Java.call "HttpServletResponse.setHeader(String,String)"
+    resp
+    !@"Allow"
+    (match l with
+    | hd :: tl ->
+        List.fold_left
+          (fun acc opt ->
+            acc
+            |> JavaStringBuilder.append_string |. !@", "
+            |> JavaStringBuilder.append_string |. (string_of_option opt))
+          (JavaStringBuilder.make_of_string (string_of_option hd))
+          tl
+        |> JavaStringBuilder.to_string
+    | [] ->
+        !@"")
 
 module Default_HTTP = struct
   let error meth req resp =
