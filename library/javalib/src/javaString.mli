@@ -25,86 +25,86 @@
     with [String]. *)
 
 val length : java'lang'String java_instance -> int
-(** Similar to [String.length]. *)
+(** Similar to {!String.length}. *)
 
 val get : java'lang'String java_instance -> int -> int
-(** Similar to [String.get]. *)
+(** Similar to {!String.get}. *)
 
 val make : int -> int -> java'lang'String java_instance
-(** Similar to [String.make]. *)
+(** Similar to {!String.make}. *)
 
 val copy : java'lang'String java_instance -> java'lang'String java_instance
 (** Equivalent to the identity function. *)
 
 val sub : java'lang'String java_instance -> int -> int -> java'lang'String java_instance
-(** Similar to [String.sub]. *)
+(** Similar to {!String.sub}. *)
 
 val concat : java'lang'String java_instance -> java'lang'String java_instance list -> java'lang'String java_instance
-(** Similar to [String.concat]. *)
+(** Similar to {!String.concat}. *)
 
 val iter : (int -> unit) -> java'lang'String java_instance -> unit
-(** Similar to [String.iter]. *)
+(** Similar to {!String.iter}. *)
 
 val iteri : (int -> int -> unit) -> java'lang'String java_instance -> unit
-(** Similar to [String.iteri]. *)
+(** Similar to {!String.iteri}. *)
 
 val map : (int -> int) -> java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.map]. *)
+(** Similar to {!String.map}. *)
 
 val trim : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.trim]. *)
+(** Similar to {!String.trim}. *)
 
 val escaped : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.escaped]. *)
+(** Similar to {!String.escaped}. *)
 
 val index : java'lang'String java_instance -> int -> int
-(** Similar to [String.index]. *)
+(** Similar to {!String.index}. *)
 
 val rindex : java'lang'String java_instance -> int -> int
-(** Similar to [String.rindex]. *)
+(** Similar to {!String.rindex}. *)
 
 val index_from : java'lang'String java_instance -> int -> int -> int
-(** Similar to [String.index_from]. *)
+(** Similar to {!String.index_from}. *)
 
 val rindex_from : java'lang'String java_instance -> int -> int -> int
-(** Similar to [String.rindex_from]. *)
+(** Similar to {!String.rindex_from}. *)
 
 val contains : java'lang'String java_instance -> int -> bool
-(** Similar to [String.contains]. *)
+(** Similar to {!String.contains}. *)
 
 val contains_from : java'lang'String java_instance -> int -> int -> bool
-(** Similar to [String.contains_from]. *)
+(** Similar to {!String.contains_from}. *)
 
 val rcontains_from : java'lang'String java_instance -> int -> int -> bool
-(** Similar to [String.rcontains_from]. *)
+(** Similar to {!String.rcontains_from}. *)
 
 val uppercase : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.uppercase]. *)
+(** Similar to {!String.uppercase}. *)
 
 val lowercase : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.lowercase]. *)
+(** Similar to {!String.lowercase}. *)
 
 val capitalize : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.capitalize]. *)
+(** Similar to {!String.capitalize}. *)
 
 val uncapitalize : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to [String.uncapitalize]. *)
+(** Similar to {!String.uncapitalize}. *)
 
 type t = java'lang'String java_instance
-(** Similar to [String.t]. *)
+(** Similar to {!String.t}. *)
 
 val compare : t -> t -> int
-(** Similar to [String.compare]. *)
+(** Similar to {!String.compare}. *)
 
 val compare_ignore_case : t -> t -> int
-(** Similar to [String.compare], but ignoring case when comparing
+(** Similar to {!String.compare}, but ignoring case when comparing
     strings. *)
 
 val equals : t -> t -> bool
 (** Tests whether the passed strings are equal. *)
 
 val equals_ignore_case : t -> t -> bool
-(** Similar to [String.equals], but ignoring case when comparing
+(** Similar to {!String.equals}, but ignoring case when comparing
     strings. *)
 
 

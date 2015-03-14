@@ -32,7 +32,7 @@ external (|.) : ('a -> 'b) -> 'a -> 'b = "%apply"
 
 external (!@) : string -> java'lang'String java_instance =
   "ocamljava_javastring_of_string"
-(** Synonym for [JavaString.of_string]. *)
+(** Synonym for {!JavaString.of_string}. *)
 
 val (^^^) : java'lang'String java_instance -> java'lang'String java_instance -> java'lang'String java_instance
 (** Concatenation of Java strings. *)

@@ -68,7 +68,7 @@ type _ field =
   | Month                : month    field (** Month. *)
   | Week_of_month        : java_int field (** Range: 0..6 (1 is the first full week). *)
   | Week_of_year         : java_int field (** Range: 1..53. *)
-  | Date                 : java_int field (** Synonym for [Day_of_month]. *)
+  | Date                 : java_int field (** Synonym for {!Day_of_month}. *)
   | Day_of_month         : java_int field (** Starts at 1. *)
   | Day_of_week          : day      field (** Day. *)
   | Day_of_week_in_month : java_int field (** Starts at 1. *)
@@ -110,6 +110,7 @@ val get : t -> 'a field -> 'a
 val get_time_zone : t -> JavaTimeZone.t
 (** Returns the time zone for the passed calendar; see
     {java java.util.Calendar#getTimeZone()}. *)
+
 
 (** {6 Creation of new calendar values} *)
 

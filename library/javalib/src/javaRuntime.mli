@@ -20,7 +20,7 @@
 
 
 type t = java'lang'Runtime java_instance
-(** The type of runtime instances; see {java java.lang.Runtime} *)
+(** The type of runtime instances. *)
 
 val get_runtime : unit -> t
 (** Returns the runtime for the current Java application; see

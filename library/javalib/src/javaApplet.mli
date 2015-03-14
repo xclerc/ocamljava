@@ -124,7 +124,7 @@ type graphics_event = {
   keypressed : bool; (** [true] if a key has been pressed. *)
   key        : char; (** the character for the key pressed. *)
 }
-(** Equivalent to [Graphics.status], copied to avoid dependency. *)
+(** Equivalent to {!Graphics.status}, copied to avoid dependency. *)
 
 module type Graphics = sig
   val applet_info : JavaString.t

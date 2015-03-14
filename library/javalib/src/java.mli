@@ -215,7 +215,7 @@ external make_array : 'a java_array_shape -> 'a =
 
 external make_array_dims : 'a java_array_shape_dims -> 'a =
   "java make array dims"
-(** [make_array_dims desc dim1 ... dimn] is similar to [make_array],
+(** [make_array_dims desc dim1 ... dimn] is similar to {!make_array},
     except that the array descriptor is made of two kinds of dimension
     specifiers, allowing to initialize only the first dimensions of the
     array.
@@ -263,11 +263,11 @@ external call : 'a java_method_call -> 'a =
 
 external exec : 'a java_method_exec -> 'a =
   "java method exec"
-(** Similar to [call], but ignores the result if any. *)
+(** Similar to {!call}, but ignores the result if any. *)
 
 external chain : 'a java_method_chain -> 'a =
   "java method chain"
-(** Similar to [call], returns the instance the method was called upon. *)
+(** Similar to {!call}, returns the instance the method was called upon. *)
 
 
 (** {6 Field access} *)
@@ -428,16 +428,16 @@ external proxy_loader : 'a java_proxy -> java'lang'ClassLoader java_extends -> '
 
 external proxy_system : 'a java_proxy -> 'a =
   "java proxy system"
-(** Similar to [proxy_loader], but uses the system class loader. *)
+(** Similar to {!proxy_loader}, but uses the system class loader. *)
 
 external proxy_runtime : 'a java_proxy -> 'a =
   "java proxy runtime"
-(** Similar to [proxy_loader], but uses the class loader that was used to
+(** Similar to {!proxy_loader}, but uses the class loader that was used to
     load the OCaml-Java runtime. *)
 
 external proxy : 'a java_proxy -> 'a =
   "java proxy system"
-(** Synonym for [proxy_system]. *)
+(** Synonym for {!proxy_system}. *)
 
 
 (** {6 Miscellaneous} *)
