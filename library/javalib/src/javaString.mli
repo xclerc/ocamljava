@@ -19,86 +19,95 @@
 (** Utility functions for Java strings. *)
 
 
-(** {6 String operations}
+(** {6 OCaml-compatible signature} *)
 
-    The following function definitions provide with an interface compatible
-    with [String]. *)
+module OCaml : sig
 
-val length : java'lang'String java_instance -> int
-(** Similar to {!String.length}. *)
+  val length : java'lang'String java_instance -> int
+  (** Similar to {!String.length}. *)
 
-val get : java'lang'String java_instance -> int -> int
-(** Similar to {!String.get}. *)
+  val get : java'lang'String java_instance -> int -> int
+  (** Similar to {!String.get}. *)
 
-val make : int -> int -> java'lang'String java_instance
-(** Similar to {!String.make}. *)
+  val make : int -> int -> java'lang'String java_instance
+  (** Similar to {!String.make}. *)
 
-val copy : java'lang'String java_instance -> java'lang'String java_instance
-(** Equivalent to the identity function. *)
+  val copy : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.copy}, equivalent to the identity function. *)
 
-val sub : java'lang'String java_instance -> int -> int -> java'lang'String java_instance
-(** Similar to {!String.sub}. *)
+  val sub : java'lang'String java_instance -> int -> int -> java'lang'String java_instance
+  (** Similar to {!String.sub}. *)
 
-val concat : java'lang'String java_instance -> java'lang'String java_instance list -> java'lang'String java_instance
-(** Similar to {!String.concat}. *)
+  val concat : java'lang'String java_instance -> java'lang'String java_instance list -> java'lang'String java_instance
+  (** Similar to {!String.concat}. *)
 
-val iter : (int -> unit) -> java'lang'String java_instance -> unit
-(** Similar to {!String.iter}. *)
+  val iter : (int -> unit) -> java'lang'String java_instance -> unit
+  (** Similar to {!String.iter}. *)
 
-val iteri : (int -> int -> unit) -> java'lang'String java_instance -> unit
-(** Similar to {!String.iteri}. *)
+  val iteri : (int -> int -> unit) -> java'lang'String java_instance -> unit
+  (** Similar to {!String.iteri}. *)
 
-val map : (int -> int) -> java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.map}. *)
+  val map : (int -> int) -> java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.map}. *)
 
-val trim : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.trim}. *)
+  val trim : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.trim}. *)
 
-val escaped : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.escaped}. *)
+  val escaped : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.escaped}. *)
 
-val index : java'lang'String java_instance -> int -> int
-(** Similar to {!String.index}. *)
+  val index : java'lang'String java_instance -> int -> int
+  (** Similar to {!String.index}. *)
 
-val rindex : java'lang'String java_instance -> int -> int
-(** Similar to {!String.rindex}. *)
+  val rindex : java'lang'String java_instance -> int -> int
+  (** Similar to {!String.rindex}. *)
 
-val index_from : java'lang'String java_instance -> int -> int -> int
-(** Similar to {!String.index_from}. *)
+  val index_from : java'lang'String java_instance -> int -> int -> int
+  (** Similar to {!String.index_from}. *)
 
-val rindex_from : java'lang'String java_instance -> int -> int -> int
-(** Similar to {!String.rindex_from}. *)
+  val rindex_from : java'lang'String java_instance -> int -> int -> int
+  (** Similar to {!String.rindex_from}. *)
 
-val contains : java'lang'String java_instance -> int -> bool
-(** Similar to {!String.contains}. *)
+  val contains : java'lang'String java_instance -> int -> bool
+  (** Similar to {!String.contains}. *)
 
-val contains_from : java'lang'String java_instance -> int -> int -> bool
-(** Similar to {!String.contains_from}. *)
+  val contains_from : java'lang'String java_instance -> int -> int -> bool
+  (** Similar to {!String.contains_from}. *)
 
-val rcontains_from : java'lang'String java_instance -> int -> int -> bool
-(** Similar to {!String.rcontains_from}. *)
+  val rcontains_from : java'lang'String java_instance -> int -> int -> bool
+  (** Similar to {!String.rcontains_from}. *)
 
-val uppercase : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.uppercase}. *)
+  val uppercase : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.uppercase}. *)
 
-val lowercase : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.lowercase}. *)
+  val lowercase : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.lowercase}. *)
 
-val capitalize : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.capitalize}. *)
+  val capitalize : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.capitalize}. *)
 
-val uncapitalize : java'lang'String java_instance -> java'lang'String java_instance
-(** Similar to {!String.uncapitalize}. *)
+  val uncapitalize : java'lang'String java_instance -> java'lang'String java_instance
+  (** Similar to {!String.uncapitalize}. *)
+
+  type t = java'lang'String java_instance
+  (** Similar to {!String.t}. *)
+
+  val compare : t -> t -> int
+  (** Similar to {!String.compare}. *)
+
+  val compare_ignore_case : t -> t -> int
+  (** Similar to {!String.compare}, but ignoring case when comparing
+      strings. *)
+
+end
+(** Module providing functions that can be used as drop-in replacements
+    for function from {!String}. *)
+
+
+(** {6 String operations} *)
 
 type t = java'lang'String java_instance
-(** Similar to {!String.t}. *)
-
-val compare : t -> t -> int
-(** Similar to {!String.compare}. *)
-
-val compare_ignore_case : t -> t -> int
-(** Similar to {!String.compare}, but ignoring case when comparing
-    strings. *)
+(** The type of strings. *)
 
 val equals : t -> t -> bool
 (** Tests whether the passed strings are equal. *)
