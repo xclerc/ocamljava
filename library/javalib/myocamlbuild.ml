@@ -355,7 +355,7 @@ let () =
     let dir = Pathname.dirname dst in
     let cmd = Printf.sprintf "mkdir -p %s" (Pathname.to_string dir) in
     if Sys.command cmd <> 0 then failwith ("cannot run " ^ cmd);
-    cp src dst in
+    mv src dst in
   let apply_template in_chan out_chan subst =
     try
       while true do
