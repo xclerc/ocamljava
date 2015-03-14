@@ -180,11 +180,56 @@ end
 
 type t = _'String java_instance
 
+let char_at s idx =
+  Java.call "String.charAt(int)" s idx
+
+let length s =
+  Java.call "String.length()" s
+
+let trim s =
+  Java.call "String.trim()" s
+
+let split s regexp =
+  Java.call "String.split(String)" s regexp
+
+let matches s regexp =
+  Java.call "String.matches(String)" s regexp
+
+let index_of s sub =
+  Java.call "String.indexOf(String)" s sub
+
+let last_index_of s sub =
+  Java.call "String.lastIndexOf(String)" s sub
+
+let starts_with s prefix =
+  Java.call "String.startsWith(String)" s prefix
+
+let ends_with s suffix =
+  Java.call "String.endsWith(String)" s suffix
+
+let substring s start_idx end_idx =
+  Java.call "String.substring(int,int)" s start_idx end_idx
+
+let to_char_array s =
+  Java.call "String.toCharArray()" s
+
+let to_lower_case s =
+  Java.call "String.toLowerCase()" s
+
+let to_upper_case s =
+  Java.call "String.toUpperCase()" s
+
 let equals x y =
   Java.call "String.equals(Object)" x y
 
 let equals_ignore_case x y =
   Java.call "String.equalsIgnoreCase(String)" x y
+
+let compare_to x y =
+  Java.call "String.compareTo(String)" x y
+
+let compare_to_ignore_case x y =
+  Java.call "String.compareToIgnoreCase(String)" x y
 
 
 (* Conversion from/to OCaml strings *)

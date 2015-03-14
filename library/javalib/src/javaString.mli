@@ -109,12 +109,83 @@ end
 type t = java'lang'String java_instance
 (** The type of strings. *)
 
+val char_at : t -> java_int -> java_char
+(** Returns the character at the passed index; see
+    {java java.lang.String#charAt(int)}.
+
+    @raise Java_exception if index is invalid *)
+
+val length : t -> java_int
+(** Returns the length of the passed string; see
+    {java java.lang.String#length()}. *)
+
+val trim : t -> t
+(** Returns a copy of the passed string, without leading and trailing
+    spaces; see {java java.lang.String#trim()}. *)
+
+val split : t -> t -> java'lang'String java_instance java_reference_array
+(** [split s regexp] splits [s] using regular expression [regexp]; see
+    {java java.lang.String#split(java.lang.String)}.
+
+    @raise Java_exception if [regexp] is invalid*)
+
+val matches : t -> t -> bool
+(** [matches s regexp] tests whether [s] matches regular expression
+    [regexp]; see {java java.lang.String#matches(java.lang.String)}.
+
+    @raise Java_exception if [regexp] is invalid*)
+
+val index_of : t -> t -> java_int
+(** [index_of s sub] returns the index of the first occurrence of [sub]
+    in [s] if any, [-1l] otherwise; see
+    {java java.lang.String#indexOf(java.lang.String)}. *)
+
+val last_index_of : t -> t -> java_int
+(** [last_index_of s sub] returns the index of the last occurrence of
+    [sub] in [s] if any, [-1l] otherwise; see
+    {java java.lang.String#lastIndexOf(java.lang.String)}. *)
+
+val starts_with : t -> t -> bool
+(** [starts_with s prefix] tests whether [s] starts with [prefix]; see
+    {java java.lang.String#startsWith(java.lang.String)}. *)
+
+val ends_with : t -> t -> bool
+(** [ends_with s suffix] tests whether [s] ends with [suffix]; see
+    {java java.lang.String#endsWith(java.lang.String)}. *)
+
+val substring : t -> java_int -> java_int -> t
+(** [substring s start_idx end_idx] returns the substring of [s]
+    beginning at index [start_idx] (inclusive) and ending at index
+    [end_idx] (exclusive); see
+    {java java.lang.String#substring(int, int)}. *)
+
+val to_char_array : t -> java_char java_char_array
+(** Converts the passed string into an array of characters; see
+    {java java.lang.String#toCharArray()}. *)
+
+val to_lower_case : t -> t
+(** Returns a copy of the passed string with all characters converted to
+    lower case; see {java java.lang.String#toLowerCase()}. *)
+
+val to_upper_case : t -> t
+(** Returns a copy of the passed string with all characters converted to
+    upper case; see {java java.lang.String#toUpperCase()}. *)
+
 val equals : t -> t -> bool
-(** Tests whether the passed strings are equal. *)
+(** Tests whether the passed strings are equal; see
+    {java java.lang.String#equals(java.lang.Object)}. *)
 
 val equals_ignore_case : t -> t -> bool
-(** Similar to {!String.equals}, but ignoring case when comparing
-    strings. *)
+(** Similar to {!equals}, but ignoring case when comparing strings; see
+    {java java.lang.String#equalsIgnoreCase(java.lang.Object)} *)
+
+val compare_to : t -> t -> java_int
+(** Compares the passed strings; see
+    {java java.lang.String#compareTo(java.lang.String)}. *)
+
+val compare_to_ignore_case : t -> t -> java_int
+(** Similar to {!compare_to}, but ignoring case when comparing strings;
+    see {java java.lang.String#compareToIgnoreCase(java.lang.String)}. *)
 
 
 (** {6 Conversion from/to OCaml strings} *)
