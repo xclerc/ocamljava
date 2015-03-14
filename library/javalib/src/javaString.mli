@@ -177,7 +177,7 @@ val equals : t -> t -> bool
 
 val equals_ignore_case : t -> t -> bool
 (** Similar to {!equals}, but ignoring case when comparing strings; see
-    {java java.lang.String#equalsIgnoreCase(java.lang.Object)} *)
+    {java java.lang.String#equalsIgnoreCase(java.lang.String)}. *)
 
 val compare_to : t -> t -> java_int
 (** Compares the passed strings; see
