@@ -119,6 +119,10 @@ val length : t -> java_int
 (** Returns the length of the passed string; see
     {java java.lang.String#length()}. *)
 
+val is_empty : t -> bool
+(** Tests whether the passed string is empty; see
+    {java java.lang.String#isEmpty()}. *)
+
 val trim : t -> t
 (** Returns a copy of the passed string, without leading and trailing
     spaces; see {java java.lang.String#trim()}. *)

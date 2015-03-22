@@ -186,6 +186,9 @@ let char_at s idx =
 let length s =
   Java.call "String.length()" s
 
+let is_empty s =
+  Java.call "String.isEmpty()" s
+
 let trim s =
   Java.call "String.trim()" s
 
