@@ -42,6 +42,93 @@ diff -aur patched/fda.ml original/fda.ml
        law_penalty = Fail };
      { law_name = "Leftover ocamlyacc-generated files";
        law_rules = [Implies_not(".mly",".ml"); Implies_not(".mly",".mli")];
+diff -aur patched/findlib.ml original/findlib.ml
+--- patched/findlib.ml	2014-04-13 09:05:24.000000000 +0200
++++ original/findlib.ml	2014-04-13 09:05:24.000000000 +0200
+@@ -53,8 +53,6 @@
+   version: string;
+   archives_byte: string;
+   archives_native: string;
+-  archives_java: string;
+-  jars: string list;  
+   link_options: string;
+   location: string;
+   dependencies: package list;
+@@ -83,13 +81,6 @@
+         run_and_parse Lexers.trim_blanks
+           "%s query -a-format -predicates native %s" ocamlfind name
+       in
+-      let a_java =
+-        run_and_parse Lexers.trim_blanks
+-          "%s query -a-format -predicates java %s" ocamlfind name
+-      in
+-      let jars =
+-        run_and_parse Lexers.blank_sep_strings
+-          "%s query -format '%%+(jars)' -predicates java %s" ocamlfind name in
+       let deps =
+         run_and_parse Lexers.blank_sep_strings "%s query -r -p-format %s" ocamlfind name
+       in
+@@ -108,8 +99,6 @@
+         version = v;
+         archives_byte = a_byte;
+         archives_native = a_native;
+-        archives_java = a_java;
+-        jars = jars;
+         link_options = lo;
+         location = l;
+         dependencies = deps;
+@@ -160,24 +149,11 @@
+   | A "", _ -> l
+   | _ -> a :: l
+ 
+-let compile_flags java l =
++let compile_flags l =
+   let pkgs = topological_closure l in
+   let locations = List.fold_left begin fun acc p ->
+     SSet.add p.location acc
+   end SSet.empty pkgs in
+-  let cp_flags =
+-    if java then
+-      List.flatten
+-        (List.map
+-           (fun pkg ->
+-             List.flatten
+-               (List.map
+-                  (fun jar ->
+-                    [A"-cp"; A jar])
+-                pkg.jars))
+-           pkgs)
+-    else
+-      [] in
+   let flags = [] in
+   (* includes *)
+   let flags =
+@@ -185,12 +161,11 @@
+       add_atom (P l) (add_atom (A "-I") acc)
+     end flags (SSet.elements locations)
+   in
+-  S (cp_flags @ (List.rev flags))
+-let compile_flags_byte = compile_flags false
+-let compile_flags_native = compile_flags false
+-let compile_flags_java = compile_flags true
++  S (List.rev flags)
++let compile_flags_byte = compile_flags
++let compile_flags_native = compile_flags
+ 
+-let link_flags _javaXXX f l =
++let link_flags f l =
+   let pkgs = topological_closure l in
+   let locations = List.fold_left begin fun acc p ->
+     SSet.add p.location acc
+@@ -215,6 +190,5 @@
+     end flags pkgs
+   in
+   S (List.rev flags)
+-let link_flags_byte = link_flags false (fun x -> x.archives_byte)
+-let link_flags_native = link_flags false (fun x -> x.archives_native)
+-let link_flags_java = link_flags true (fun x -> x.archives_java)
++let link_flags_byte = link_flags (fun x -> x.archives_byte)
++let link_flags_native = link_flags (fun x -> x.archives_native)
 diff -aur patched/main.ml original/main.ml
 --- patched/main.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/main.ml	2014-04-13 09:05:24.000000000 +0200
@@ -409,7 +496,30 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
  (* findlib *)
  let () =
    if !Options.use_ocamlfind then begin
-@@ -551,41 +490,6 @@
+@@ -515,10 +454,8 @@
+     let all_tags = [
+       ["ocaml"; "byte"; "compile"];
+       ["ocaml"; "native"; "compile"];
+-      ["ocaml"; "java"; "compile"];
+       ["ocaml"; "byte"; "link"];
+       ["ocaml"; "native"; "link"];
+-      ["ocaml"; "java"; "link"];
+       ["ocaml"; "ocamldep"];
+       ["ocaml"; "doc"];
+       ["ocaml"; "mktop"];
+@@ -537,10 +474,8 @@
+       let pkgs = List.map Findlib.query !Options.ocaml_pkgs in
+       flag ["ocaml"; "byte"; "compile"] (Findlib.compile_flags_byte pkgs);
+       flag ["ocaml"; "native"; "compile"] (Findlib.compile_flags_native pkgs);
+-      flag ["ocaml"; "java"; "compile"] (Findlib.compile_flags_java pkgs);
+       flag ["ocaml"; "byte"; "link"] (Findlib.link_flags_byte pkgs);
+-      flag ["ocaml"; "native"; "link"] (Findlib.link_flags_native pkgs);
+-      flag ["ocaml"; "java"; "link"] (Findlib.link_flags_java pkgs)
++      flag ["ocaml"; "native"; "link"] (Findlib.link_flags_native pkgs)
+     with Findlib.Findlib_error e ->
+       Findlib.report_error e
+   end
+@@ -555,41 +490,6 @@
      (fun param -> S [A "-inline"; A param]);
    pflag ["ocaml"; "compile"] "pp"
      (fun param -> S [A "-pp"; A param]);
@@ -451,17 +561,17 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
    pflag ["ocaml"; "ocamldep"] "pp"
      (fun param -> S [A "-pp"; A param]);
    pflag ["ocaml"; "doc"] "pp"
-@@ -628,9 +532,6 @@
+@@ -632,9 +532,6 @@
  ocaml_lib ~extern:true ~dir:"+ocamldoc" "ocamldoc";;
  ocaml_lib ~extern:true ~dir:"+ocamlbuild" ~tag_name:"use_ocamlbuild" "ocamlbuildlib";;
  
--ocaml_lib ~extern:true ~byte:false ~native:false "javalib";;
--ocaml_lib ~extern:true ~byte:false ~native:false "concurrent";;
+-ocaml_lib ~extern:true ~dir:"+javalib"    ~tag_name:"use_javalib"    ~byte:false ~native:false "javalib";;
+-ocaml_lib ~extern:true ~dir:"+concurrent" ~tag_name:"use_concurrent" ~byte:false ~native:false "concurrent";;
 -
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4" "camlp4lib";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_old_camlp4" "camlp4";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4_full" "camlp4fulllib";;
-@@ -640,7 +541,6 @@
+@@ -644,7 +541,6 @@
          A"-I"; A"+camlp4/Camlp4Filters"]);;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "byte"] (A"+camlp4/Camlp4Bin.cmo");;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "native"] (A"+camlp4/Camlp4Bin.cmx");;
@@ -469,7 +579,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
  
  flag ["ocaml"; "debug"; "compile"; "byte"] (A "-g");;
  flag ["ocaml"; "debug"; "link"; "byte"; "program"] (A "-g");;
-@@ -674,7 +574,6 @@
+@@ -678,7 +574,6 @@
    flag ["ocaml"; "doc"; "thread"] (S[A"-I"; A"+threads"]);
    flag ["ocaml"; "link"; "thread"; "native"; "program"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "program"] (A "threads.cma");
@@ -477,7 +587,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
    flag ["ocaml"; "link"; "thread"; "native"; "toplevel"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "toplevel"] (A "threads.cma");
  end;;
-@@ -706,29 +605,8 @@
+@@ -710,29 +605,8 @@
  flag ["ocaml"; "doc"; "docfile"; "extension:tex"] (A"-latex");;
  flag ["ocaml"; "doc"; "docfile"; "extension:ltx"] (A"-latex");;
  flag ["ocaml"; "doc"; "docfile"; "extension:texi"] (A"-texi");;
@@ -656,6 +766,14 @@ diff -aur patched/options.ml original/options.ml
  
     "--", Rest (fun x -> program_to_execute := true; add_to' program_args_internal x),
     " Stop argument processing, remaining arguments are given to the user program";
+@@ -304,7 +288,6 @@
+        This design decision can easily be changed. *)
+     ocamlc := ocamlfind & A"ocamlc";
+     ocamlopt := ocamlfind & A"ocamlopt";
+-    ocamljava := ocamlfind & A"ocamljava";
+     ocamldep := ocamlfind & A"ocamldep";
+     ocamldoc := ocamlfind & A"ocamldoc";
+     ocamlmktop := ocamlfind & A"ocamlmktop";
 diff -aur patched/plugin.ml original/plugin.ml
 --- patched/plugin.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/plugin.ml	2014-04-13 09:05:24.000000000 +0200
@@ -798,7 +916,35 @@ diff -aur patched/signatures.mli original/signatures.mli
  
    val add : string * Arg.spec * string -> unit
  end
-@@ -698,7 +692,6 @@
+@@ -490,8 +484,6 @@
+       (** Archive names, with the .cma extension, but without the directory. *)
+     archives_native: string;
+       (** Archive names, with the .cmxa extension, but without the directory. *)
+-    archives_java: string;
+-    jars: string list;  
+     link_options: string;
+     location: string;
+     dependencies: package list;
+@@ -520,18 +512,12 @@
+   val compile_flags_native: package list -> command_spec
+     (** Same as [link_flags_byte] but for native mode. *)
+ 
+-  val compile_flags_java: package list -> command_spec
+-    (** Same as [link_flags_byte] but for Java mode. *)
+-
+   val link_flags_byte: package list -> command_spec
+     (** Return the flags to add when linking in byte mode. It includes:
+ include directories, libraries and special link options. *)
+ 
+   val link_flags_native: package list -> command_spec
+     (** Same as [link_flags_byte] but for native mode. *)
+-
+-  val link_flags_java: package list -> command_spec
+-    (** Same as [link_flags_byte] but for Java mode. *)
+ end
+ 
+ (** This module contains the functions and values that can be used by
+@@ -706,7 +692,6 @@
      ?extern:bool ->
      ?byte:bool ->
      ?native:bool ->
