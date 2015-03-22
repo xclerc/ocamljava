@@ -400,7 +400,7 @@ let link ppf objfiles output_name =
       let manifest =
         { Manifest.default with
           Manifest.main_class = Some (Bytecodeutils.make_class startup_name);
-          class_path = List.map UTF8.of_string class_path} in
+          class_path = List.map UTF8.of_string class_path } in
       ArchiveBuilder.add_manifest builder manifest
     end;
     (* add runtime parameters to archive *)
@@ -445,6 +445,10 @@ let link ppf objfiles output_name =
     if !Jclflags.standalone then begin
       let service_prefix = UTF8.of_string "META-INF/services/" in
       let services = Hashtbl.create 17 in
+      let jar_files =
+        match !Jclflags.war with
+        | Some _ -> Jconfig.runtime_support_jar :: jars
+        | None   -> Jconfig.runtime_support_jar :: jars @ !Jclflags.additional_jars in
       List.iter
         (fun jar_file ->
           let jar_file_in_path =
@@ -474,7 +478,7 @@ let link ppf objfiles output_name =
               end)
             jar_archive;
           ArchiveInputStream.close jar_archive)
-        (Jconfig.runtime_support_jar :: jars @ !Jclflags.additional_jars);
+        jar_files;
       Hashtbl.iter
         (fun name l ->
           if !Jclflags.nomerge && (List.length l > 1) then
@@ -494,7 +498,22 @@ let link ppf objfiles output_name =
             data
             |> ByteBuffer.contents
             |> ArchiveBuilder.add_entry builder name)
-        services
+        services;
+      if !Jclflags.war <> None then begin
+        List.iter
+          (fun jar_file ->
+            let jar_file_in_path =
+              try
+                Misc.find_in_path !Config.load_path jar_file
+              with Not_found ->
+                raise (Error (File_not_found jar_file)) in
+            let archive_path = "WEB-INF/lib/" ^ (Filename.basename jar_file_in_path) in
+            ArchiveBuilder.add_entry_from_file
+              builder
+              (UTF8.of_string archive_path)
+              (Path.make_of_string jar_file_in_path))
+          !Jclflags.additional_jars
+      end
     end;
     (* add 'additional' classes to archive *)
     List.iter
