@@ -40,6 +40,8 @@ let is_special_primitive = function
   | "java method chain"
   | "java field get"
   | "java field set"
+  | "java iter"
+  | "java fold"
   | "java instanceof"
   | "java cast"
 (*| "java class" is a special primitive, but its parameter is not erased *)
@@ -1019,6 +1021,10 @@ let get_arity prim_name id =
       let field_info = get_field_set_info id in
       let is_static = AccessFlag.mem_field `Static field_info.field_field.Field.flags in
       if is_static then 1 else 2
+  | "java iter" ->
+      2
+  | "java fold" ->
+      3
   | "java instanceof" ->
       1
   | "java cast" ->

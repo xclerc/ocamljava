@@ -50,6 +50,15 @@ external set : 'a java_field_set -> 'a =
   "java field set"
 
 
+(* Iteration *)
+
+external iter : 'a java_reference_type -> ('a -> unit) -> java'util'Iterator java_extends -> unit =
+  "java iter"
+
+external fold : 'a java_reference_type -> ('b -> 'a -> 'b) -> 'b -> java'util'Iterator java_extends -> 'b =
+  "java fold"
+
+
 (* Null value *)
 
 external null : unit -> 'a java_instance =

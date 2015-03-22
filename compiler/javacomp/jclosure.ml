@@ -1048,6 +1048,8 @@ and is_java_primitive = function
   | "java method chain"
   | "java field get"
   | "java field set"
+  | "java iter"
+  | "java fold"
   | "java instanceof"
   | "java cast"
   | "java class"
@@ -1064,7 +1066,7 @@ and is_java_primitive = function
   | _ -> false
 
 and split_args = function
-  | (Jconst (Lambda_const (Const_base (Const_int id))) :: args), (_ :: approx)->
+  | (Jconst (Lambda_const (Const_base (Const_int id))) :: args), (_ :: approx) ->
       id, args, approx
   | _ ->
       raise (Error Special_primitive_first_argument)
@@ -1132,6 +1134,90 @@ and close_java_primitive fenv cenv pname args =
           else
             (Jjavaprim(Java_set(class_name, field_name, kind, typ), args, Debuginfo.none),
              Value_unknown None)
+      end
+  | "java iter" ->
+      begin match args with
+        [ id, _; funct, _; iterator, _ ] ->
+          let (id, _approx) = close fenv cenv id in
+          let (iterator, _approx) = close fenv cenv iterator in
+          let typ =
+            match id with
+            | Jconst (Lambda_const (Const_base (Const_int id))) ->
+                let tc = Jtypes.get_reference_type_info id in
+                convert_java_type_no_void tc.Jtypes.type_class
+            | _ ->
+                raise (Error Special_primitive_first_argument) in
+          let id_iterator = Ident.create "iterator" in
+          let id_element = Ident.create "element" in
+          let has_next = Java_method("java.util.Iterator", "hasNext", Jtypes.Bare_call,
+                                     Interface_call, [], false, `Boolean) in
+          let cond = Jjavaprim(has_next, [Jvar id_iterator], Debuginfo.none) in
+          let next = Java_method("java.util.Iterator", "next", Jtypes.Bare_call,
+                                 Interface_call, [], false, `Class "java.lang.Object") in
+          let body = Jlet(id_element,
+                          Jjavaprim(Java_cast(typ),
+                                    [Jjavaprim(next, [Jvar id_iterator], Debuginfo.none)],
+                                    Debuginfo.none),
+                          match funct with
+                          | Lfunction(_kind, [param, _], _return, body) ->
+                              let (body, _approx) = close fenv cenv body in
+                              let subst = Tbl.add param (Jvar id_element) Tbl.empty in
+                              let body = substitute subst body in
+                              body
+                          | _ ->
+                              let element = Lvar id_element, None in
+                              let call = Lapply(funct, [element], Location.none) in
+                              let (call, _approx) = close fenv cenv call in
+                              call) in
+          Jlet(id_iterator, iterator, Jwhile(cond, body, None)), Value_unknown None
+      | _ ->
+          assert false
+      end
+  | "java fold" ->
+      begin match args with
+        [ id, _; funct, _; zero, _; iterator, _ ] ->
+          let (id, _approx) = close fenv cenv id in
+          let (zero, _approx) = close fenv cenv zero in
+          let (iterator, _approx) = close fenv cenv iterator in
+          let typ =
+            match id with
+            | Jconst (Lambda_const (Const_base (Const_int id))) ->
+                let tc = Jtypes.get_reference_type_info id in
+                convert_java_type_no_void tc.Jtypes.type_class
+            | _ ->
+                raise (Error Special_primitive_first_argument) in
+          let id_acc = Ident.create "acc" in
+          let id_iterator = Ident.create "iterator" in
+          let id_element = Ident.create "element" in
+          let has_next = Java_method("java.util.Iterator", "hasNext", Jtypes.Bare_call,
+                                     Interface_call, [], false, `Boolean) in
+          let cond = Jjavaprim(has_next, [Jvar id_iterator], Debuginfo.none) in
+          let next = Java_method("java.util.Iterator", "next", Jtypes.Bare_call,
+                                 Interface_call, [], false, `Class "java.lang.Object") in
+          let body = Jlet(id_element,
+                          Jjavaprim(Java_cast(typ),
+                                    [Jjavaprim(next, [Jvar id_iterator], Debuginfo.none)],
+                                    Debuginfo.none),
+                          match funct with
+                          | Lfunction(_kind, [param_acc, _; param_elem, _], _return, body) ->
+                              let (body, _approx) = close fenv cenv (Lassign(id_acc, body)) in
+                              let subst = Tbl.add param_acc (Jvar id_acc) Tbl.empty in
+                              let subst = Tbl.add param_elem (Jvar id_element) subst in
+                              let body = substitute subst body in
+                              body
+                          | _ ->
+                              let acc = Lvar id_acc, None in
+                              let element = Lvar id_element, None in
+                              let call = Lapply(funct, [acc; element], Location.none) in
+                              let assign = Lassign(id_acc, call) in
+                              let (assign, _approx) = close fenv cenv assign in
+                              assign) in
+          Jlet(id_acc, zero,
+               Jlet(id_iterator, iterator,
+                    Jsequence(Jwhile(cond, body, None),
+                              Jvar id_acc))), Value_unknown None
+      | _ ->
+          assert false
       end
   | "java instanceof" ->
       let args = close_list_approx fenv cenv args in

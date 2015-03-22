@@ -310,6 +310,29 @@ external set : 'a java_field_set -> 'a =
     @raise Java_exception if [obj] is [null] *)
 
 
+(** {6 Iteration} *)
+
+external iter : 'a java_reference_type -> ('a -> unit) -> java'util'Iterator java_extends -> unit =
+  "java iter"
+(** [iter desc f it] applies [f] to every element returned by [it], after
+    casting them to [desc].
+
+    [desc] is either a class name, or an array descriptor.
+
+    @raise Java_exception if [it] is [null] *)
+
+
+external fold : 'a java_reference_type -> ('b -> 'a -> 'b) -> 'b -> java'util'Iterator java_extends -> 'b =
+  "java fold"
+(** [fold desc f z it] computes [(f ... ((f z it0) it1) ... itn)] where
+    [iti] values are successively returned by [it], and casted to [desc]
+    before they are passed to [f].
+
+    [desc] is either a class name, or an array descriptor.
+
+    @raise Java_exception if [it] is [null] *)
+
+
 (** {6 Null value} *)
 
 val null : 'a java_instance
