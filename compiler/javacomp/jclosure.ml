@@ -1228,14 +1228,14 @@ and close_java_primitive fenv cenv pname args =
         [ lock, _; Lfunction(_kind, _params, _return, body), _ ] ->
           let (lock, _approx) = close fenv cenv lock in
           let (body, _approx) = close fenv cenv body in
-          (Jjavaprim(Java_synchronized(Inlined_sync, min_int), [lock; body], Debuginfo.none),
+          (Jjavaprim(Java_synchronized(Inlined_func, min_int), [lock; body], Debuginfo.none),
            Value_constptr 0)
       | [ lock, _; funct, _ ] ->
           let (lock, _approx) = close fenv cenv lock in
           let unit = Lconst(Const_pointer 0), Some Predef.type_unit in
           let expr = Lapply(funct, [unit], Location.none) in
           let (expr, _approx) = close fenv cenv expr in
-          (Jjavaprim(Java_synchronized(Function_sync, min_int), [lock; expr], Debuginfo.none),
+          (Jjavaprim(Java_synchronized(Called_func, min_int), [lock; expr], Debuginfo.none),
            Value_constptr 0)
       | _ ->
           assert false

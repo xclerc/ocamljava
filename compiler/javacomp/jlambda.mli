@@ -87,7 +87,7 @@ type java_primitive =
   | Java_cast of non_void_java_type
   | Java_class of java_type
   | Java_throw
-  | Java_synchronized of java_primitive_sync_kind * int
+  | Java_synchronized of java_primitive_func_kind * int
   | Java_proxy of java_primitive_proxy
 and java_primitive_array_dims = {
     jpad_total : int;
@@ -100,9 +100,9 @@ and java_primitive_call_kind =
 and java_primitive_field_kind =
   | Static_field
   | Instance_field
-and java_primitive_sync_kind =
-  | Inlined_sync
-  | Function_sync
+and java_primitive_func_kind =
+  | Inlined_func
+  | Called_func
 and java_primitive_proxy_kind =
   | Custom_class_loader
   | System_class_loader

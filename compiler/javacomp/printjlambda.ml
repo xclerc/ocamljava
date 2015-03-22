@@ -130,7 +130,7 @@ let rec java_primitive ppf = function
       fprintf ppf "throw"
   | Java_synchronized (kind, idx) ->
       fprintf ppf "synchronized@ %a@ %d"
-        sync_kind kind
+        func_kind kind
         idx
   | Java_proxy { jpp_kind; jpp_interface; jpp_interfaces; jpp_mapping } ->
       let string_list ppf l =
@@ -165,9 +165,9 @@ and method_call ppf = function
 and field_kind ppf = function
   | Static_field   -> fprintf ppf "static"
   | Instance_field -> fprintf ppf "instance"
-and sync_kind ppf = function
-  | Inlined_sync  -> fprintf ppf "inlined"
-  | Function_sync -> fprintf ppf "function"
+and func_kind ppf = function
+  | Inlined_func -> fprintf ppf "inlined"
+  | Called_func  -> fprintf ppf "called"
 
 let loop_inlining_info ppf = function
   | Some x -> fprintf ppf "[inlining %d]" x
