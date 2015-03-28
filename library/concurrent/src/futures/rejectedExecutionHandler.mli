@@ -19,10 +19,22 @@
 (** Policies for blocked executions. *)
 
 
-type t =
-  | Abort_policy (** Reject computation. *)
-  | Caller_runs_policy (** Run the computation in the calling thread. *)
-  | Discard_oldest_policy (** Discard the oldest unstarted computation. *)
-  | Discard_policy (** Discard the submitted computation. *)
+type t = java'util'concurrent'RejectedExecutionHandler java_instance
 (** The type of policies for blocked executions, that is when thread and
     queue bounds have been reached. *)
+
+val abort_policy : t
+(** Reject computation; see
+    {java java.util.concurrent.ThreadPoolExecutor.AbortPolicy}. *)
+
+val caller_runs_policy : t
+(** Run the computation in the calling thread; see
+    {java java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy}. *)
+
+val discard_oldest_policy : t
+(** Discard the oldest unstarted computation; see
+    {java java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy}. *)
+
+val discard_policy : t
+(** Discard the submitted computation; see
+    {java java.util.concurrent.ThreadPoolExecutor.DiscardPolicy}. *)

@@ -16,19 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'CountDownLatch
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> t =
-  "ocamljava_countdownlatch_make"
+type t = _'CountDownLatch java_instance
 
-external await : t -> unit =
-  "ocamljava_countdownlatch_await"
+let make n =
+  Java.make "CountDownLatch(int)" n
 
-external await_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_countdownlatch_await_time"
+let await cdl =
+  Java.call "CountDownLatch.await()" cdl
 
-external count_down : t -> unit =
-  "ocamljava_countdownlatch_count_down"
+let await_time cdl time timeunit =
+  Java.call "CountDownLatch.await(long,TimeUnit)" cdl time timeunit
 
-external get_count : t -> int64 =
-  "ocamljava_countdownlatch_get_count"
+let count_down cdl =
+  Java.call "CountDownLatch.countDown()" cdl
+
+let get_count cdl =
+  Java.call "CountDownLatch.getCount()" cdl

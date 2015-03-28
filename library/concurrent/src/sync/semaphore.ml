@@ -16,37 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'Semaphore
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> bool -> t =
-  "ocamljava_semaphore_make"
+type t = _'Semaphore java_instance
 
-external acquire : t -> int32 -> unit =
-  "ocamljava_semaphore_acquire"
+let make ?(fair = false) permits =
+  Java.make "Semaphore(int,boolean)" permits fair
 
-external acquire_uninterruptibly : t -> int32 -> unit =
-  "ocamljava_semaphore_acquire_uninterruptibly"
+let acquire sem permits =
+  Java.call "Semaphore.acquire(int)" sem permits
 
-external available_permits : t -> int32 =
-  "ocamljava_semaphore_available_permits"
+let acquire_uninterruptibly sem permits =
+  Java.call "Semaphore.acquireUninterruptibly(int)" sem permits
 
-external drain_permits : t -> int32 =
-  "ocamljava_semaphore_drain_permits"
+let available_permits sem =
+  Java.call "Semaphore.availablePermits()" sem
 
-external get_queue_length : t -> int32 =
-  "ocamljava_semaphore_get_queue_length"
+let drain_permits sem =
+  Java.call "Semaphore.drainPermits()" sem
 
-external has_queued_threads : t -> bool =
-  "ocamljava_semaphore_has_queued_threads"
+let get_queue_length sem =
+  Java.call "Semaphore.getQueueLength()" sem
 
-external is_fair : t -> bool =
-  "ocamljava_semaphore_is_fair"
+let has_queued_threads sem =
+  Java.call "Semaphore.hasQueuedThreads()" sem
 
-external release : t -> int32 -> unit =
-  "ocamljava_semaphore_release"
+let is_fair sem =
+  Java.call "Semaphore.isFair()" sem
 
-external try_acquire : t -> int32 -> bool =
-  "ocamljava_semaphore_try_acquire"
+let release sem permits =
+  Java.call "Semaphore.release(int)" sem permits
 
-external try_acquire_time : t -> int32 -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_semaphore_try_acquire"
+let try_acquire sem permits =
+  Java.call "Semaphore.tryAcquire(int)" sem permits
+
+let try_acquire_time sem permits time timeunit =
+  Java.call "Semaphore.tryAcquire(int,long,TimeUnit)"sem permits time timeunit

@@ -18,26 +18,25 @@
 
 (** Value exchangers. *)
 
-type t
+type t = java'util'concurrent'Exchanger java_instance
 (** The type of exchangers, allowing two threads to swap values. *)
 
-external make : unit -> t =
-  "ocamljava_exchanger_make"
-(** Returns a new exchanger. *)
+val make : unit -> t
+(** Returns a new exchanger; see
+    {java java.util.concurrent.Exchanger#Exchanger()}. *)
 
-external exchange : t -> 'a -> 'a =
-  "ocamljava_exchanger_exchange"
+val exchange : t -> 'a -> 'a
 (** Waits for another thread to arrive at the same exchange point, and
-    then swaps the values provided by the two threads.
+    then swaps the values provided by the two threads; see
+    {java java.util.concurrent.Exchanger#exchange(V)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external exchange_time : t -> 'a -> int64 -> TimeUnit.t -> 'a =
-  "ocamljava_exchanger_exchange_time"
+val exchange_time : t -> 'a -> java_long -> TimeUnit.t -> 'a
 (** [exchange_time e x t u] is similar to [exchange e x], except that the
     current thread will at most wait for [t] (time value whose unit is
-    [u]).
+    [u]); see
+    {java java.util.concurrent.Exchanger#exchange(V, long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
-
-    Raises [Runtime.Timeout] if time has elapsed with no exchange. *)
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception if time has elapsed with no exchange *)

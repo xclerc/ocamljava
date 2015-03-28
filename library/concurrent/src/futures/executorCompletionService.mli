@@ -19,32 +19,27 @@
 (** Helper entities for thread pool executors. *)
 
 
-type t
+type t = java'util'concurrent'ExecutorCompletionService java_instance
 (** The type of completion services, providing utilities to wait for
     future completions. *)
 
-external make : ThreadPoolExecutor.t -> t =
-  "ocamljava_executorcompletionservice_make"
+val make : ThreadPoolExecutor.t -> t
 (** Returns a new completion service based on the passed thread pool. *)
 
-external poll : t -> 'a Future.t option =
-  "ocamljava_executorcompletionservice_poll"
+val poll : t -> 'a Future.t option
 (** Returns (and removes from the service) a completed task if any, or
     returns [None]. *)
 
-external poll_time : t -> int64 -> TimeUnit.t -> 'a Future.t option =
-  "ocamljava_executorcompletionservice_poll_time"
+val poll_time : t -> java_long -> TimeUnit.t -> 'a Future.t option
 (** [poll_time s t u] is similar to [pool s], except that the current
     thread will at most wait for [t] (time value whose unit is [u]).
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
-  "ocamljava_executorcompletionservice_submit"
+val submit : t -> ('a -> 'b) -> 'a -> 'b Future.t
 (** Same as {!ThreadPoolExecutor.submit}. *)
 
-external take : t -> 'a Future.t =
-  "ocamljava_executorcompletionservice_take"
+val take : t -> 'a Future.t
 (** Waits for a task to complete, and returns it.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)

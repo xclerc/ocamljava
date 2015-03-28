@@ -19,50 +19,47 @@
 (** Reusable barriers. *)
 
 
-type t
+type t = java'util'concurrent'CyclicBarrier java_instance
 (** The type of cyclic barriers, that are barriers possibly re-used once
     all waiting threads have restarted. *)
 
-external make : int32 -> t =
-  "ocamljava_cyclicbarrier_make"
-(** [make n] returns a barrier waiting for [n] threads.
+val make : java_int -> t
+(** [make n] returns a barrier waiting for [n] threads; see
+    {java java.util.concurrent.CyclicBarrier#CyclicBarrier(int)}.
 
-    Raises [Invalid_argument] if [n] is negative. *)
+    @raise Java_exception if [n] is negative *)
 
-external await : t -> int32 =
-  "ocamljava_cyclicbarrier_await"
-(** Waits until all threads have reached the barrier.
+val await : t -> java_int
+(** Waits until all threads have reached the barrier; see
+    {java java.util.concurrent.CyclicBarrier#await()}.
 
-    Raises [Invalid_argument] if the barrier is broken.
+    @raise Java_exception if the barrier is broken
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external await_time : t -> int64 -> TimeUnit.t -> int32 =
-  "ocamljava_cyclicbarrier_await"
+val await_time : t -> java_long -> TimeUnit.t -> java_int
 (** [await_time b t u] is similar to [await b], except that the current
-    thread will at most wait for [t] (time value whose unit is [u]).
+    thread will at most wait for [t] (time value whose unit is [u]); see
+    {java java.util.concurrent.CyclicBarrier#await(long,java.util.concurrent.TimeUnit)}.
 
-    Raises [Invalid_argument] if the barrier is broken.
+    @Raises Java_exception if the barrier is broken.
+    @Raises Java_exception if the thread is interrupted.
+    @Raises Java_exception if time has elapsed without gathering all
+                           threads *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+val get_number_waiting : t -> java_int
+(** Returns the number of threads currently waiting on the barrier; see
+    {java java.util.concurrent.CyclicBarrier#getNumberWaiting()}. *)
 
-    Raises [Runtime.Timeout] if time has elapsed without gathering all
-    threads. *)
+val get_parties : t -> java_int
+(** Returns the number of threads to be waited on the barrier; see
+    {java java.util.concurrent.CyclicBarrier#getParties()}. *)
 
-external get_number_waiting : t -> int32 =
-  "ocamljava_cyclicbarrier_get_number_waiting"
-(** Returns the number of threads currently waiting on the barrier. *)
+val is_broken : t -> bool
+(** Tests whether the barrier is broken. A barrier is broken if {!reset}
+    when threads are waiting on it; see
+    {java java.util.concurrent.CyclicBarrier#isBroken()}. *)
 
-external get_parties : t -> int32 =
-  "ocamljava_cyclicbarrier_get_parties"
-(** Returns the number of threads to be waited on the barrier. *)
-
-external is_broken : t -> bool =
-  "ocamljava_cyclicbarrier_is_broken"
-(** Tests whether the barrier is broken. A barrier is broken if [reset]
-    when threads are waiting on it. *)
-
-external reset : t -> unit =
-  "ocamljava_cyclicbarrier_reset"
+val reset : t -> unit
 (** Resets the barrier to its original state. The barrier will be broken
-    if there are threads currently waiting on it. *)
+    if there are threads currently waiting on it; see
+    {java java.util.concurrent.CyclicBarrier#reset()}. *)

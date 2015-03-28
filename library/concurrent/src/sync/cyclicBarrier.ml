@@ -16,25 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'CyclicBarrier
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> t =
-  "ocamljava_cyclicbarrier_make"
+type t = _'CyclicBarrier java_instance
 
-external await : t -> int32 =
-  "ocamljava_cyclicbarrier_await"
+let make n =
+  Java.make "CyclicBarrier(int)" n
 
-external await_time : t -> int64 -> TimeUnit.t -> int32 =
-  "ocamljava_cyclicbarrier_await"
+let await cb =
+  Java.call "CyclicBarrier.await()" cb
 
-external get_number_waiting : t -> int32 =
-  "ocamljava_cyclicbarrier_get_number_waiting"
+let await_time cb time timeunit =
+  Java.call "CyclicBarrier.await(long,TimeUnit)" cb time timeunit
 
-external get_parties : t -> int32 =
-  "ocamljava_cyclicbarrier_get_parties"
+let get_number_waiting cb =
+  Java.call "CyclicBarrier.getNumberWaiting()" cb
 
-external is_broken : t -> bool =
-  "ocamljava_cyclicbarrier_is_broken"
+let get_parties cb =
+  Java.call "CyclicBarrier.getParties()" cb
 
-external reset : t -> unit =
-  "ocamljava_cyclicbarrier_reset"
+let is_broken cb =
+  Java.call "CyclicBarrier.isBroken()" cb
+
+let reset cb =
+  Java.call "CyclicBarrier.reset()" cb

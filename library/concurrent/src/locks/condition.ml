@@ -16,22 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'Date
+open Class'java'util'concurrent'TimeUnit
+open Class'java'util'concurrent'locks'Condition
 
-external await : t -> unit =
-  "ocamljava_condition_await"
+type t = _'Condition java_instance
 
-external await_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_condition_await_time"
+let await cond =
+  Java.call "Condition.await()" cond
 
-external await_nanos : t -> int64 -> int64 =
-  "ocamljava_condition_await_nanos"
+let await_time cond time timeunit =
+  Java.call "Condition.await(long,TimeUnit)" cond time timeunit
 
-external await_uninterruptibly : t -> unit =
-  "ocamljava_condition_await_uninterruptibly"
+let await_nanos cond nanos =
+  Java.call "Condition.awaitNanos(long)" cond nanos
 
-external signal : t -> unit =
-  "ocamljava_condition_signal"
+let await_uninterruptibly cond =
+  Java.call "Condition.awaitUninterruptibly()" cond
 
-external signal_all : t -> unit =
-  "ocamljava_condition_signal_all"
+let await_until cond date =
+  Java.call "Condition.awaitUntil(Date)" cond date
+
+let signal cond =
+  Java.call "Condition.signal()" cond
+
+let signal_all cond =
+  Java.call "Condition.signalAll()" cond

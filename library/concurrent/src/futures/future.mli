@@ -18,45 +18,37 @@
 
 (** Computations run in background. *)
 
-
-type 'a t
+type 'a t = java'util'concurrent'Future java_instance
 (** The type of futures, that are computations run in background. *)
-
-external cancel : 'a t -> bool -> bool =
-  "ocamljava_future_cancel"
+    
+val cancel : 'a t -> bool -> bool
 (** [cancel f i] attemps to cancel future [f], [i] indicating whether to
     interrupt the computation if already started. Returns whether the
-    future was cancelled. *)
+    future was cancelled; see
+    {java java.util.concurrent.Future.cancel(boolean)}. *)
 
-external get : 'a t -> 'a =
-  "ocamljava_future_get"
-(** Waits for the computation to complete, and returns its result.
+val get : 'a t -> 'a
+(** Waits for the computation to complete, and returns its result; see
+    {java java.util.concurrent.Future.get()}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception is the computation raised an uncaught exception
+    @raise Java_exception if the computation was cancelled *)
 
-    Raises [Runtime.Raised] is the computation raised an uncaught
-    exception.
-
-    Raises [Not_found] if the computation was cancelled. *)
-
-external get_time : 'a t -> int64 -> TimeUnit.t -> 'a =
-  "ocamljava_future_get_time"
+val get_time : 'a t -> java_long -> TimeUnit.t -> 'a
 (** [get_time f t u] is similar to [get f], except that the current
-    thread will at most wait for [t] (time value whose unit is [u]).
+    thread will at most wait for [t] (time value whose unit is [u]); see
+    {java java.util.concurrent.Future.get(long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception is the computation raised an uncaught exception
+    @raise Java_exception if the computation was cancelled
+    @raise Java_exception if time has elapsed without completion *)
 
-    Raises [Runtime.Raised] is the computation raised an uncaught
-    exception.
+val is_cancelled : 'a t -> bool
+(** Tests whether the task was cancelled before completion; see
+    {java java.util.concurrent.Future.isCancelled()}. *)
 
-    Raises [Not_found] if the computation was cancelled.
-
-    Raises [Runtime.Timeout] if time has elapsed without completion. *)
-
-external is_cancelled : 'a t -> bool =
-  "ocamljava_future_is_cancelled"
-(** Tests whether the task was cancelled before completion. *)
-
-external is_done : 'a t -> bool =
-  "ocamljava_future_is_done"
-(** Tests whether the computation is completed. *)
+val is_done : 'a t -> bool
+(** Tests whether the computation is completed; see
+    {java java.util.concurrent.Future.isDone()}. *)

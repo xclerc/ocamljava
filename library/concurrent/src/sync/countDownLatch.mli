@@ -19,33 +19,33 @@
 (** Countdown synchronization. *)
 
 
-type t
+type t = java'util'concurrent'CountDownLatch java_instance
 (** The type of countdown latches, that are barrier-like synchronization
     entities. *)
 
-external make : int32 -> t =
-  "ocamljava_countdownlatch_make"
-(** [make n] returns a countdown latch waiting for [n] threads.
+val make : java_int -> t
+(** [make n] returns a countdown latch waiting for [n] threads; see
+    {java java.util.concurrent.CountDownLatch#CountDownLatch(int)}.
 
-    Raises [Invalid_argument] if [n] is negative. *)
+    @raise Java_exception if [n] is negative *)
 
-external await : t -> unit =
-  "ocamljava_countdownlatch_await"
-(** Waits until the coutdown reaches zero, without countingdown.
+val await : t -> unit
+(** Waits until the coutdown reaches zero, without countingdown; see
+    {java java.util.concurrent.CountDownLatch#await()}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external await_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_countdownlatch_await_time"
+val await_time : t -> java_long -> TimeUnit.t -> bool
 (** [await_time c t u] is similar to [await c], except that the current
-    thread will at most wait for [t] (time value whose unit is [u]).
+    thread will at most wait for [t] (time value whose unit is [u]); see
+    {java java.util.concurrent.CountDownLatch#await(long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external count_down : t -> unit =
-  "ocamljava_countdownlatch_count_down"
-(** Decrements the count, and then waits for the countdown to reach zero. *)
+val count_down : t -> unit
+(** Decrements the count, and then waits for the countdown to reach
+    zero; see {java java.util.concurrent.CountDownLatch#countDown()}. *)
 
-external get_count : t -> int64 =
-  "ocamljava_countdownlatch_get_count"
-(** Returns the current count. *)
+val get_count : t -> java_long
+(** Returns the current count; see
+    {java java.util.concurrent.CountDownLatch#getCount()}. *)

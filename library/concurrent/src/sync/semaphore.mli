@@ -18,77 +18,77 @@
 
 (** Semaphores. *)
 
-type t
+
+type t = java'util'concurrent'Semaphore java_instance
 (** The type of semaphores, each maintaining a set of available
     permits. *)
 
-external make : int32 -> bool -> t =
-  "ocamljava_semaphore_make"
-(** [make p f] returns a new semaphore with [p] permits, [f] indicating
-    whether a {i fair} ordering policy is requested.
+val make : ?fair: bool -> java_int -> t
+(** [make ~fair:f p] returns a new semaphore with [p] permits, [f]
+    indicating whether a {i fair} ordering policy is requested
+    (defaulting to [false]); see
+    {java java.util.concurrent.Semaphore#Semaphore(int, boolean)}.
 
     [p] can be negative, meaning that permits should be released before
     any acquisition. *)
 
-external acquire : t -> int32 -> unit =
-  "ocamljava_semaphore_acquire"
+val acquire : t -> java_int -> unit
 (** [acquire s p] acquires [p] permits from semaphore [s], blocking until
-    they are available.
+    they are available; see
+    {java java.util.concurrent.Semaphore#acquires(int)}.
 
-    Raises [Invalid_argument] if [p] is negative.
+    @raise Java_exception if [p] is negative
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external acquire_uninterruptibly : t -> int32 -> unit =
-  "ocamljava_semaphore_acquire_uninterruptibly"
+val acquire_uninterruptibly : t -> java_int -> unit
 (** [acquire_uninterruptibly s p] is similar to [acquire s p], except
-    that waiting thread cannot be interrupted.
+    that waiting thread cannot be interrupted; see
+    {java java.util.concurrent.Semaphore#acquireUninterruptibly(int)}.
 
-    Raises [Invalid_argument] if [p] is negative. *)
+    @raise Java_exception if [p] is negative *)
 
-external available_permits : t -> int32 =
-  "ocamljava_semaphore_available_permits"
-(** Returns the number of available permits for the semaphore. *)
+val available_permits : t -> java_int
+(** Returns the number of available permits for the semaphore; see
+    {java java.util.concurrent.Semaphore#availablePermits()}. *)
 
-external drain_permits : t -> int32 =
-  "ocamljava_semaphore_drain_permits"
+val drain_permits : t -> java_int
 (** Acquires and returns all available permits from the semaphore,
-    returning immediately. *)
+    returning immediately; see
+    {java java.util.concurrent.Semaphore#drainPermits(int, boolean)}. *)
 
-external get_queue_length : t -> int32 =
-  "ocamljava_semaphore_get_queue_length"
+val get_queue_length : t -> java_int
 (** Returns an estimate of the number of threads waiting on the semaphore
-    to acquire permits. *)
+    to acquire permits; see
+    {java java.util.concurrent.Semaphore#getQueueLength()}. *)
 
-external has_queued_threads : t -> bool =
-  "ocamljava_semaphore_has_queued_threads"
+val has_queued_threads : t -> bool
 (** Tests whether there are threads waiting on the semaphore to acquire
-    permits. *)
+    permits; see
+    {java java.util.concurrent.Semaphore#hasQueuedThreads()}. *)
 
-external is_fair : t -> bool =
-  "ocamljava_semaphore_is_fair"
-(** Tests whether the semaphore uses a fair policy. *)
+val is_fair : t -> bool
+(** Tests whether the semaphore uses a fair policy; see
+    {java java.util.concurrent.Semaphore#isFair()}. *)
 
-external release : t -> int32 -> unit =
-  "ocamljava_semaphore_release"
-(** [release s p] releases [p] permits from semaphore [s].
+val release : t -> java_int -> unit
+(** [release s p] releases [p] permits from semaphore [s]; see
+    {java java.util.concurrent.Semaphore#release(int)}.
 
-    Raises [Invalid_argument] if [p] is negative. *)
+    @raise Java_exception if [p] is negative *)
 
-external try_acquire : t -> int32 -> bool =
-  "ocamljava_semaphore_try_acquire"
+val try_acquire : t -> java_int -> bool
 (** [try_acquire s p] is similar to [acquire s p], except the function
     always returns immediately returning [true] if acquisition was
-    successful.
+    successful; see
+    {java java.util.concurrent.Semaphore#tryAcquire(int)}.
 
-    Raises [Invalid_argument] if [p] is negative. *)
+    @raise Java_exception if [p] is negative *)
 
-external try_acquire_time : t -> int32 -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_semaphore_try_acquire"
+val try_acquire_time : t -> java_int -> java_long -> TimeUnit.t -> bool
 (** [try_acquire_time s p t u] is similar to [try_acquire s p], except
     that the current thread will at most wait for [t] (time value whose
-    unit is [u]).
+    unit is [u]); see
+    {java java.util.concurrent.Semaphore#tryAcquire(int, long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Invalid_argument] if [p] is negative.
-
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if [p] is negative
+    @raise Java_exception if the thread is interrupted *)

@@ -19,31 +19,25 @@
 (** Computations run in background with a delay. *)
 
 
-type 'a t
+type 'a t = java'util'concurrent'ScheduledFuture java_instance
 (** The type of futures, that are computations run in background with a
     delay. *)
 
-external cancel : 'a t -> bool -> bool =
-  "ocamljava_future_cancel"
+val cancel : 'a t -> bool -> bool
 (** Same as {!Future.cancel}. *)
 
-external get : 'a t -> 'a =
-  "ocamljava_future_get"
+val get : 'a t -> 'a
 (** Same as {!Future.get}. *)
 
-external get_time : 'a t -> int64 -> TimeUnit.t -> 'a =
-  "ocamljava_future_get_time"
+val get_time : 'a t -> java_long -> TimeUnit.t -> 'a
 (** Same as {!Future.get_time}. *)
 
-external is_cancelled : 'a t -> bool =
-  "ocamljava_future_is_cancelled"
+val is_cancelled : 'a t -> bool
 (** Same as {!Future.is_cancelled}. *)
 
-external is_done : 'a t -> bool =
-  "ocamljava_future_is_done"
+val is_done : 'a t -> bool
 (** Same as {!Future.is_done}. *)
 
-external get_delay : 'a t -> TimeUnit.t -> int64 =
-  "ocamljava_scheduledfuture_get_delay"
+val get_delay : 'a t -> TimeUnit.t -> java_long
 (** Returns the remaining delay for the computation, in the passed time
     unit. *)

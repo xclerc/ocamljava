@@ -16,55 +16,59 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'Phaser
+open Class'java'util'concurrent'TimeUnit
 
-external make : t option -> int32 -> t =
-  "ocamljava_phaser_make"
+type t = _'Phaser java_instance
 
-external arrive : t -> int32 =
-  "ocamljava_phaser_arrive"
+let make ?(parent = Java.null) ?(parties = 0l) () =
+  Java.make "Phaser(Phaser,int)" parent parties
 
-external arrive_and_await_advance : t -> int32 =
-  "ocamljava_phaser_arrive_and_await_advance"
+let arrive ph =
+  Java.call "Phaser.arrive()" ph
 
-external arrive_and_deregister : t -> int32 =
-  "ocamljava_phaser_arrive_and_deregister"
+let arrive_and_await_advance ph =
+  Java.call "Phaser.arriveAndAwaitAdvance()" ph
 
-external await_advance : t -> int32 -> int32 =
-  "ocamljava_phaser_await_advance"
+let arrive_and_deregister ph =
+  Java.call "Phaser.arriveAndDeregister()" ph
 
-external await_advance_interruptibly : t -> int32 -> int32 =
-  "ocamljava_phaser_await_advance_interruptibly"
+let await_advance ph phase =
+  Java.call "Phaser.awaitAdvance(int)" ph phase
 
-external await_advance_interruptibly_time : t -> int32 -> int64 -> TimeUnit.t -> int32 =
-  "ocamljava_phaser_await_advance_interruptibly_time"
+let await_advance_interruptibly ph phase =
+  Java.call "Phaser.awaitAdvanceInterruptibly(int)" ph phase
 
-external bulk_register : t -> int32 -> int32 =
-  "ocamljava_phaser_bulk_register"
+let await_advance_interruptibly_time ph phase time timeunit =
+  Java.call "Phaser.awaitAdvanceInterruptibly(int,long,TimeUnit)"
+    ph phase time timeunit
 
-external force_termination : t -> unit =
-  "ocamljava_phaser_force_termination"
+let bulk_register ph parties =
+  Java.call "Phaser.bulkRegister(int)" ph parties
 
-external get_arrived_parties : t -> int32 =
-  "ocamljava_phaser_get_arrived_parties"
+let force_termination ph =
+  Java.call "Phaser.forceTermination()" ph
 
-external get_parent : t -> t option =
-  "ocamljava_phaser_get_parent"
+let get_arrived_parties ph =
+  Java.call "Phaser.getArrivedParties()" ph
 
-external get_phase : t -> int32 =
-  "ocamljava_phaser_get_phase"
+let get_parent ph =
+  Java.call "Phaser.getParent()" ph
 
-external get_registered_parties : t -> int32 =
-  "ocamljava_phaser_get_registered_parties"
+let get_phase ph =
+  Java.call "Phaser.getPhase()" ph
 
-external get_root : t -> t =
-  "ocamljava_phaser_get_root"
+let get_registered_parties ph =
+  Java.call "Phaser.getRegisteredParties()" ph
 
-external get_unarrived_parties : t -> int32 =
-  "ocamljava_phaser_get_unarrived_parties"
+let get_root ph =
+  Java.call "Phaser.getRoot()" ph
 
-external is_terminated : t -> bool =
-  "ocamljava_phaser_is_terminated"
+let get_unarrived_parties ph =
+  Java.call "Phaser.getUnarrivedParties()" ph
 
-external register : t -> int32 =
-  "ocamljava_phaser_register"
+let is_terminated ph =
+  Java.call "Phaser.isTerminated()" ph
+
+let register ph =
+  Java.call "Phaser.register()" ph

@@ -19,28 +19,31 @@
 (** Thread-local variables. *)
 
 
-type 'a t
+type 'a t = java'lang'ThreadLocal java_instance
 (** The type of thread-local variables, providing an independent value to
     each thread. *)
 
 external make : 'a -> 'a t =
   "ocamljava_threadlocal_make"
 (** Returns a new thread-local variable whose initial value in each
-    thread is the passed value. *)
+    thread is the passed value; see
+    {java java.lang.ThreadLocal#ThreadLocal()} and
+    {java java.lang.ThreadLocal#initialValue()}. *)
 
 external get : 'a t -> 'a =
   "ocamljava_threadlocal_get"
 (** Returns the value of the thread-local variable for the current
-    thread. *)
+    thread; see {java java.lang.ThreadLocal#get()}. *)
 
 external remove : 'a t -> unit =
   "ocamljava_threadlocal_remove"
 (** Removes the value of the thread-local variable for the current
     thread. The variable can still be [set] or [get]. If no [set] occurs
     between [remove] and [get], the variable is reinitialized with the
-    value originally passed to [make]. *)
+    value originally passed to [make]; see
+    {java java.lang.ThreadLocal#remove()}. *)
 
 external set : 'a t -> 'a -> unit =
   "ocamljava_threadlocal_set"
 (** Modifies the value of the thread-local variable for the current
-    thread. *)
+    thread; see {java java.lang.ThreadLocal#set(T)}. *)

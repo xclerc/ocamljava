@@ -19,16 +19,30 @@
 (** Time units. *)
 
 
-type t =
-  | Nanoseconds (** Associated value is a number of nanoseconds. *)
-  | Microseconds (** Associated value is a number of microseconds. *)
-  | Milliseconds (** Associated value is a number of milliseconds. *)
-  | Seconds (** Associated value is a number of seconds. *)
-  | Minutes (** Associated value is a number of minutes. *)
-  | Hours (** Associated value is a number of hours. *)
-  | Days (** Associated value is a number of days. *)
+type t = java'util'concurrent'TimeUnit java_instance
 (** The type of units used to express durations ({i e.g.} for timeouts). *)
 
-external convert : t -> t -> int64 -> int64 =
-  "ocamljava_timeunit_convert"
-(** [convert f t x] converts the value [x] from unit [f] to unit [t]. *)
+val nanoseconds : t
+(** Time unit for nanoseconds. *)
+
+val microseconds : t
+(** Time unit for microseconds. *)
+
+val milliseconds : t
+(** Time unit for milliseconds. *)
+
+val seconds : t
+(** Time unit for seconds. *)
+
+val minutes : t
+(** Time unit for minutes. *)
+
+val hours : t
+(** Time unit for hours. *)
+
+val days : t
+(** Time unit for days. *)
+
+val convert : src:t -> dst:t -> java_long -> java_long
+(** [convert ~src ~dst x] converts the value [x] from unit [src] to unit
+    [dst]; see {java java.util.concurrent.TimeUnit#convert(long,java.util.concurrent.TimeUnit)} *)

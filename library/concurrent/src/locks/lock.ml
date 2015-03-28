@@ -16,25 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'TimeUnit
+open Class'java'util'concurrent'locks'Lock
+open Class'java'util'concurrent'locks'ReentrantLock
 
-external make_reentrant : bool -> t =
-  "ocamljava_lock_make_reentrant"
+type t = _'Lock java_instance
 
-external lock : t -> unit =
-  "ocamljava_lock_lock"
+let make_reentrant ?(fair = false) () =
+  Java.make "ReentrantLock(boolean)" fair
+  |> Java.cast "Lock"
 
-external lock_interruptibly : t -> unit =
-  "ocamljava_lock_lock_interruptibly"
+let lock l =
+  Java.call "Lock.lock()" l
 
-external new_condition : t -> Condition.t =
-  "ocamljava_lock_new_condition"
+let lock_interruptibly l =
+  Java.call "Lock.lockInterruptibly()" l
 
-external try_lock : t -> bool =
-  "ocamljava_lock_try_lock"
+let new_condition l =
+  Java.call "Lock.newCondition()" l
 
-external try_lock_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_lock_try_lock_time"
+let try_lock l =
+  Java.call "Lock.tryLock()" l
 
-external unlock : t -> unit =
-  "ocamljava_lock_unlock"
+let try_lock_time l time timeunit =
+  Java.call "Lock.tryLock(long,TimeUnit)" l time timeunit
+
+let unlock l =
+  Java.call "Lock.unlock()" l

@@ -24,85 +24,96 @@ type state =
   | Timed_waiting
   | Terminated
 
-external get_max_priority : unit -> int32 =
-  "ocamljava_thread_get_max_priority"
+let decode_state s =
+  if Java.equal (Java.get "Thread.State.NEW" ()) s then
+    New
+  else if Java.equal (Java.get "Thread.State.RUNNABLE" ()) s then
+    Runnable
+  else if Java.equal (Java.get "Thread.State.BLOCKED" ()) s then
+    Blocked
+  else if Java.equal (Java.get "Thread.State.WAITING" ()) s then
+    Waiting
+  else if Java.equal (Java.get "Thread.State.TIMED_WAITING" ()) s then
+    Timed_waiting
+  else if Java.equal (Java.get "Thread.State.TERMINATED" ()) s then
+    Terminated
+  else
+    assert false
 
-external get_min_priority : unit -> int32 =
-  "ocamljava_thread_get_min_priority"
+let max_priority  = Java.get "Thread.MAX_PRIORITY"  ()
 
-external get_norm_priority : unit -> int32 =
-  "ocamljava_thread_get_norm_priority"
+let min_priority  = Java.get "Thread.MIN_PRIORITY"  ()
 
-let max_priority = get_max_priority ()
+let norm_priority = Java.get "Thread.NORM_PRIORITY" ()
 
-let min_priority = get_min_priority ()
+type t = _'Thread java_instance
 
-let norm_priority = get_norm_priority ()
-
-type t
-
-external make : ThreadGroup.t option -> string option -> ('a -> unit) -> 'a -> t =
+external ocamljava_thread_make : ThreadGroup.t -> JavaString.t -> ('a -> unit) -> 'a -> t =
   "ocamljava_thread_make"
 
-external current_thread : unit -> t =
-  "ocamljava_thread_current_thread"
+let make ?(group = Java.null) ?(name = Java.null) f x =
+  ocamljava_thread_make group name f x
+  
+let current_thread () =
+  Java.call "Thread.currentThread()" ()
 
-external get_id : t -> int64 =
-  "ocamljava_thread_get_id"
+let get_id th =
+  Java.call "Thread.getId()" th
 
-external get_name : t -> string =
-  "ocamljava_thread_get_name"
+let get_name th =
+  Java.call "Thread.getName()" th
 
-external get_priority : t -> string =
-  "ocamljava_thread_get_priority"
+let get_priority th =
+  Java.call "Thread.getPriority()" th
 
-external get_state : t -> state =
-  "ocamljava_thread_get_state"
+let get_state th =
+  Java.call "Thread.getState()" th
+  |> decode_state
 
-external get_thread_group : t -> ThreadGroup.t option =
-  "ocamljava_thread_get_thread_group"
+let get_thread_group th =
+  Java.call "Thread.getThreadGroup()" th
 
-external interrupt : t -> unit =
-  "ocamljava_thread_interrupt"
+let interrupt th =
+  Java.call "Thread.interrupt()" th
 
-external interrupted : unit -> bool =
-  "ocamljava_thread_interrupted"
+let interrupted () =
+  Java.call "Thread.interrupted()" ()
 
-external is_alive : t -> bool =
-  "ocamljava_thread_is_alive"
+let is_alive th =
+  Java.call "Thread.isAlive()" th
 
-external is_daemon : t -> bool =
-  "ocamljava_thread_is_daemon"
+let is_daemon th =
+  Java.call "Thread.isDaemon()" th
 
-external is_interrupted : t -> bool =
-  "ocamljava_thread_is_interrupted"
+let is_interrupted th =
+  Java.call "Thread.isInterrupted()" th
 
-external join : t -> unit =
-  "ocamljava_thread_join"
+let join th =
+  Java.call "Thread.join()" th
 
-external join_time : t -> int64 -> unit =
-  "ocamljava_thread_join_time"
+let join_time th millis =
+  Java.call "Thread.join(long)" th millis
 
-external join_time_nanos : t -> int64 -> int32 -> unit =
-  "ocamljava_thread_join_time_nanos"
+let join_time_nanos th millis nanos =
+  Java.call "Thread.join(long,int)" th millis nanos
 
-external set_daemon : t -> bool -> unit =
-  "ocamljava_thread_set_daemon"
+let set_daemon th b =
+  Java.call "Thread.setDaemon(boolean)" th b
 
-external set_name : t -> string -> unit =
-  "ocamljava_thread_set_name"
+let set_name th n =
+  Java.call "Thread.setName(String)" th n
 
-external set_priority : t -> int32 -> unit =
-  "ocamljava_thread_set_priority"
+let set_priority th prio =
+  Java.call "Thread.setPriority(int)" th prio
 
-external sleep : int64 -> unit =
-  "ocamljava_thread_sleep"
+let sleep millis =
+  Java.call "Thread.sleep(long)" millis
 
-external sleep_nanos : int64 -> int32 -> unit =
-  "ocamljava_thread_sleep_nanos"
+let sleep_nanos millis nanos =
+  Java.call "Thread.sleep(long,int)" millis nanos
 
-external start : t -> unit =
-  "ocamljava_thread_start"
+let start th =
+  Java.call "Thread.start()" th
 
-external yield : unit -> unit =
-  "ocamljava_thread_yield"
+let yield () =
+  Java.call "Thread.yield()" ()

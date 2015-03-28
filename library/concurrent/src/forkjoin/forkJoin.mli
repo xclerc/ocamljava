@@ -23,7 +23,7 @@ external split : ForkJoinPool.t -> ('a -> ('a * 'a) option) -> ('b -> 'b -> 'b) 
 (** [split pool fork join f x] computes [f x] by leveraging multiple
     threads from [pool].
 
-    The [fork] function is used to determine for a given input vallue
+    The [fork] function is used to determine for a given input value
     whether the computation should be split (returning [Some (x1, x2)]
     will generate two sub-computations with inputs [x1] and [x2]) or not
     (returning [None]). The [fork] function is recursively called inside
@@ -32,10 +32,8 @@ external split : ForkJoinPool.t -> ('a -> ('a * 'a) option) -> ('b -> 'b -> 'b) 
     The [join] function is used to combine the results of two
     sub-computations.
 
-    Raises [Failure] if any call of [fork], [join], or [f] raises an
-    uncaught exception.
-
-    Raises [Invalid_argument] if the passed pool cannot execute the
+    Raises an exception if any call of [fork], [join], or [f] raises an
+    uncaught exception, or if the passed pool cannot execute the
     computation.
 
     As an example, a (very inefficient) way to compute the fibonacci

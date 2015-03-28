@@ -16,55 +16,65 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'ForkJoinPool
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> bool -> t =
+type t = _'ForkJoinPool java_instance
+
+external ocamljava_forkjoinpool_make : int32 -> bool -> t =
   "ocamljava_forkjoinpool_make"
 
-external await_termination : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_forkjoinpool_await_termination"
+let default_parallelism () =
+  Java.call "Runtime.availableProcessors()"
+    (Java.call "Runtime.getRuntime()" ())
 
-external get_active_thread_count : t -> int32 =
-  "ocamljava_forkjoinpool_get_active_thread_count"
+let make ?(parallelism = default_parallelism ()) a =
+  ocamljava_forkjoinpool_make parallelism a
 
-external get_async_mode : t -> bool =
-  "ocamljava_forkjoinpool_get_async_mode"
+let await_termination pool time timeunit =
+  Java.call "ForkJoinPool.awaitTermination(long,TimeUnit)" pool time timeunit
 
-external get_parallelism : t -> int32 =
-  "ocamljava_forkjoinpool_get_parallelism"
+let get_active_thread_count pool =
+  Java.call "ForkJoinPool.getActiveThreadCount()" pool
 
-external get_pool_size : t -> int32 =
-  "ocamljava_forkjoinpool_get_pool_size"
+let get_async_mode pool =
+  Java.call "ForkJoinPool.getAsyncMode()" pool
 
-external get_queued_submission_count : t -> int32 =
-  "ocamljava_forkjoinpool_get_queued_submission_count"
+let get_parallelism pool =
+  Java.call "ForkJoinPool.getParallelism()" pool
 
-external get_queued_task_count : t -> int64 =
-  "ocamljava_forkjoinpool_get_queued_task_count"
+let get_pool_size pool =
+  Java.call "ForkJoinPool.getPoolSize()" pool
 
-external get_running_thread_count : t -> int32 =
-  "ocamljava_forkjoinpool_get_running_thread_count"
+let get_queued_submission_count pool =
+  Java.call "ForkJoinPool.getQueuedSubmissionCount()" pool
 
-external get_steal_count : t -> int64 =
-  "ocamljava_forkjoinpool_get_steal_count"
+let get_queued_task_count pool =
+  Java.call "ForkJoinPool.getQueuedTaskCount()" pool
 
-external has_queued_submissions : t -> bool =
-  "ocamljava_forkjoinpool_has_queued_submissions"
+let get_running_thread_count pool =
+  Java.call "ForkJoinPool.getRunningThreadCount()" pool
 
-external is_quiescent : t -> bool =
-  "ocamljava_forkjoinpool_is_quiescent"
+let get_steal_count pool =
+  Java.call "ForkJoinPool.getStealCount()" pool
 
-external is_shutdown : t -> bool =
-  "ocamljava_forkjoinpool_is_shutdown"
+let has_queued_submissions pool =
+  Java.call "ForkJoinPool.hasQueuedSubmissions()" pool
 
-external is_terminated : t -> bool =
-  "ocamljava_forkjoinpool_is_terminated"
+let is_quiescent pool =
+  Java.call "ForkJoinPool.isQuiescent()" pool
 
-external is_terminating : t -> bool =
-  "ocamljava_forkjoinpool_is_terminating"
+let is_shutdown pool =
+  Java.call "ForkJoinPool.isShutdown()" pool
 
-external shutdown : t -> unit =
-  "ocamljava_forkjoinpool_shutdown"
+let is_terminated pool =
+  Java.call "ForkJoinPool.isTerminated()" pool
 
-external shutdown_now : t -> unit =
-  "ocamljava_forkjoinpool_shutdown_now"
+let is_terminating pool =
+  Java.call "ForkJoinPool.isTerminating()" pool
+
+let shutdown pool =
+  Java.call "ForkJoinPool.shutdown()" pool
+
+let shutdown_now pool =
+  Java.exec "ForkJoinPool.shutdownNow()" pool

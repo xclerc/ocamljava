@@ -16,8 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t =
-  | Abort_policy
-  | Caller_runs_policy
-  | Discard_oldest_policy
-  | Discard_policy
+open Class'java'util'concurrent'RejectedExecutionHandler
+
+type t = _'RejectedExecutionHandler java_instance
+
+let abort_policy =
+  Java.make "java.util.concurrent.ThreadPoolExecutor.AbortPolicy()" ()
+  |> Java.cast "RejectedExecutionHandler"
+
+let caller_runs_policy =
+  Java.make "java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy()" ()
+  |> Java.cast "RejectedExecutionHandler"
+
+let discard_oldest_policy =
+  Java.make "java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy()" ()
+  |> Java.cast "RejectedExecutionHandler"
+
+let discard_policy =
+  Java.make "java.util.concurrent.ThreadPoolExecutor.DiscardPolicy()" ()
+  |> Java.cast "RejectedExecutionHandler"

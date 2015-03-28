@@ -20,7 +20,7 @@
     and cyclic barriers. *)
 
 
-type t
+type t = java'util'concurrent'Phaser java_instance
 (** The type of phasers, differing from coutdown latches and cyclic
     barriers by the fact that parties explicitly register.
 
@@ -32,108 +32,104 @@ type t
     The phase number of a phaser starts at zero, and advances when all
     parties arrive at the phaser. *)
 
-external make : t option -> int32 -> t =
-  "ocamljava_phaser_make"
-(** [make p n] returns a new phaser with parent [p], and number of
-    parties [n].
+val make : ?parent:t -> ?parties:int32 -> unit -> t
+(** [make ~parent:p ~parties:n] returns a new phaser with parent [p]
+    (defaulting to [null]), and number of parties [n] (defaulting to
+    [0l]); see
+    {java java.util.concurrent.Phaser#Phaser(java.util.concurrent.Phaser, int)}.
 
-    Raises [Invalid_argument] if [n] is negative. *)
+    @raise Java_exception if [n] is negative *)
 
-external arrive : t -> int32 =
-  "ocamljava_phaser_arrive"
+val arrive : t -> java_int
 (** Records that a party has arrived to the phaser without waiting for
     others, returns the phase number (negative if the phaser is
-    terminated).
+    terminated); see {java java.util.concurrent.Phaser#arrive()}.
 
-    Raises [Invalid_argument] if the phase number would be negative while
-    the phaser is not terminated. *)
+    @raise Java_exception if the phase number would be negative while
+                          the phaser is not terminated *)
 
-external arrive_and_await_advance : t -> int32 =
-  "ocamljava_phaser_arrive_and_await_advance"
+val arrive_and_await_advance : t -> java_int
 (** Records that a party has arrived to the phaser and waits for others,
-    returns the phase number (negative if the phaser is terminated).
+    returns the phase number (negative if the phaser is terminated); see
+    {java java.util.concurrent.Phaser#arriveAndAwaitAdvance()}.
 
-    Raises [Invalid_argument] if the phase number would be negative while
-    the phaser is not terminated. *)
+    @raise Java_exception if the phase number would be negative while
+                          the phaser is not terminated *)
 
-external arrive_and_deregister : t -> int32 =
-  "ocamljava_phaser_arrive_and_deregister"
+val arrive_and_deregister : t -> java_int
 (** Records that a party has arrived to the phaser without waiting for
     others, deregisters a party, returns the phase number (negative if
-    the phaser is terminated).
+    the phaser is terminated); see
+    {java java.util.concurrent.Phaser#arriveAndDeregister()}.
 
-    Raises [Invalid_argument] if the phase number would be negative while
-    the phaser is not terminated. *)
+    @raise Java_exception if the phase number would be negative while
+                          the phaser is not terminated *)
 
-external await_advance : t -> int32 -> int32 =
-  "ocamljava_phaser_await_advance"
-(** Waits for the phase number of the phaser to reach the passed value. *)
+val await_advance : t -> java_int -> java_int
+(** Waits for the phase number of the phaser to reach the passed value; see
+    {java java.util.concurrent.Phaser#awaitAdvance(int)}. *)
 
-external await_advance_interruptibly : t -> int32 -> int32 =
-  "ocamljava_phaser_await_advance_interruptibly"
-(** Similar to [await_advance] except that the thread can be interrupted.
+val await_advance_interruptibly : t -> java_int -> java_int
+(** Similar to {!await_advance} except that the thread can be interrupted; see
+    {java java.util.concurrent.Phaser#awaitAdvanceInterruptibly(int)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external await_advance_interruptibly_time : t -> int32 -> int64 -> TimeUnit.t -> int32 =
-  "ocamljava_phaser_await_advance_interruptibly_time"
+val await_advance_interruptibly_time : t -> java_int -> java_long -> TimeUnit.t -> java_int
 (** [await_advance_interruptibly_time p pn t u] is similar to
     [await_advance_interruptibly p pn], except that the current
-    thread will at most wait for [t] (time value whose unit is [u]).
+    thread will at most wait for [t] (time value whose unit is [u]); see
+    {java java.util.concurrent.Phaser#awaitAdvanceInterruptibly(int, long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception if time has elapsed without reaching the
+                          given phase number*)
 
-    Raises [Runtime.Timeout] if time has elapsed without reaching the
-    given phase number.*)
+val bulk_register : t -> java_int -> java_int
+(** [bulk_register p n] adds [n] unarrived parties to phaser [p]; see
+    {java java.util.concurrent.Phaser#bilkRegister(int)}.
 
-external bulk_register : t -> int32 -> int32 =
-  "ocamljava_phaser_bulk_register"
-(** [bulk_register p n] adds [n] unarrived parties to phaser [p].
+    @raise Java_exception if [n] is negative
+    @raise Java_exception if the maximum number of parties has
+                          already been reached *)
 
-    Raises [Invalid_argument] if [n] is negative.
+val force_termination : t -> unit
+(** Forces termination of the phaser, includind children phasers; see
+    {java java.util.concurrent.Phaser#forceTermination()}. *)
 
-    Raises [Invalid_argument] if the maximum number of parties has
-    already been reached. *)
-
-external force_termination : t -> unit =
-  "ocamljava_phaser_force_termination"
-(** Forces termination of the phaser, includind children phasers. *)
-
-external get_arrived_parties : t -> int32 =
-  "ocamljava_phaser_get_arrived_parties"
+val get_arrived_parties : t -> java_int
 (** Returns the number of registered parties that have arrived to the
-    phaser. *)
+    phaser; see {java java.util.concurrent.Phaser#getArrivedParties()}. *)
 
-external get_parent : t -> t option =
-  "ocamljava_phaser_get_parent"
-(** Returns the parent of the phaser. *)
+val get_parent : t -> t
+(** Returns the parent of the phaser; see
+    {java java.util.concurrent.Phaser#getParent()}. *)
 
-external get_phase : t -> int32 =
-  "ocamljava_phaser_get_phase"
-(** Returns the phase number. *)
+val get_phase : t -> java_int
+(** Returns the phase number; see
+    {java java.util.concurrent.Phaser#getPhase()}. *)
 
-external get_registered_parties : t -> int32 =
-  "ocamljava_phaser_get_registered_parties"
-(** Returns the number of registered parties. *)
+val get_registered_parties : t -> java_int
+(** Returns the number of registered parties; see
+    {java java.util.concurrent.Phaser#getRegisteredParties()}. *)
 
-external get_root : t -> t =
-  "ocamljava_phaser_get_root"
+val get_root : t -> t
 (** Returns the root that can be reached from the phaser by recursively
-    visiting parents. Returns the passed phaser if it has no parent. *)
+    visiting parents. Returns the passed phaser if it has no parent; see
+    {java java.util.concurrent.Phaser#getRoot()}. *)
 
-external get_unarrived_parties : t -> int32 =
-  "ocamljava_phaser_get_unarrived_parties"
+val get_unarrived_parties : t -> java_int
 (** Returns the number of registered parties that have not yet arrived to
-    the phaser. *)
+    the phaser; see
+    {java java.util.concurrent.Phaser#getUnarrivedParties()}. *)
 
-external is_terminated : t -> bool =
-  "ocamljava_phaser_is_terminated"
-(** Tests whether the phaser has been terminated. *)
+val is_terminated : t -> bool
+(** Tests whether the phaser has been terminated; see
+    {java java.util.concurrent.Phaser#isTerminated()}. *)
 
-external register : t -> int32 =
-  "ocamljava_phaser_register"
+val register : t -> java_int
 (** Adds a new unarrived party to the phaser, and returns the current
-    phase number
+    phase number; see {java java.util.concurrent.Phaser#register()}.
 
-    Raises [Invalid_argument] if the maximum number of parties has
-    already been reached. *)
+    @raise Java_exception if the maximum number of parties has already
+                          been reached *)

@@ -16,43 +16,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+type t = java'lang'ThreadGroup java_instance
 
-external make : t option -> string -> t =
-  "ocamljava_threadgroup_make"
+let make ?(parent = Java.null) name =
+  if Java.is_null parent then
+    Java.make "ThreadGroup(String)" name
+  else
+    Java.make "ThreadGroup(ThreadGroup,String)" parent name
 
-external active_count : t -> int32 =
-  "ocamljava_threadgroup_active_count"
+let active_count group =
+  Java.call "ThreadGroup.activeCount()" group
 
-external active_group_count : t -> int32 =
-  "ocamljava_threadgroup_active_group_count"
+let active_group_count group =
+  Java.call "ThreadGroup.activeGroupCount()" group
 
-external destroy : t -> unit =
-  "ocamljava_threadgroup_destroy"
+let destroy group =
+  Java.call "ThreadGroup.destroy()" group
 
-external get_max_priority : t -> int32 =
-  "ocamljava_threadgroup_get_max_priority"
+let get_max_priority group =
+  Java.call "ThreadGroup.getMaxPriority()" group
 
-external get_name : t -> string =
-  "ocamljava_threadgroup_get_name"
+let get_name group =
+  Java.call "ThreadGroup.getName()" group
 
-external get_parent : t -> t option =
-  "ocamljava_threadgroup_get_parent"
+let get_parent group =
+  Java.call "ThreadGroup.getParent()" group
 
-external interrupt : t -> unit =
-  "ocamljava_threadgroup_interrupt"
+let interrupt group =
+  Java.call "ThreadGroup.interrupt()" group
 
-external is_daemon : t -> bool =
-  "ocamljava_threadgroup_is_daemon"
+let is_daemon group =
+  Java.call "ThreadGroup.isDaemon()" group
 
-external is_destroyed : t -> bool =
-  "ocamljava_threadgroup_is_destroyed"
+let is_destroyed group =
+  Java.call "ThreadGroup.isDestroyed()" group
 
-external parent_of : t -> t -> bool =
-  "ocamljava_threadgroup_parent_of"
+let parent_of group1 group2 =
+  Java.call "ThreadGroup.parentOf(ThreadGroup)" group1 group2
 
-external set_daemon : t -> bool -> unit =
-  "ocamljava_threadgroup_set_daemon"
+let set_daemon group b =
+  Java.call "ThreadGroup.setDaemon(boolean)" group b
 
-external set_max_priority : t -> int32 -> unit =
-  "ocamljava_threadgroup_set_max_priority"
+let set_max_priority group prio =
+  Java.call "ThreadGroup.setMaxPriority(int)" group prio

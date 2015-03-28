@@ -19,22 +19,22 @@
 (** Read/write locks. *)
 
 
-type t
+type t = java'util'concurrent'locks'ReentrantReadWriteLock java_instance
 (** The type of read/write locks that are indeed peirs of associated
     locks where the read lock can be held simultaneously by any number of
     threads as long as the write lock is available, while the write lock
     can be help by at most one thread at a time. *)
 
-external make_reentrant : bool -> t =
-  "ocamljava_readwritelock_make_reentrant"
+val make_reentrant : ?fair:bool -> unit -> t
 (** Returns a new read/write lock, whose read and write locks are
     reentrant, the parameter indicates whether a {i fair} ordering policy
-    is requested. *)
+    is requested (defaulting to [false]); see
+    {java java.util.concurrent.locks.ReentrantReadWriteLock#ReentrantReadWriteLock(boolean)}. *)
 
-external read_lock : t -> Lock.t =
-  "ocamljava_readwritelock_read_lock"
-(** Returns the read lock of the read/write lock. *)
+val read_lock : t -> Lock.t
+(** Returns the read lock of the read/write lock; see
+    {java java.util.concurrent.locks.ReentrantReadWriteLock#readLock()}. *)
 
-external write_lock : t -> Lock.t =
-  "ocamljava_readwritelock_write_lock"
-(** Returns the write lock of the read/write lock. *)
+val write_lock : t -> Lock.t
+(** Returns the write lock of the read/write lock; see
+    {java java.util.concurrent.locks.ReentrantReadWriteLock#writeLock()}. *)

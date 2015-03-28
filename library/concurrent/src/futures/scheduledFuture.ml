@@ -16,22 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type 'a t
+open Class'java'util'concurrent'ScheduledFuture
+open Class'java'util'concurrent'TimeUnit
 
-external cancel : 'a t -> bool -> bool =
-  "ocamljava_future_cancel"
+type 'a t = _'ScheduledFuture java_instance
+
+let cancel f i =
+  Java.call "ScheduledFuture.cancel(boolean)" f i
 
 external get : 'a t -> 'a =
   "ocamljava_future_get"
 
-external get_time : 'a t -> int64 -> TimeUnit.t -> 'a =
+external get_time : 'a t -> java_long -> TimeUnit.t -> 'a =
   "ocamljava_future_get_time"
 
-external is_cancelled : 'a t -> bool =
-  "ocamljava_future_is_cancelled"
+let is_cancelled f =
+  Java.call "ScheduledFuture.isCancelled()" f
 
-external is_done : 'a t -> bool =
-  "ocamljava_future_is_done"
+let is_done f =
+  Java.call "ScheduledFuture.isDone()" f
 
-external get_delay : 'a t -> TimeUnit.t -> int64 =
-  "ocamljava_scheduledfuture_get_delay"
+let get_delay f timeunit =
+  Java.call "ScheduledFuture.getDelay(TimeUnit)" f timeunit

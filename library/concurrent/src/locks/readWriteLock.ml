@@ -16,13 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'locks'Lock
+open Class'java'util'concurrent'locks'ReentrantReadWriteLock
 
-external make_reentrant : bool -> t =
-  "ocamljava_readwritelock_make_reentrant"
+type t = _'ReentrantReadWriteLock java_instance
 
-external read_lock : t -> Lock.t =
-  "ocamljava_readwritelock_read_lock"
+let make_reentrant ?(fair = false) () =
+  Java.make "ReentrantReadWriteLock(boolean)" fair
 
-external write_lock : t -> Lock.t =
-  "ocamljava_readwritelock_write_lock"
+let read_lock rwl =
+  Java.call "ReentrantReadWriteLock.readLock():Lock" rwl
+
+let write_lock rwl =
+  Java.call "ReentrantReadWriteLock.writeLock():Lock" rwl

@@ -19,49 +19,47 @@
 (** Reentrant locks. *)
 
 
-type t
+type t = java'util'concurrent'locks'Lock java_instance
 (** The type of (reentrant) locks. *)
 
-external make_reentrant : bool -> t =
-  "ocamljava_lock_make_reentrant"
+val make_reentrant : ?fair:bool -> unit -> t
 (** Returns a new reentrant lock, the parameter indicates whether a
-    {i fair} ordering policy is requested. *)
+    {i fair} ordering policy is requested (defaulting to [false]); see
+    {java java.util.concurrent.locks.ReentrantLock#ReentrantLock(boolean)}. *)
 
-external lock : t -> unit =
-  "ocamljava_lock_lock"
+val lock : t -> unit
 (** Acquires the lock. Returns immediately if the lock is either not held
     by another thread, or already held by the current thread. Otherwise,
     the current thread is blocked until the holding thread releases the
-    lock. *)
+    lock; see
+    {java java.util.concurrent.locks.Lock#lock()}. *)
 
-external lock_interruptibly : t -> unit =
-  "ocamljava_lock_lock_interruptibly"
-(** Similar to [lock], except that some other thread may interrupt the
-    current thread while blocked.
+val lock_interruptibly : t -> unit
+(** Similar to {!lock}, except that some other thread may interrupt the
+    current thread while blocked; see
+    {java java.util.concurrent.locks.Lock#lockInterruptibly()}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external new_condition : t -> Condition.t =
-  "ocamljava_lock_new_condition"
-(** Returns a new condition associated with the passed lock. *)
+val new_condition : t -> Condition.t
+(** Returns a new condition associated with the passed lock; see
+    {java java.util.concurrent.locks.Lock#newCondition()}. *)
 
-external try_lock : t -> bool =
-  "ocamljava_lock_try_lock"
+val try_lock : t -> bool
 (** Acquires the lock if available, returning [true]. Otherwise,
-    immediately returns [false]. *)
+    immediately returns [false]; see
+    {java java.util.concurrent.locks.Lock#tryLock()}. *)
 
-external try_lock_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_lock_try_lock_time"
+val try_lock_time : t -> java_long -> TimeUnit.t -> bool
 (** [try_lock_time l t u] is similar to [lock_interruptibly l], except
     that the current thread will at most wait for [t] (time value whose
-    unit is [u]). Returns whether the lock was acquired.
+    unit is [u]). Returns whether the lock was acquired; see
+    {java java.util.concurrent.locks.Lock#tryLock(long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
+val unlock : t -> unit
+(** Releases the lock; see
+    {java java.util.concurrent.locks.Lock#unlock()}.
 
-external unlock : t -> unit =
-  "ocamljava_lock_unlock"
-(** Releases the lock.
-
-    Raises [Invalid_argument] if the current thread does not hold the
-    lock. *)
+    @raise Java_exception if the current thread does not hold the lock *)

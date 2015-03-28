@@ -19,61 +19,67 @@
 (** Lock-base condition. *)
 
 
-type t
+type t = java'util'concurrent'locks'Condition java_instance
 (** The type of conditions, constructed from [Lock] values.
 
     Operations on conditions should be called only when the lock the
     condition was constructed from is held by the current thread. *)
 
-external await : t -> unit =
-  "ocamljava_condition_await"
+val await : t -> unit
 (** Waits until either the condition is signal, or the current thread is
-    interrupted.
+    interrupted; see
+    {java java.util.concurrent.locks.Condition#await()}.
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external await_time : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_condition_await_time"
+val await_time : t -> java_long -> TimeUnit.t -> bool
 (** [await_time c t u] is similar to [await c], except that the current
     thread will at most wait for [t] (time value whose unit is [u]).
-    Returns whether the condition was signaled.
+    Returns whether the condition was signaled; see
+    {java java.util.concurrent.locks.Condition#await(long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external await_nanos : t -> int64 -> int64 =
-  "ocamljava_condition_await_nanos"
+val await_nanos : t -> java_long -> java_long
 (** [await_nanos c n] is similar to [await c], except that the current
     thread will at most wait for [n] nanoseconds. Returns the duration of
-    the wait, a negative value if the condition was not signaled.
+    the wait, a negative value if the condition was not signaled; see
+    {java java.util.concurrent.locks.Condition#awaitNanos(long)}.
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+val await_uninterruptibly : t -> unit
+(** Similar to [await] except that the thread cannot be interrupted; see
+    {java java.util.concurrent.locks.Condition#awaitUninterruptibly()}.
 
-external await_uninterruptibly : t -> unit =
-  "ocamljava_condition_await_uninterruptibly"
-(** Similar to [await] except that the thread cannot be interrupted.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock *)
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock. *)
+val await_until : t -> java'util'Date java_extends -> bool
+(** [await_until c d] waits until the date [d] is reached.
+    Returns whether the date was actually reached; see
+    {java java.util.concurrent.locks.Condition#awaitUntil()}.
 
-external signal : t -> unit =
-  "ocamljava_condition_signal"
-(** Signals the condition, unblocking one waiting thread.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock. *)
+val signal : t -> unit
+(** Signals the condition, unblocking one waiting thread; see
+    {java java.util.concurrent.locks.Condition#signal()}.
 
-external signal_all : t -> unit =
-  "ocamljava_condition_signal_all"
-(** Signals the condition, unblocking all waiting threads.
+    @raise Java_exception if the current thread does not hold the
+                          associated lock *)
 
-    Raises [Invalid_argument] if the current thread does not hold the
-    associated lock. *)
+val signal_all : t -> unit
+(** Signals the condition, unblocking all waiting threads; see
+    {java java.util.concurrent.locks.Condition#signalAll()}.
+
+    @raise Java_exception if the current thread does not hold the
+                          associated lock *)

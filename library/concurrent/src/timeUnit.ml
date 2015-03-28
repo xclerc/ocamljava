@@ -16,14 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t =
-  | Nanoseconds
-  | Microseconds
-  | Milliseconds
-  | Seconds
-  | Minutes
-  | Hours
-  | Days
+open Class'java'util'concurrent'TimeUnit
 
-external convert : t -> t -> int64 -> int64 =
-  "ocamljava_timeunit_convert"
+type t = _'TimeUnit java_instance
+
+let nanoseconds  = Java.get "TimeUnit.NANOSECONDS"  ()
+
+let microseconds = Java.get "TimeUnit.MICROSECONDS" ()
+
+let milliseconds = Java.get "TimeUnit.MILLISECONDS" ()
+
+let seconds      = Java.get "TimeUnit.SECONDS"      ()
+
+let minutes      = Java.get "TimeUnit.MINUTES"      ()
+
+let hours        = Java.get "TimeUnit.HOURS"        ()
+
+let days         = Java.get "TimeUnit.DAYS"         ()
+
+let convert ~src ~dst x =
+  Java.call "TimeUnit.convert(long,TimeUnit)" dst x src

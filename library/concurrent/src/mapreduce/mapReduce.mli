@@ -64,10 +64,7 @@ module type S = sig
       they are available.
 
       Then, folds over key/value couple through the {i reduce} operation,
-      using the third parameter as the inital value.
-
-      Raises [Runtime.Raise] if a {i map}, {i reduce}, {i combine}
-      operation, or comparison raises and exception. *)
+      using the third parameter as the inital value. *)
 end
 (** Signature of a map/reduce computation. *)
 

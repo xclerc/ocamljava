@@ -16,17 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+
 (* Thread pool *)
 
-let parallelism = Runtime.available_processors ()
+let parallelism =
+  Java.call "Runtime.availableProcessors()"
+    (Java.call "Runtime.getRuntime()" ())
 
 let parallelism_int = Int32.to_int parallelism
 
 let default_pool =
   ThreadPoolExecutor.make
     parallelism (Int32.mul 2l parallelism)
-    1L TimeUnit.Seconds
-    RejectedExecutionHandler.Caller_runs_policy
+    1L TimeUnit.seconds
+    RejectedExecutionHandler.caller_runs_policy
 
 let shutdown_now () =
   ignore (ThreadPoolExecutor.shutdown_now default_pool)
@@ -82,13 +85,7 @@ let heuristic_size len = max 16 (len / (parallelism_int * 2))
 
 let rec wait_completion = function
   | hd :: tl -> Future.get hd; wait_completion tl
-  | [] -> ()
-
-let wait_completion_exn l =
-  try
-    wait_completion l
-  with Runtime.Raised e ->
-    raise e
+  | []       -> ()
 
 let init_part f a low high () =
   for i = low to pred high do
@@ -114,7 +111,7 @@ let init ?(pool = default_pool) ?(chunk_size = -1) len f =
       futures := future :: !futures;
       low := !low + sz
     done;
-    wait_completion_exn !futures;
+    wait_completion !futures;
     a
   end
 
@@ -137,7 +134,7 @@ let iter ?(pool = default_pool) ?(chunk_size = -1) f a =
     futures := future :: !futures;
     low := !low + sz
   done;
-  wait_completion_exn !futures
+  wait_completion !futures
 
 let map_part f a r low high () =
   for i = low to pred high do
@@ -164,7 +161,7 @@ let map ?(pool = default_pool) ?(chunk_size = -1) f a =
       futures := future :: !futures;
       low := !low + sz
     done;
-    wait_completion_exn !futures;
+    wait_completion !futures;
     r
   end
 
@@ -187,7 +184,7 @@ let iteri ?(pool = default_pool) ?(chunk_size = -1) f a =
     futures := future :: !futures;
     low := !low + sz
   done;
-  wait_completion_exn !futures
+  wait_completion !futures
 
 let mapi_part f a r low high () =
   for i = low to pred high do
@@ -214,7 +211,7 @@ let mapi ?(pool = default_pool) ?(chunk_size = -1) f a =
       futures := future :: !futures;
       low := !low + sz
     done;
-    wait_completion_exn !futures;
+    wait_completion !futures;
     r
   end
 
@@ -242,9 +239,7 @@ let fold_left ?(pool = default_pool) ?(chunk_size = -1) f g x a =
   let futures = ref (List.rev !futures) in
   let acc = ref x in
   while !futures <> [] do
-    (try
-      acc := g !acc (Future.get (List.hd !futures))
-    with Runtime.Raised e -> raise e);
+    acc := g !acc (Future.get (List.hd !futures));
     futures := List.tl !futures
   done;
   !acc
@@ -272,9 +267,7 @@ let fold_right ?(pool = default_pool) ?(chunk_size = -1) f g a x =
   done;
   let acc = ref x in
   while !futures <> [] do
-    (try
-      acc := g (Future.get (List.hd !futures)) !acc
-    with Runtime.Raised e -> raise e);
+    acc := g (Future.get (List.hd !futures)) !acc;
     futures := List.tl !futures
   done;
   !acc
@@ -305,9 +298,7 @@ let sort ?(pool = default_pool) ?(chunk_size = -1) cmp a =
     for i = 0 to pred p do
       lengths.(i) <- Array.length parts.(i)
     done;
-    (try
-      List.iter Future.get !futures
-    with Runtime.Raised e -> raise e);
+    List.iter Future.get !futures;
     for i = 0 to pred len do
       let j = ref 0 in
       while indices.(!j) = lengths.(!j) do
@@ -348,12 +339,6 @@ let rec wait_successful_completion = function
           wait_successful_completion tl)
   | [] -> None
 
-let wait_successful_completion_exn l =
-  try
-    wait_successful_completion l
-  with Runtime.Raised e ->
-    raise e
-
 let search_part predicate a low high () =
   let index = ref low in
   let interrupted = ref (Thread.interrupted ()) in
@@ -382,38 +367,38 @@ let search ?(pool = default_pool) ?(chunk_size = -1) predicate a =
     futures := future :: !futures;
     low := !low + sz
   done;
-  wait_successful_completion_exn !futures
+  wait_successful_completion !futures
 
 let mem ?(pool = default_pool) ?(chunk_size = -1) x a =
   let res = search ~pool ~chunk_size (fun e -> e = x) a in
   match res with
   | Some _ -> true
-  | None -> false
+  | None   -> false
 
 let memq ?(pool = default_pool) ?(chunk_size = -1) x a =
   match search ~pool ~chunk_size (fun e -> e == x) a with
   | Some _ -> true
-  | None -> false
+  | None   -> false
 
 let exists ?(pool = default_pool) ?(chunk_size = -1) f a =
   match search ~pool ~chunk_size f a with
   | Some _ -> true
-  | None -> false
+  | None   -> false
 
 let for_all ?(pool = default_pool) ?(chunk_size = -1) f a =
   match search ~pool ~chunk_size (fun e -> not (f e)) a with
   | Some _ -> false
-  | None -> true
+  | None   -> true
 
 let find ?(pool = default_pool) ?(chunk_size = -1) f a =
   match search ~pool ~chunk_size f a with
   | Some x -> unsafe_get a x
-  | None -> raise Not_found
+  | None   -> raise Not_found
 
 let find_index ?(pool = default_pool) ?(chunk_size = -1) f a =
   match search ~pool ~chunk_size f a with
   | Some x -> x
-  | None -> raise Not_found
+  | None   -> raise Not_found
 
 let find_all ?(pool = default_pool) ?(chunk_size = -1) f a =
   fold_right ~pool ~chunk_size

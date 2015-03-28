@@ -56,12 +56,12 @@ val run : ?retries:int -> (('a ref -> 'a) -> ('a ref -> 'a -> unit) -> 'b) -> 'b
     transaction to be re-executed from the beginning, while any other
     exception will cause the transaction to be aborted.
 
-    Raises [Cancelled] if the transaction cannot be committed, and
-    retries have been exhausted.
-
     Raises the exception raised by the transaction, if different from
-    [Retry]. *)
+    [Retry].
+
+    @raise Cancelled if the transaction cannot be committed, and retries
+                     have been exhausted *)
 
 val run_read_only : ?retries:int -> (('a ref -> 'a) -> 'b) -> 'b
-(** Akin to [run], but with a smaller overhead due to the fact that the
+(** Akin to {!run}, but with a smaller overhead due to the fact that the
     transaction is guaranteed to only read values. *)

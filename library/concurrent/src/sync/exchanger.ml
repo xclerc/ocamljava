@@ -16,10 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'Exchanger
 
-external make : unit -> t =
-  "ocamljava_exchanger_make"
+type t = _'Exchanger java_instance
+
+let make () =
+  Java.make "Exchanger()" ()
 
 external exchange : t -> 'a -> 'a =
   "ocamljava_exchanger_exchange"

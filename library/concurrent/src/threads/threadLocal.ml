@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type 'a t
+type 'a t = _'ThreadLocal java_instance
 
 external make : 'a -> 'a t =
   "ocamljava_threadlocal_make"

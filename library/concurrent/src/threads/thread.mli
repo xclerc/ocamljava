@@ -20,143 +20,139 @@
 
 
 type state =
-  | New (** The thread has not been started. *)
-  | Runnable (** The thread is executing. *)
-  | Blocked (** The thread is blocked on a lock. *)
-  | Waiting (** The thread is waiting for another thread (with no timeout). *)
+  | New           (** The thread has not been started. *)
+  | Runnable      (** The thread is executing. *)
+  | Blocked       (** The thread is blocked on a lock. *)
+  | Waiting       (** The thread is waiting for another thread (with no timeout). *)
   | Timed_waiting (** The thread is waiting for another thread (with a timeout). *)
-  | Terminated (** The thread has terminated execution. *)
-(** The type of thread states. *)
+  | Terminated    (** The thread has terminated execution. *)
+(** The type of thread states; see {java java.lang.Thread.State}. *)
 
-val max_priority : int32
-(** The maximum priority for a thread. *)
+val max_priority : java_int
+(** The maximum priority for a thread; see
+    {java java.lang.Thread#MAX_PRIORITY}. *)
 
-val min_priority : int32
-(** The minimum priority for a thread. *)
+val min_priority : java_int
+(** The minimum priority for a thread; see
+    {java java.lang.Thread#MIN_PRIORITY}. *)
 
-val norm_priority : int32
-(** The normal ({i i. e. default}) priority for a thread. *)
+val norm_priority : java_int
+(** The normal ({i i. e. default}) priority for a thread; see
+    {java java.lang.Thread#NORM_PRIORITY}. *)
 
-type t
+type t = java'lang'Thread java_instance
 (** The type of threads. If a thread raises an exception escapes, it is
     written to the standard output and then discarded. *)
 
-external make : ThreadGroup.t option -> string option -> ('a -> unit) -> 'a -> t =
-  "ocamljava_thread_make"
+val make : ?group:ThreadGroup.t -> ?name:JavaString.t -> ('a -> unit) -> 'a -> t
 (** [make g n f x] returns a new thread in group [g] with name [n]. The
-    thread will execute [f x] when started. *)
+    thread will execute [f x] when started; see
+    {java java.lang.Thread#Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String)}. *)
 
-external current_thread : unit -> t =
-  "ocamljava_thread_current_thread"
-(** Returns the thread that is currently executing. *)
+val current_thread : unit -> t
+(** Returns the thread that is currently executing; see
+    {java java.lang.Thread#currentThread()}. *)
 
-external get_id : t -> int64 =
-  "ocamljava_thread_get_id"
+val get_id : t -> java_long
 (** Returns the thread identifier. The identifier is positive, and
     guaranteed to be unique while the thread is executing. The identifier
-    can be recycled when the thread has terminated its execution. *)
+    can be recycled when the thread has terminated its execution; see
+    {java java.lang.Thread#getId()}. *)
 
-external get_name : t -> string =
-  "ocamljava_thread_get_name"
-(** Returns the name of the thread. *)
+val get_name : t -> JavaString.t
+(** Returns the name of the thread; see
+    {java java.lang.Thread#getName()}. *)
 
-external get_priority : t -> string =
-  "ocamljava_thread_get_priority"
-(** Returns the priority of the thread. *)
+val get_priority : t -> java_int
+(** Returns the priority of the thread; see
+    {java java.lang.Thread#getPriority()}. *)
 
-external get_state : t -> state =
-  "ocamljava_thread_get_state"
-(** Returns the state of the thread. *)
+val get_state : t -> state
+(** Returns the state of the thread; see
+    {java java.lang.Thread#getState()}. *)
 
-external get_thread_group : t -> ThreadGroup.t option =
-  "ocamljava_thread_get_thread_group"
+val get_thread_group : t -> ThreadGroup.t
 (** Returns the group of the thread, [None] if the thread has terminated
-    its execution. *)
+    its execution; see {java java.lang.Thread#getThreadGroup()}. *)
 
-external interrupt : t -> unit =
-  "ocamljava_thread_interrupt"
-(** Interrupts the thread. *)
+val interrupt : t -> unit
+(** Interrupts the thread; see {java java.lang.Thread#interrupt()}. *)
 
-external interrupted : unit -> bool =
-  "ocamljava_thread_interrupted"
+val interrupted : unit -> bool
 (** Tests whether the current thread has been interrupted, and sets its
-    interrupted status to [false]. *)
+    interrupted status to [false]; see
+    {java java.lang.Thread#interrupted()}. *)
 
-external is_alive : t -> bool =
-  "ocamljava_thread_is_alive"
-(** Tests whether the thread has started and not terminated. *)
+val is_alive : t -> bool
+(** Tests whether the thread has started and not terminated; see
+    {java java.lang.Thread#isAlive()}. *)
 
-external is_daemon : t -> bool =
-  "ocamljava_thread_is_daemon"
-(** Tests whether the thread is a daemon one. *)
+val is_daemon : t -> bool
+(** Tests whether the thread is a daemon one; see
+    {java java.lang.Thread#isDaemon()}. *)
 
-external is_interrupted : t -> bool =
-  "ocamljava_thread_is_interrupted"
-(** Tests whether the thread has been interrupted. *)
+val is_interrupted : t -> bool
+(** Tests whether the thread has been interrupted; see
+    {java java.lang.Thread#isInterrupted()}. *)
 
-external join : t -> unit =
-  "ocamljava_thread_join"
-(** Waits for the termination of the passed thread.
+val join : t -> unit
+(** Waits for the termination of the passed thread; see
+    {java java.lang.Thread#currentThreadjoin()}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external join_time : t -> int64 -> unit =
-  "ocamljava_thread_join_time"
+val join_time : t -> java_long -> unit
 (** [join_time t m] is similar to [join t], except that the current
-    thread will at most wait for [m] milliseconds.
+    thread will at most wait for [m] milliseconds; see
+    {java java.lang.Thread#joint(long)}.
 
-    Raises [Invalid_argument] if [m] is invalid.
+    @raise Java_exception if [m] is invalid
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external join_time_nanos : t -> int64 -> int32 -> unit =
-  "ocamljava_thread_join_time_nanos"
+val join_time_nanos : t -> java_long -> java_int -> unit
 (** [join_time t m n] is similar to [join t], except that the current
-    thread will at most wait for [m] milliseconds plus [n] nanoseconds.
+    thread will at most wait for [m] milliseconds plus [n] nanoseconds; see
+    {java java.lang.Thread#join(long, int)}.
 
-    Raises [Invalid_argument] if [m] or [n] is invalid.
+    @raise Java_exception if [m] or [n] is invalid
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+val set_daemon : t -> bool -> unit
+(** Changes the daemon status of the thread; see
+    {java java.lang.Thread#setDaemon(boolean)}.
 
-external set_daemon : t -> bool -> unit =
-  "ocamljava_thread_set_daemon"
-(** Changes the daemon status of the thread.
+    @raise Java_exception if the thread has already been started *)
 
-    Raises [Invalid_argument] if the thread has already been started. *)
+val set_name : t -> JavaString.t -> unit
+(** Changes the name of the thread; see
+    {java java.lang.Thread#setName(java.lang.String)}. *)
 
-external set_name : t -> string -> unit =
-  "ocamljava_thread_set_name"
-(** Changes the name of the thread. *)
+val set_priority : t -> java_int -> unit
+(** Changes the priority of the thread; see
+    {java java.lang.Thread#setPriority(int)}.
 
-external set_priority : t -> int32 -> unit =
-  "ocamljava_thread_set_priority"
-(** Changes the priority of the thread.
+    @raise Java_exception if the priority is invalid *)
 
-    Raises [Invalid_argument] if the priority is invalid. *)
+val sleep : java_long -> unit
+(** [sleep m] waits for [m] milliseconds; see
+    {java java.lang.Thread#sleep(long)}.
 
-external sleep : int64 -> unit =
-  "ocamljava_thread_sleep"
-(** [sleep m] waits for [m] milliseconds.
+    @raise Java_exception if [m] is invalid
+    @raise Java_exception if the thread is interrupted *)
 
-    Raises [Invalid_argument] if [m] is invalid.
+val sleep_nanos : java_long -> java_int -> unit
+(** [sleep m n] waits for [m] milliseconds plus [n] nanoseconds; see
+    {java java.lang.Thread#sleep(long, int)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if [m] or [n] is invalid
+    @raise Java_exception if the thread is interrupted *)
 
-external sleep_nanos : int64 -> int32 -> unit =
-  "ocamljava_thread_sleep_nanos"
-(** [sleep m n] waits for [m] milliseconds plus [n] nanoseconds.
+val start : t -> unit
+(** Starts the execution of the thread; see
+    {java java.lang.Thread#start()}.
 
-    Raises [Invalid_argument] if [m] or [n] is invalid.
+    @raise Java_exception if the thread has already been started *)
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
-
-external start : t -> unit =
-  "ocamljava_thread_start"
-(** Starts the execution of the thread.
-
-    Raises [Invalid_argument] if the thread has already been started. *)
-
-external yield : unit -> unit =
-  "ocamljava_thread_yield"
+val yield : unit -> unit
 (** Indicates that the current thread wants to yield its use of a
-    processor. *)
+    processor; see {java java.lang.Thread#yield()}. *)

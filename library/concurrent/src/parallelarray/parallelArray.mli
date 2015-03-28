@@ -35,8 +35,8 @@
 (** {6 Thread pool} *)
 
 val default_pool : ThreadPoolExecutor.t
-(** The default pool used for parallel computations, initialized with a
-    size of [Runtime.available_processors]. *)
+(** The default pool used for parallel computations, initialized with the
+    number of available (logical) processors. *)
 
 val shutdown_now : unit -> unit
 (** Shutdowns [default_pool]. *)
@@ -46,78 +46,74 @@ val shutdown_now : unit -> unit
 
 external length : 'a array -> int =
   "%array_length"
-(** Synonym for [Array.length]. *)
+(** Synonym for {!Array.length}. *)
 
 external get : 'a array -> int -> 'a =
   "%array_safe_get"
-(** Synonym for [Array.get]. *)
+(** Synonym for {!Array.get}. *)
 
 external set : 'a array -> int -> 'a -> unit =
   "%array_safe_set"
-(** Synonym for [Array.set]. *)
+(** Synonym for {!Array.set}. *)
 
 external make : int -> 'a -> 'a array =
   "caml_make_vect"
-(** Synonym for [Array.make]. *)
+(** Synonym for {!Array.make}. *)
 
 external create : int -> 'a -> 'a array =
   "caml_make_vect"
-(** Synonym for [Array.create]. *)
+(** Synonym for {!Array.create}. *)
 
 val make_matrix : int -> int -> 'a -> 'a array array
-(** Synonym for [Array.make_matrix]. *)
+(** Synonym for {!Array.make_matrix}. *)
 
 val create_matrix : int -> int -> 'a -> 'a array array
-(** Synonym for [Array.create_matrix]. *)
+(** Synonym for {!Array.create_matrix}. *)
 
 val append : 'a array -> 'a array -> 'a array
-(** Synonym for [Array.append]. *)
+(** Synonym for {!Array.append}. *)
 
 val concat : 'a array list -> 'a array
-(** Synonym for [Array.concat]. *)
+(** Synonym for {!Array.concat}. *)
 
 val sub : 'a array -> int -> int -> 'a array
-(** Synonym for [Array.sub]. *)
+(** Synonym for {!Array.sub}. *)
 
 val copy : 'a array -> 'a array
-(** Synonym for [Array.copy]. *)
+(** Synonym for {!Array.copy}. *)
 
 val fill : 'a array -> int -> int -> 'a -> unit
-(** Synonym for [Array.fill]. *)
+(** Synonym for {!Array.fill}. *)
 
 val blit : 'a array -> int -> 'a array -> int -> int -> unit
-(** Synonym for [Array.blit]. *)
+(** Synonym for {!Array.blit}. *)
 
 val to_list : 'a array -> 'a list
-(** Synonym for [Array.to_list]. *)
+(** Synonym for {!Array.to_list}. *)
 
 val of_list : 'a list -> 'a array
-(** Synonym for [Array.of_list]. *)
+(** Synonym for {!Array.of_list}. *)
 
 
 (** {6 Parallel operations} *)
 
 val init : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> int -> (int -> 'a) -> 'a array
-(** Similar to [Array.init], except that computations are done in
+(** Similar to {!Array.init}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
 
-    Raise [Invalid_argument] if passed size is negative or above
-    [Sys.max_array_length].
-
-    Raises [Runtime.Raised] if the passed function raises an exception. *)
+    @raise Invalid_argument if passed size is negative or above
+                            [Sys.max_array_length] *)
 
 val iter : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> unit) -> 'a array -> unit
-(** Similar to [Array.iter], except that computations are done in
+(** Similar to {!Array.iter}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread.
-
-    Raises [Runtime.Raised] if the passed function raises an exception. *)
+    to be allocated to a thread. *)
 
 val map : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'b) -> 'a array -> 'b array
-(** Similar to [Array.map], except that computations are done in
+(** Similar to {!Array.map}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
@@ -125,52 +121,42 @@ val map : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'b) -> 'a arra
     Raises [Runtime.Raised] if the passed function raises an exception. *)
 
 val iteri : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> (int -> 'a -> unit) -> 'a array -> unit
-(** Similar to [Array.iteri], except that computations are done in
+(** Similar to {!Array.iteri}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread.
-
-    Raises [Runtime.Raised] if the passed function raises an exception. *)
+    to be allocated to a thread. *)
 
 val mapi : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> (int -> 'a -> 'b) -> 'a array -> 'b array
-(** Similar to [Array.mapi], except that computations are done in
+(** Similar to {!Array.mapi}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
-    to be allocated to a thread.
-
-    Raises [Runtime.Raised] if the passed function raises an exception. *)
+    to be allocated to a thread. *)
 
 val fold_left : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'b -> 'a) -> ('a -> 'a -> 'a) -> 'a -> 'b array -> 'a
-(** Similar to [Array.fold_left], except that computations are done in
+(** Similar to {!Array.fold_left}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
 
     {i This version uses an additional function in order to be able to
-    "merge" the computations done on sub arrrays.}
-
-    Raises [Runtime.Raised] if any of the passed functions raises an exception. *)
+    "merge" the computations done on sub arrrays.} *)
 
 val fold_right : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('b -> 'a -> 'a) -> ('a -> 'a -> 'a) -> 'b array -> 'a -> 'a
-(** Similar to [Array.fold_right], except that computations are done in
+(** Similar to {!Array.fold_right}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
 
     {i This version uses an additional function in order to be able to
-    "merge" the computations done on sub arrrays.}
-
-    Raises [Runtime.Raised] if any of the passed functions raises an exception. *)
+    "merge" the computations done on sub arrrays.} *)
 
 val sort : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'a -> int) -> 'a array -> unit
-(** Similar to [Array.sort], except that computations are done in
+(** Similar to {!Array.sort}, except that computations are done in
     parallel; [pool] indicates the thread pool to use (defaulting to
     [default_pool]), while [chunk_size] indicates the size of each chunk
     to be allocated to a thread.
 
-    The current implementation has a {i O(n)} space complexity.
-
-    Raises [Runtime.Raised] if the passed function raises an exception. *)
+    The current implementation has a {i O(n)} space complexity. *)
 
 val stable_sort : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> 'a -> int) -> 'a array -> unit
 (** Synonym for {!ParallelArray.sort}. *)
@@ -216,7 +202,7 @@ val find : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> bool) -> 'a a
     the one with the lowest index is returned.} *)
 
 val find_index : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> bool) -> 'a array -> int
-(** Similar to [find], except that the index is returned. *)
+(** Similar to {!find}, except that the index is returned. *)
 
 val find_all : ?pool:ThreadPoolExecutor.t -> ?chunk_size:int -> ('a -> bool) -> 'a array -> 'a list
 (** [find_all ~pool ~chunk_size f a] returns all the elements of [a] that

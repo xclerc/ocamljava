@@ -34,43 +34,43 @@ module type S = sig
 end
 
 module Make (C : Computation) = struct
+
   type input = C.input
+
   type output = C.output
+
   module KeyMap = Map.Make (struct type t = C.key let compare = C.compare_keys end)
+
   let compute pool inputs =
-    try
-      let n = Int32.to_int (ThreadPoolExecutor.get_maximum_pool_size pool) in
-      let n = max 1 n in
-      let service = ExecutorCompletionService.make pool in
-      let init = Stream.npeek n inputs in
-      let futures =
-        List.map
-          (fun x -> ExecutorCompletionService.submit service C.map x)
-          init in
-      let running = ref (List.length futures) in
-      for _i = 1 to !running do
-        Stream.junk inputs;
-      done;
-      let map = ref KeyMap.empty in
-      while !running > 0 do
-        let finished = ExecutorCompletionService.take service in
-        let kv_list : (C.key * C.value) list = Future.get finished in
-        List.iter
-          (fun (k, v) ->
-            try
-              let old = KeyMap.find k !map in
-              map := KeyMap.add k (C.combine k old v) !map
-            with Not_found ->
-              map := KeyMap.add k v !map)
-          kv_list;
-        match Stream.peek inputs with
-        | Some i ->
-            Stream.junk inputs;
-            ignore (ExecutorCompletionService.submit service C.map i)
-        | None -> decr running
-      done;
-      KeyMap.fold C.reduce !map
-    with
-    | (Runtime.Raised _) as rr -> raise rr
-    | e -> raise (Runtime.Raised e)
+    let n = max 1 (Int32.to_int (ThreadPoolExecutor.get_maximum_pool_size pool)) in
+    let service = ExecutorCompletionService.make pool in
+    let init = Stream.npeek n inputs in
+    let futures =
+      List.map
+        (fun x -> ExecutorCompletionService.submit service C.map x)
+        init in
+    let running = ref (List.length futures) in
+    for _i = 1 to !running do
+      Stream.junk inputs;
+    done;
+    let map = ref KeyMap.empty in
+    while !running > 0 do
+      let finished = ExecutorCompletionService.take service in
+      let kv_list : (C.key * C.value) list = Future.get finished in
+      List.iter
+        (fun (k, v) ->
+          try
+            let old = KeyMap.find k !map in
+            map := KeyMap.add k (C.combine k old v) !map
+          with Not_found ->
+            map := KeyMap.add k v !map)
+        kv_list;
+      match Stream.peek inputs with
+      | Some i ->
+          Stream.junk inputs;
+          ignore (ExecutorCompletionService.submit service C.map i)
+      | None -> decr running
+    done;
+    KeyMap.fold C.reduce !map
+
 end
