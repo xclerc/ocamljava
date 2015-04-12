@@ -139,7 +139,13 @@ module Options = Java_args.Make_comp_options (struct
   let _java_extensions = set java_extensions
   let _java_generics = set java_generics
   let _java_internal_types = set java_internal_types
-  let _java_package s = java_package := s
+  let _java_package s =
+    try
+      let open BaristaLibrary in
+      ignore (Name.make_for_package_from_external (UTF8.of_string s));
+      java_package := s
+    with _ ->
+      raise(Arg.Bad("invalid package name " ^ s))
   let _javac s = c_compiler := Some s
   let _jopt s = all_ccopts := s :: !all_ccopts
   let _labels = clear classic
