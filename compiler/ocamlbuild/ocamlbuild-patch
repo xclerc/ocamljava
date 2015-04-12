@@ -103,7 +103,7 @@ diff -aur original/findlib.ml patched/findlib.ml
    let flags = [] in
    (* includes *)
    let flags =
-@@ -161,11 +185,12 @@
+@@ -161,9 +185,10 @@
        add_atom (P l) (add_atom (A "-I") acc)
      end flags (SSet.elements locations)
    in
@@ -115,20 +115,13 @@ diff -aur original/findlib.ml patched/findlib.ml
 +let compile_flags_native = compile_flags false
 +let compile_flags_java = compile_flags true
  
--let link_flags f l =
-+let link_flags _javaXXX f l =
+ let link_flags f l =
    let pkgs = topological_closure l in
-   let locations = List.fold_left begin fun acc p ->
-     SSet.add p.location acc
-@@ -190,5 +215,6 @@
-     end flags pkgs
-   in
+@@ -192,3 +217,4 @@
    S (List.rev flags)
--let link_flags_byte = link_flags (fun x -> x.archives_byte)
--let link_flags_native = link_flags (fun x -> x.archives_native)
-+let link_flags_byte = link_flags false (fun x -> x.archives_byte)
-+let link_flags_native = link_flags false (fun x -> x.archives_native)
-+let link_flags_java = link_flags true (fun x -> x.archives_java)
+ let link_flags_byte = link_flags (fun x -> x.archives_byte)
+ let link_flags_native = link_flags (fun x -> x.archives_native)
++let link_flags_java = link_flags (fun x -> x.archives_java)
 diff -aur original/main.ml patched/main.ml
 --- original/main.ml	2014-04-13 09:05:24.000000000 +0200
 +++ patched/main.ml	2014-04-13 09:05:24.000000000 +0200
