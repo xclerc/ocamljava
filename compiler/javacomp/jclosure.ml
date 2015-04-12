@@ -1118,7 +1118,12 @@ and close_java_primitive fenv cenv pname args =
       let get = pname = "java field get" in
       let args = close_list_approx fenv cenv args in
       let (id, args, _approx) = split_args args in
-      begin match Jtypes.get_field_get_info id with
+      let field_info =
+        if get then
+          Jtypes.get_field_get_info id
+        else
+          Jtypes.get_field_set_info id in
+      begin match field_info with
         { Jtypes.field_class; field_field } ->
           let class_name = convert_class_name field_class.ClassDefinition.name in
           let field_name = convert_field_name field_field.Field.name in
