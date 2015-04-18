@@ -3650,7 +3650,7 @@ diff -aur patched/utils/warnings.ml original/utils/warnings.ml
 -  | Java_ignore_on_void -> 1001
  ;;
  
--let last_warning_number = 1000
+-let last_warning_number = 1001
 +let last_warning_number = 46
  (* Must be the max number returned by the [number] function. *)
  
@@ -3664,11 +3664,12 @@ diff -aur patched/utils/warnings.ml original/utils/warnings.ml
  ;;
  
  let nerrors = ref 0;;
-@@ -445,7 +439,6 @@
+@@ -445,8 +439,6 @@
     43, "Nonoptional label applied as optional.";
     44, "Open statement shadows an already defined identifier.";
     45, "Open statement shadows an already defined label or constructor.";
 -   1000, "Deprecated Java element.";
+-   1001, "Ignored void return.";
    ]
  ;;
  
