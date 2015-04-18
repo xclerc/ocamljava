@@ -512,7 +512,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
      with Findlib.Findlib_error e ->
        Findlib.report_error e
    end
-@@ -555,41 +490,6 @@
+@@ -555,48 +490,6 @@
      (fun param -> S [A "-inline"; A param]);
    pflag ["ocaml"; "compile"] "pp"
      (fun param -> S [A "-pp"; A param]);
@@ -524,7 +524,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
 -    (fun param -> S [A "-for-pack"; A param]);
 -  pflag ["ocaml"; "java"; "compile"] "inline"
 -    (fun param -> S [A "-inline"; A param]);
--  let java_pflag interf compile link pack name =
+-  let java_pflag interf compile link pack doc name =
 -    if interf then
 -      pflag ["ocaml"; "interf"; "compile"; "java-extensions"] name
 -        (fun param -> S [A ("-" ^ name); A param]);
@@ -536,25 +536,32 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
 -        (fun param -> S [A ("-" ^ name); A param]);
 -    if pack then
 -      pflag ["ocaml"; "java"; "pack"] name
--        (fun param -> S [A ("-" ^ name); A param]) in
--  java_pflag false false true false "additional-class";
--  java_pflag false false true false "additional-file";
--  java_pflag false false true false "additional-jar";
--  java_pflag false false true false "additional-jar-ref";
--  java_pflag false false true false "applet";
--  java_pflag true true true false "classpath";
--  java_pflag true true true false "cp";
--  java_pflag false true true true "java-package";
--  java_pflag false true true false "javac";
--  java_pflag false true true false "jopt";
--  java_pflag false true true false "provider";
--  java_pflag false false true false "runtime-parameter";
--  java_pflag false true false false "servlet";
--  java_pflag false false true false "war";
+-        (fun param -> S [A ("-" ^ name); A param]);
+-    if doc then begin
+-      pflag ["ocaml"; "doc"] name
+-        (fun param -> S [A ("-" ^ name); A param]);
+-      pflag ["extension:docdir"] name
+-        (fun param -> S [A ("-" ^ name); A param])
+-    end in
+-  (*         intrf comp  link  pack  doc  *)
+-  java_pflag false false true  false false "additional-class";
+-  java_pflag false false true  false false "additional-file";
+-  java_pflag false false true  false false "additional-jar";
+-  java_pflag false false true  false false "additional-jar-ref";
+-  java_pflag false false true  false false "applet";
+-  java_pflag true  true  true  false true  "classpath";
+-  java_pflag true  true  true  false true  "cp";
+-  java_pflag false true  true  true  false "java-package";
+-  java_pflag false true  true  false false "javac";
+-  java_pflag false true  true  false false "jopt";
+-  java_pflag false true  true  false false "provider";
+-  java_pflag false false true  false false "runtime-parameter";
+-  java_pflag false true  false false false "servlet";
+-  java_pflag false false true  false false "war";
    pflag ["ocaml"; "ocamldep"] "pp"
      (fun param -> S [A "-pp"; A param]);
    pflag ["ocaml"; "doc"] "pp"
-@@ -632,9 +532,6 @@
+@@ -639,9 +532,6 @@
  ocaml_lib ~extern:true ~dir:"+ocamldoc" "ocamldoc";;
  ocaml_lib ~extern:true ~dir:"+ocamlbuild" ~tag_name:"use_ocamlbuild" "ocamlbuildlib";;
  
@@ -564,7 +571,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4" "camlp4lib";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_old_camlp4" "camlp4";;
  ocaml_lib ~extern:true ~dir:"+camlp4" ~tag_name:"use_camlp4_full" "camlp4fulllib";;
-@@ -644,7 +541,6 @@
+@@ -651,7 +541,6 @@
          A"-I"; A"+camlp4/Camlp4Filters"]);;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "byte"] (A"+camlp4/Camlp4Bin.cmo");;
  flag ["ocaml"; "use_camlp4_bin"; "link"; "native"] (A"+camlp4/Camlp4Bin.cmx");;
@@ -572,7 +579,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
  
  flag ["ocaml"; "debug"; "compile"; "byte"] (A "-g");;
  flag ["ocaml"; "debug"; "link"; "byte"; "program"] (A "-g");;
-@@ -678,7 +574,6 @@
+@@ -685,7 +574,6 @@
    flag ["ocaml"; "doc"; "thread"] (S[A"-I"; A"+threads"]);
    flag ["ocaml"; "link"; "thread"; "native"; "program"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "program"] (A "threads.cma");
@@ -580,7 +587,7 @@ diff -aur patched/ocaml_specific.ml original/ocaml_specific.ml
    flag ["ocaml"; "link"; "thread"; "native"; "toplevel"] (A "threads.cmxa");
    flag ["ocaml"; "link"; "thread"; "byte"; "toplevel"] (A "threads.cma");
  end;;
-@@ -710,29 +605,8 @@
+@@ -717,29 +605,8 @@
  flag ["ocaml"; "doc"; "docfile"; "extension:tex"] (A"-latex");;
  flag ["ocaml"; "doc"; "docfile"; "extension:ltx"] (A"-latex");;
  flag ["ocaml"; "doc"; "docfile"; "extension:texi"] (A"-texi");;
