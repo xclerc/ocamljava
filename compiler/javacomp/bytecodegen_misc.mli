@@ -31,6 +31,9 @@ module State : sig
   val compile_line_numbers : unit -> (BaristaLibrary.Utils.u2 * BaristaLibrary.Utils.u2) list
   val add_catch : int -> int ref -> unit
   val get_catch_offset : int -> int ref
+  val incr_tail_calls : unit -> unit
+  val incr_non_tail_calls : unit -> unit
+  val compile_method_infos : unit -> BaristaLibrary.Annotation.t
 end
 
 val repeat_parameters : int -> BaristaLibrary.Descriptor.for_field list

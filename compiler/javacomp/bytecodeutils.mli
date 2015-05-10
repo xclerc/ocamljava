@@ -59,6 +59,7 @@ val class_LongValue : BaristaLibrary.Name.for_class
 val class_Map : BaristaLibrary.Name.for_class
 val class_Math : BaristaLibrary.Name.for_class
 val class_MethodHandle : BaristaLibrary.Name.for_class
+val class_MethodInfos : BaristaLibrary.Name.for_class
 val class_MethodMapping : BaristaLibrary.Name.for_class
 val class_NativeIntValue : BaristaLibrary.Name.for_class
 val class_Object : BaristaLibrary.Name.for_class

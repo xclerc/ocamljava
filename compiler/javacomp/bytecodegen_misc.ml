@@ -40,6 +40,10 @@ module State = struct
 
   let current_catches : (int, int ref) Hashtbl.t = Hashtbl.create 17
 
+  let tail_calls = ref 0
+
+  let non_tail_calls = ref 0
+
   let reset_state ~file ~clas ~func =
     curr_file := file;
     curr_class := clas;
@@ -48,7 +52,9 @@ module State = struct
     table := [];
     line_number_table := [];
     prev_ofs := 0;
-    Hashtbl.clear current_catches
+    Hashtbl.clear current_catches;
+    tail_calls := 0;
+    non_tail_calls := 0
 
   let current_file () =
     !curr_file
@@ -92,6 +98,17 @@ module State = struct
 
   let get_catch_offset id =
     Hashtbl.find current_catches id
+
+  let incr_tail_calls () =
+    incr tail_calls
+
+  let incr_non_tail_calls () =
+    incr non_tail_calls
+
+  let compile_method_infos () =
+    class_MethodInfos,
+    [ UTF8.of_string "tailCalls", Annotation.Int_value (Int32.of_int !tail_calls) ;
+      UTF8.of_string "nonTailCalls", Annotation.Int_value (Int32.of_int !non_tail_calls) ]
 
 end
 

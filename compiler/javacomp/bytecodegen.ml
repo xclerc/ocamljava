@@ -189,7 +189,9 @@ let rec compile_expression is_tail ofs curr_expr =
       kstore k idx
   | Mcall ({ Jlambda.fl_class; fl_method }, args, arg_kinds, ret_kind, dbg) ->
       State.add_debug_info ofs dbg;
-      if is_tail && (State.is_same_function fl_class fl_method) then
+      let is_recursive = State.is_same_function fl_class fl_method in
+      if is_tail && is_recursive then begin
+        State.incr_tail_calls ();
         let args_instrs, args_sz =
           with_size (compile_expression_list_to_locals ofs args arg_kinds) in
         let dest = ~-(ofs + args_sz) in
@@ -199,7 +201,8 @@ let rec compile_expression is_tail ofs curr_expr =
               Instruction.GOTO (Utils.s2 dest)
             else
               Instruction.GOTO_W (Utils.s4 (Int32.of_int dest)) ] ]
-      else begin
+      end else begin
+        if is_recursive then State.incr_non_tail_calls ();
         let type_of_kind = function
           | Boxed_value            -> `Class class_Value
           | Tagged_int             -> `Long
@@ -1221,7 +1224,7 @@ let compile_function ppf fd =
         ControlFlow.graph_of_instructions
           ~line_mapper:mapper
           instrs
-          exception_table in
+          (ControlFlow.sort_exception_table exception_table) in
       let evaluation = PartialEvaluation.make_of_parameters false parameters in
       graph
       |> Peephole.optimize_graph ~rules:peephole_rules
@@ -1275,13 +1278,15 @@ let compile_function ppf fd =
              parameters) ]
     else
       []) in
+  let annots = [ State.compile_method_infos () ] in
   let code =
     Attribute.({ max_stack; max_locals; code; exception_table; attributes }) in
   Method.(Regular { flags = [`Public; `Static];
                     name = make_method fd.fun_name;
                     descriptor = (parameters, return_type);
                     attributes = [`Code code;
-                                  `Exceptions [class_FailException]]; })
+                                  `Exceptions [class_FailException];
+                                  `RuntimeInvisibleAnnotations annots]; })
 
 let compile_surrogate fd =
   let _, call_parameters, max_stack, instrs =
