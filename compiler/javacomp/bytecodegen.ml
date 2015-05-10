@@ -1330,46 +1330,62 @@ let compile_surrogate fd =
                     attributes = [`Code code;
                                   `Exceptions [class_FailException] ]; })
 
-let compile_constants ppf f =
-  let consts_code = f () in
-  if (size consts_code) < 65536 then begin
-    let instrs = Instrtree.flatten consts_code in
-    if !Jclflags.dump_bytecode then
-      Printbytecode.bytecode ppf "bytecode for constants:" instrs [];
-    let code, _, _, graph =
-      ControlFlow.graph_of_instructions instrs []
-      |> Peephole.optimize_graph ~rules:peephole_rules
-      |> Code.optimize_jumps
-      |> Code.remove_dead_code
-      |> Code.flatten_graph in
-    let init_state =
-      StackState.make_of_parameters None [] in
-    let current_class = make_class (State.current_class ()) in
-    let max_stack, max_locals, stack_map_frame =
-      Code.compute_stack_infos current_class (Jutils.get_unifier ()) graph init_state in
-    let attributes =
-      if stack_map_frame <> [] then
-        [ `StackMapTable stack_map_frame ]
-      else
-        [] in
-    let code =
-      Attribute.({ max_stack; max_locals; code; exception_table = []; attributes }) in
-    let const_class =
-      Bytecodegen_constants.const_class_of_curr_class (State.current_class ()) in
-    Method.(Regular { flags = [`Public; `Static];
-                      name = make_method "createConstants";
-                      descriptor = ([], `Class const_class);
-                      attributes = [`Code code] })
-  end else
-    raise Not_found
+exception Constants_code_too_big
 
-let compile_constants_to_method ppf =
+let compile_constants ppf f =
+  let functions = f () in
+  List.map
+    (fun (is_auxiliary, consts_name, consts_code) ->
+      if (size consts_code) < 65536 then begin
+        let const_class =
+          Bytecodegen_constants.const_class_of_curr_class (State.current_class ()) in
+        let instrs = Instrtree.flatten consts_code in
+        if !Jclflags.dump_bytecode then
+          Printbytecode.bytecode ppf "bytecode for constants:" instrs [];
+        let code, _, _, graph =
+          ControlFlow.graph_of_instructions instrs []
+          |> Peephole.optimize_graph ~rules:peephole_rules
+          |> Code.optimize_jumps
+          |> Code.remove_dead_code
+          |> Code.flatten_graph in
+        let init_state =
+          StackState.make_of_parameters
+            None
+            (if is_auxiliary then [`Class const_class; `Class class_Value] else []) in
+        let current_class = make_class (State.current_class ()) in
+        let max_stack, max_locals, stack_map_frame =
+          Code.compute_stack_infos current_class (Jutils.get_unifier ()) graph init_state in
+        let attributes =
+          if stack_map_frame <> [] then
+            [ `StackMapTable stack_map_frame ]
+          else
+            [] in
+        let code =
+          Attribute.({ max_stack; max_locals; code; exception_table = []; attributes }) in
+        let desc =
+          if is_auxiliary then
+            ([`Class const_class; `Class class_Value], `Void)
+          else
+            ([], `Class const_class) in
+        Method.(Regular { flags = [`Public; `Static];
+                          name = make_method consts_name;
+                          descriptor = desc;
+                          attributes = [`Code code] })
+      end else
+        raise Constants_code_too_big)
+    functions
+
+let compile_constants_to_methods ppf =
   try
     compile_constants ppf Bytecodegen_constants.init_class_fields_from_code,
     false
-  with _ ->
-    compile_constants ppf Bytecodegen_constants.init_class_fields_from_load,
-    true
+  with Constants_code_too_big ->
+    (try
+      compile_constants ppf Bytecodegen_constants.init_class_fields_from_load,
+      true
+    with Constants_code_too_big ->
+      compile_constants ppf Bytecodegen_constants.init_class_fields_from_split_load,
+      true)
 
 let compile_get_global_method classname =
   let classname = make_class classname in

@@ -53,9 +53,13 @@ val compile_class : bool -> (string * BaristaLibrary.Bytes.t) list
     list of (entry path, entry contents) couples. The parameter indicates
     whether marshalled data for constants is needed. *)
 
-val init_class_fields_from_code : unit -> Instrtree.t
+val init_class_fields_from_code : unit -> (bool * string * Instrtree.t) list
 (** Returns the instructions initializing fields. *)
 
-val init_class_fields_from_load : unit -> Instrtree.t
+val init_class_fields_from_load : unit -> (bool * string * Instrtree.t) list
 (** Returns the instructions initializing fields from a marshalled
     entry. *)
+
+val init_class_fields_from_split_load : unit -> (bool * string * Instrtree.t) list
+(** Returns the instructions initializing fields from a marshalled
+    entry, splitting the code into several methods. *)

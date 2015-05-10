@@ -180,11 +180,11 @@ let compile_implementation prefixname ppf (size, lam) =
           else
             [ impl ])
     |> List.flatten in
-  let createConstants_method, needs_marshalled_data =
-    Bytecodegen.compile_constants_to_method ppf in
+  let createConstants_methods, needs_marshalled_data =
+    Bytecodegen.compile_constants_to_methods ppf in
   let static_block, fields = Bytecodegen.compile_fields ppf in
   let get_global_method = Bytecodegen.compile_get_global_method global_class in
-  let methods = static_block :: createConstants_method :: get_global_method :: methods in
+  let methods = static_block :: get_global_method :: (createConstants_methods @ methods) in
   let annotations = Macrogen_global.compile_global_uses () in
   let class_data = Bytecodegen.compile_class fields methods annotations in
   let global_class_data = Bytecodegen_global.compile_class () in

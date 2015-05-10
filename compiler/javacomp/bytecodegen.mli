@@ -35,7 +35,7 @@ val compile_class : BaristaLibrary.Field.t list -> BaristaLibrary.Method.t list 
 (** Builds a class from environment and passed lists of fields and
     methods. Returns the compiled class as an array of bytes. *)
 
-val compile_constants_to_method : Format.formatter -> BaristaLibrary.Method.t * bool
+val compile_constants_to_methods : Format.formatter -> BaristaLibrary.Method.t list * bool
 (** Compiles the constants, returning the constants as a method. *)
 
 val compile_get_global_method : string -> BaristaLibrary.Method.t

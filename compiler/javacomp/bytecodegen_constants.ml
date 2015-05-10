@@ -325,16 +325,18 @@ let init_class_fields_from_code () =
               Instrtree.leaf [ Instruction.PUTFIELD (const_class,
                                                      field_name,
                                                      `Class Bytecodeutils.class_Value) ] ]) in
-  Instrtree.node
-    [ Instrtree.leaf [ Instruction.NEW const_class ;
-                       Instruction.DUP ;
-                       Instruction.INVOKESPECIAL (const_class,
-                                                  Bytecodeutils.make_method "<init>",
-                                                  ([], `Void)) ;
-                       Instruction.ASTORE_0 ] ;
-      Instrtree.node l ;
-      Instrtree.leaf [ Instruction.ALOAD_0 ;
-                       Instruction.ARETURN ] ]
+  [ false,
+    "createConstants",
+    Instrtree.node
+      [ Instrtree.leaf [ Instruction.NEW const_class ;
+                         Instruction.DUP ;
+                         Instruction.INVOKESPECIAL (const_class,
+                                                    Bytecodeutils.make_method "<init>",
+                                                    ([], `Void)) ;
+                         Instruction.ASTORE_0 ] ;
+        Instrtree.node l ;
+        Instrtree.leaf [ Instruction.ALOAD_0 ;
+                         Instruction.ARETURN ] ] ]
 
 let init_class_fields_from_load () =
   let const_class = const_class_of_curr_class (State.current_class ()) in
@@ -366,7 +368,93 @@ let init_class_fields_from_load () =
                                                      `Class Bytecodeutils.class_Value) ] ]) in
   let suffix_intrs = Instrtree.leaf [ Instruction.ALOAD_0 ;
                                       Instruction.ARETURN ] in
-  Instrtree.node
-    [ prefix_instrs ;
-      Instrtree.node instrs ;
-      suffix_intrs ]
+  [ false,
+    "createConstants",
+    Instrtree.node
+      [ prefix_instrs ;
+        Instrtree.node instrs ;
+        suffix_intrs ] ]
+
+let split_list n l =
+  let rec take acc n = function
+    | (hd :: tl) as l ->
+        if n <= 0 then
+          List.rev acc, l
+        else
+          take (hd :: acc) (pred n) tl
+    | [] -> List.rev acc, [] in
+  let rec iter idx acc n = function
+    | (_ :: _) as l ->
+        let l1, l2 = take [] n l in
+        iter (idx + List.length l1) ((idx, l1) :: acc) n l2
+    | [] -> List.rev acc in
+  iter 0 [] n l
+
+let init_class_fields_from_split_load_n n =
+  let const_class = const_class_of_curr_class (State.current_class ()) in
+  let curr_class = Bytecodeutils.make_class (State.current_class ()) in
+  let prefix_instrs =
+    Instrtree.node
+      [ Instrtree.leaf [ Instruction.NEW const_class ;
+                         Instruction.DUP ;
+                         Instruction.INVOKESPECIAL (const_class,
+                                                    Bytecodeutils.make_method "<init>",
+                                                    ([], `Void)) ;
+                         Instruction.ASTORE_0 ] ;
+        Instrtree.leaf [ Instruction.LDC_W (`Class_or_interface curr_class) ] ;
+        Bytecodeutils.meth_loadConstants ;
+        Instrtree.leaf [ Instruction.ASTORE_1 ] ] in
+  let len = List.length !structured_constants in
+  let parts = split_list (succ (len / n)) (List.rev !structured_constants) in
+  let auxiliary_methods =
+    List.mapi
+      (fun meth_idx (base_idx, struct_consts) ->
+        let instrs =
+          List.mapi
+            (fun const_idx _ ->
+              let const_idx = const_idx + base_idx in
+              let field_name = field_name_of_index const_idx in
+              Instrtree.node
+                [ Instrtree.leaf [ Instruction.ALOAD_0 ;
+                                   Instruction.ALOAD_1 ] ;
+                  Bytecodeutils.push_int64 (Int64.of_int const_idx) ;
+                  Bytecodeutils.meth_get ;
+                  Instrtree.leaf [ Instruction.PUTFIELD (const_class,
+                                                         field_name,
+                                                         `Class Bytecodeutils.class_Value) ] ])
+            struct_consts in
+        true,
+        "createConstants" ^ string_of_int meth_idx,
+        Instrtree.node
+          [ Instrtree.node instrs ;
+            Instrtree.leaf [ Instruction.RETURN ] ])
+      parts in
+  let instrs =
+    List.mapi
+      (fun idx _ ->
+        Instrtree.leaf
+          [ Instruction.ALOAD_0 ;
+            Instruction.ALOAD_1 ;
+            Instruction.INVOKESTATIC
+              (curr_class,
+               Bytecodeutils.make_method ("createConstants" ^ string_of_int idx),
+               ([`Class const_class; `Class Bytecodeutils.class_Value], `Void)) ])
+      parts in
+  let suffix_intrs = Instrtree.leaf [ Instruction.ALOAD_0 ;
+                                      Instruction.ARETURN ] in
+  (false,
+   "createConstants",
+   Instrtree.node
+     [ prefix_instrs ;
+       Instrtree.node instrs ;
+       suffix_intrs ])
+  :: auxiliary_methods
+
+let init_class_fields_from_split_load () =
+  let rec iter n =
+    let res = init_class_fields_from_split_load_n n in
+    if List.for_all (fun (_, _, instrs) -> Instrtree.size instrs < 65536) res then
+      res
+    else
+      iter (succ n) in
+  iter 2
