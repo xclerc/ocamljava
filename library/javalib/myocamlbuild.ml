@@ -313,6 +313,74 @@ let number_modules = [
     ()
 ]
 
+type exception_module = {
+    exception_module_name : string;
+    java_full_name        : string;
+    java_short_name       : string;
+    ocaml_full_name       : string;
+    ocaml_short_name      : string;
+    module_ocamldoc       : string;
+    type_ocamldoc         : string;
+  }
+
+let exception_module
+    ~module_name
+    ~java_full_name
+    ~java_short_name
+    ~ocaml_full_name
+    ~ocaml_short_name
+    ~module_ocamldoc
+    ~type_ocamldoc
+    () =
+  { exception_module_name = module_name;
+    java_full_name;
+    java_short_name;
+    ocaml_full_name;
+    ocaml_short_name;
+    module_ocamldoc;
+    type_ocamldoc; }
+
+let subst_of_exception_module em name =
+  match name with
+  | "module_name"      -> em.exception_module_name
+  | "java_full_name"   -> em.java_full_name
+  | "java_short_name"  -> em.java_short_name
+  | "ocaml_full_name"  -> em.ocaml_full_name
+  | "ocaml_short_name" -> em.ocaml_short_name
+  | "module_ocamldoc"  -> em.module_ocamldoc
+  | "type_ocamldoc"    -> em.type_ocamldoc
+  | _                  -> failwith ("unknown variable '" ^ name ^ "'")
+
+let exception_modules = [
+  exception_module
+    ~module_name:"JavaThrowable"
+    ~java_full_name:"java.lang.Throwable"
+    ~java_short_name:"Throwable"
+    ~ocaml_full_name:"java'lang'Throwable"
+    ~ocaml_short_name:"_'Throwable"
+    ~module_ocamldoc:"Utility functions for Java throwables."
+    ~type_ocamldoc:"The type of throwables."
+    () ;
+  exception_module
+    ~module_name:"JavaError"
+    ~java_full_name:"java.lang.Error"
+    ~java_short_name:"Error"
+    ~ocaml_full_name:"java'lang'Error"
+    ~ocaml_short_name:"_'Error"
+    ~module_ocamldoc:"Utility functions for Java errors."
+    ~type_ocamldoc:"The type of errors."
+    () ;
+  exception_module
+    ~module_name:"JavaException"
+    ~java_full_name:"java.lang.Exception"
+    ~java_short_name:"Exception"
+    ~ocaml_full_name:"java'lang'Exception"
+    ~ocaml_short_name:"_'Exception"
+    ~module_ocamldoc:"Utility functions for Java exceptions."
+    ~type_ocamldoc:"The type of exceptions."
+    ()
+]
+
 let () =
   let odocl_chan = open_out odocl_file in
   let mllib_chan = open_out mllib_file in
@@ -322,8 +390,9 @@ let () =
     output_string mllib_chan module_name;
     output_char mllib_chan '\n' in
   let generated_modules =
-      (List.map (fun am -> am.array_module_name)  array_modules)
-    @ (List.map (fun nm -> nm.number_module_name) number_modules) in
+      (List.map (fun am -> am.array_module_name)     array_modules)
+    @ (List.map (fun nm -> nm.number_module_name)    number_modules)
+    @ (List.map (fun em -> em.exception_module_name) exception_modules) in
   List.iter add_module generated_modules;
   let add_file filename =
     if (Pathname.check_extension filename "mli")
@@ -398,5 +467,10 @@ let () =
           subst_of_number_module
           "../templates/number-template"
           number_modules;
+        make_rules
+          (fun em -> em.exception_module_name)
+          subst_of_exception_module
+          "../templates/throwable-template"
+          exception_modules;
     | _ -> ()
   end
