@@ -166,8 +166,8 @@ let signature_of_primitive prim args =
       |> Runtimeprimitives.get_description
       |> signature_of_primdesc
   | Praise -> Fixed [Boxed_value], Boxed_value
-  | Psequand -> binary bool_kind
-  | Psequor -> binary bool_kind
+  | Psequand -> fatal_error "Psequand"
+  | Psequor -> fatal_error "Psequor"
   | Pnot -> unary bool_kind
   | Pnegint -> unary int_op_kind
   | Paddint -> binary int_op_kind

@@ -198,6 +198,12 @@ let rec kind_of_jlambda stack_frame = function
   | Jprim (Pignore, [_arg], _) ->
       (* for Pignore, the representation of argument may vary *)
       Boxed_value
+  | Jprim (Psequand, [arg1; arg2], _) ->
+      Jifthenelse (arg1, arg2, Jconst (Lambda_const (Const_base (Const_int 0))))
+      |> kind_of_jlambda stack_frame
+  | Jprim (Psequor, [arg1; arg2], _) ->
+      Jifthenelse (arg1, Jconst (Lambda_const (Const_base (Const_int 1))), arg2)
+      |> kind_of_jlambda stack_frame
   | Jprim (p, args, _) ->
       snd (signature_of_primitive p args)
   | Jjavaprim (p, _, _) ->
@@ -447,6 +453,12 @@ let rec transl add_function result_kind stack_frame = function
         (sequence
            (Mpop kind)
            Mboxedunit)
+  | Jprim (Psequand, [arg1; arg2], _) ->
+      Jifthenelse (arg1, arg2, Jconst (Lambda_const (Const_base (Const_int 0))))
+      |> transl add_function result_kind stack_frame
+  | Jprim (Psequor, [arg1; arg2], _) ->
+      Jifthenelse (arg1, Jconst (Lambda_const (Const_base (Const_int 1))), arg2)
+      |> transl add_function result_kind stack_frame
   | Jprim (prim, args, dbg) ->
       begin match simplif_primitive prim with
       | Some prim_name ->
@@ -500,23 +512,11 @@ let rec transl add_function result_kind stack_frame = function
             match x with
             | Some x -> x :: l
             | None -> l in
-          begin match prim with
-          | Psequand | Psequor ->
-              let args =
-                args
-                |> List.map2
-                    (fun kind expr -> transl add_function kind stack_frame expr)
-                    kinds
-                |> prepend arg0 in
-              Mprim (prim, args, dbg)
-              |> convert return_kind result_kind
-          | _ ->
-              let args, prefix =
-                transl_list add_function ~kinds:(Some kinds) stack_frame args in
-              Mprim (prim, prepend arg0 args, dbg)
-              |> sequence prefix
-              |> convert return_kind result_kind
-          end
+          let args, prefix =
+            transl_list add_function ~kinds:(Some kinds) stack_frame args in
+          Mprim (prim, prepend arg0 args, dbg)
+          |> sequence prefix
+          |> convert return_kind result_kind
       end
   | Jjavaprim ((Java_synchronized (kind, _)) as jprim, args, dbg) ->
       let idx_lock, stack_frame = add_var (Unboxed_instance "java.lang.Object") (Ident.create "_dummy_") stack_frame in

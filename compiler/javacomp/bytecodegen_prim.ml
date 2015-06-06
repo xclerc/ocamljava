@@ -370,32 +370,8 @@ let rec compile_primitive ofs prim prim_args compile_expression_list compile_exp
           field_Value_UNIT ]
   | Praise, _ ->
       assert false
-  | Psequand, [expr1; expr2] ->
-      let expr1_instrs, expr1_sz =
-        with_size (compile_expression false ofs expr1) in
-      let expr2_instrs, expr2_sz =
-        with_size (compile_expression false (ofs + expr1_sz + 1 + if_size) expr2) in
-      node
-        [ expr1_instrs ;
-          leaf [ Instruction.L2I ;
-                 Instruction.IFEQ (check_jump (if_size + expr2_sz + goto_size)) ] ;
-          expr2_instrs ;
-          leaf [ Instruction.GOTO (Utils.s2 (goto_size + lconst_size)) ;
-                 Instruction.LCONST_0 ] ]
   | Psequand, _ ->
       assert false
-  | Psequor, [expr1; expr2] ->
-      let expr1_instrs, expr1_sz =
-        with_size (compile_expression false ofs expr1) in
-      let expr2_instrs, expr2_sz =
-        with_size (compile_expression false (ofs + expr1_sz + 1 + if_size) expr2) in
-      node
-        [ expr1_instrs ;
-          leaf [ Instruction.L2I ;
-                 Instruction.IFNE (check_jump (if_size + expr2_sz + goto_size)) ] ;
-          expr2_instrs ;
-          leaf [ Instruction.GOTO (Utils.s2 (goto_size + lconst_size)) ;
-                 Instruction.LCONST_1 ] ]
   | Psequor, _ ->
       assert false
   | Pnot, [arg] ->
