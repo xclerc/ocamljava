@@ -2397,6 +2397,25 @@ diff -aur patched/ocamldoc/odoc.ml original/ocamldoc/odoc.ml
  let () = print_DEBUG "Fin du chargement dynamique eventuel"
  
  let () = Odoc_args.parse ()
+@@ -123,14 +121,10 @@
+     None ->
+       ()
+   | Some gen ->
+-      try
+-        let generator = Odoc_gen.get_minimal_generator gen in
+-        Odoc_info.verbose Odoc_messages.generating_doc;
+-        generator#generate modules;
+-        Odoc_info.verbose Odoc_messages.ok
+-      with e when BaristaLibrary.Predefined.is_barista_exception e ->
+-        prerr_endline (BaristaLibrary.Predefined.string_of_exception e);
+-        exit 1
++      let generator = Odoc_gen.get_minimal_generator gen in
++      Odoc_info.verbose Odoc_messages.generating_doc;
++      generator#generate modules;
++      Odoc_info.verbose Odoc_messages.ok
+ 
+ let _ =
+   if !Odoc_global.errors > 0 then
 diff -aur patched/ocamldoc/odoc_analyse.ml original/ocamldoc/odoc_analyse.ml
 --- patched/ocamldoc/odoc_analyse.ml	2014-04-13 09:05:24.000000000 +0200
 +++ original/ocamldoc/odoc_analyse.ml	2014-04-13 09:05:24.000000000 +0200
