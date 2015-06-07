@@ -88,7 +88,7 @@ let rec compile_expression is_tail ofs curr_expr =
   | Mconst (Jlambda.Const_null _) ->
       leaf [ Instruction.ACONST_NULL ]
   | Mconst (Jlambda.Const_javastring s) ->
-      leaf [ Instruction.LDC_W (`String (UTF8.of_string s)) ]
+      leaf [ Instruction.LDC_W (`String (UTF8.of_latin1 (Bytes.make_of_string s))) ]
   | Moffset (expr, n) ->
       node
         [ compile_expression false ofs expr ;

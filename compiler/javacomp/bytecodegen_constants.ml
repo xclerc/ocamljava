@@ -252,7 +252,7 @@ let init_class_fields_from_code () =
     | Const_immstring s ->
         Instrtree.node
           [ Instrtree.leaf
-              [ Instruction.LDC_W (`String (UTF8.of_string s)) ] ;
+              [ Instruction.LDC_W (`String (UTF8.of_latin1 (Bytes.make_of_string s))) ] ;
             Bytecodeutils.meth_createString ]
     | Const_base (Const_float s) ->
         push_float (float_of_string s)
