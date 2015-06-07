@@ -892,7 +892,11 @@ let translate add_function entry params repr body =
   record_global_uses body;
   let stack_frame = make_frame entry params in
   let result_kind = kind_of_repr repr in
-  transl add_function result_kind stack_frame body
+  let res = transl add_function result_kind stack_frame body in
+  match repr, entry with
+  | LR_unit, false -> remove_unit res
+  | _ -> res
+    
 
 let report_error ppf = function
   | Special_primitive_string name ->

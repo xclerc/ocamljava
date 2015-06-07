@@ -1196,7 +1196,7 @@ let compile_function ppf fd =
     if fd.fun_name = "entry" then
       [ Instruction.ARETURN ], `Class class_Value
     else if fd.fun_return = LR_unit then
-      [ Instruction.POP; Instruction.RETURN ], `Void
+      [ Instruction.RETURN ], `Void
     else
       let typ = type_of_repr fd.fun_return in
       let instr =
