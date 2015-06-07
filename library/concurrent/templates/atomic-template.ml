@@ -16,31 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open Class'java'util'concurrent'CyclicBarrier
-open Class'java'util'concurrent'TimeUnit
+type t = $(ocaml_java_type)
 
-type t = _'CyclicBarrier java_instance
+let make value =
+  Java.make "$(java_class)($(java_type))" value
 
-let make n =
-  Java.make "CyclicBarrier(int)" n
+$(add_and_get)
 
-let await cb =
-  Java.call "CyclicBarrier.await()" cb
+let compare_and_set atomic expect update =
+  Java.call "$(java_class).compareAndSet($(java_type),$(java_type))"
+    atomic expect update
 
-let await_time cb time timeunit =
-  Java.call "CyclicBarrier.await(long,TimeUnit)" cb time timeunit
+$(decrement_and_get)
 
-let get_number_waiting cb =
-  Java.call "CyclicBarrier.getNumberWaiting()" cb
+let get atomic =
+  Java.call "$(java_class).get()" atomic
 
-let get_parties cb =
-  Java.call "CyclicBarrier.getParties()" cb
+$(get_and_add)
 
-let is_broken cb =
-  Java.call "CyclicBarrier.isBroken()" cb
+$(get_and_decrement)
 
-let reset cb =
-  Java.call "CyclicBarrier.reset()" cb
+$(get_and_increment)
+
+let get_and_set atomic value =
+  Java.call "$(java_class).getAndSet($(java_type))" atomic value
+
+$(increment_and_get)
+
+let lazy_set atomic value =
+  Java.call "$(java_class).lazySet($(java_type))" atomic value
+
+let set atomic value =
+  Java.call "$(java_class).set($(java_type))" atomic value
+
+let weak_compare_and_set atomic expect update =
+  Java.call "$(java_class).weakCompareAndSet($(java_type),$(java_type))"
+    atomic expect update
 
 
 (* Null value *)

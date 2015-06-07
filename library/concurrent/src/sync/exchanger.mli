@@ -18,21 +18,21 @@
 
 (** Value exchangers. *)
 
-type t = java'util'concurrent'Exchanger java_instance
+type 'a t = java'util'concurrent'Exchanger java_instance
 (** The type of exchangers, allowing two threads to swap values. *)
 
-val make : unit -> t
+val make : unit -> 'a t
 (** Returns a new exchanger; see
     {java java.util.concurrent.Exchanger#Exchanger()}. *)
 
-val exchange : t -> 'a -> 'a
+val exchange : 'a t -> 'a -> 'a
 (** Waits for another thread to arrive at the same exchange point, and
     then swaps the values provided by the two threads; see
     {java java.util.concurrent.Exchanger#exchange(V)}.
 
     @raise Java_exception if the thread is interrupted *)
 
-val exchange_time : t -> 'a -> java_long -> TimeUnit.t -> 'a
+val exchange_time : 'a t -> 'a -> java_long -> TimeUnit.t -> 'a
 (** [exchange_time e x t u] is similar to [exchange e x], except that the
     current thread will at most wait for [t] (time value whose unit is
     [u]); see
@@ -40,3 +40,30 @@ val exchange_time : t -> 'a -> java_long -> TimeUnit.t -> 'a
 
     @raise Java_exception if the thread is interrupted
     @raise Java_exception if time has elapsed with no exchange *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

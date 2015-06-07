@@ -16,40 +16,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'RejectedExecutionHandler
+open Class'java'util'concurrent'ThreadPoolExecutor
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> int32 -> int64 -> TimeUnit.t -> RejectedExecutionHandler.t -> t =
+type t = _'ThreadPoolExecutor java_instance
+
+external threadpoolexecutor_make : int32 -> int32 -> int64 -> TimeUnit.t -> RejectedExecutionHandler.t -> t =
   "ocamljava_threadpoolexecutor_make"
 
-external await_termination : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_threadpoolexecutor_await_termination"
+let make ~core_pool_size ~max_pool_size time timeunit rhe =
+  threadpoolexecutor_make core_pool_size max_pool_size time timeunit rhe
 
-external get_active_count : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_active_count"
+let await_termination tpe time timeunit =
+  Java.call "ThreadPoolExecutor.awaitTermination(long,TimeUnit)" tpe time timeunit
 
-external get_completed_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_completed_task_count"
+let get_active_count tpe =
+  Java.call "ThreadPoolExecutor.getActiveCount()" tpe
 
-external get_core_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_core_pool_size"
+let get_completed_task_count tpe =
+  Java.call "ThreadPoolExecutor.getCompletedTaskCount()" tpe
 
-external get_keep_alive_time : t -> TimeUnit.t -> int64 =
-  "ocamljava_threadpoolexecutor_get_keep_alive_time"
+let get_core_pool_size tpe =
+  Java.call "ThreadPoolExecutor.getCorePoolSize()" tpe
 
-external get_largest_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_largest_pool_size"
+let get_keep_alive_time tpe timeunit =
+  Java.call "ThreadPoolExecutor.getKeepAliveTime(TimeUnit)" tpe timeunit
 
-external get_maximum_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_maximum_pool_size"
+let get_largest_pool_size tpe =
+  Java.call "ThreadPoolExecutor.getLargestPoolSize()" tpe
 
-external get_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_pool_size"
+let get_maximum_pool_size tpe =
+  Java.call "ThreadPoolExecutor.getMaximumPoolSize()" tpe
 
-external get_rejected_execution_handler : t -> RejectedExecutionHandler.t =
-  "ocamljava_threadpoolexecutor_get_rejected_execution_handler"
+let get_pool_size tpe =
+  Java.call "ThreadPoolExecutor.getPoolSize()" tpe
 
-external get_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_task_count"
+let get_rejected_execution_handler tpe =
+  Java.call "ThreadPoolExecutor.getRejectedExecutionHandler()" tpe
+
+let get_task_count tpe =
+  Java.call "ThreadPoolExecutor.getTaskCount()" tpe
 
 external invoke_all : t -> (unit -> 'a) list -> 'a Future.t list =
   "ocamljava_threadpoolexecutor_invoke_all"
@@ -63,32 +70,59 @@ external invoke_any : t -> (unit -> 'a) list -> 'a =
 external invoke_any_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a =
   "ocamljava_threadpoolexecutor_invoke_any_time"
 
-external is_shutdown : t -> bool =
-  "ocamljava_threadpoolexecutor_is_shutdown"
+let is_shutdown tpe =
+  Java.call "ThreadPoolExecutor.isShutdown()" tpe
 
-external is_terminated : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminated"
+let is_terminated tpe =
+  Java.call "ThreadPoolExecutor.isTerminated()" tpe
 
-external is_terminating : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminating"
+let is_terminating tpe =
+  Java.call "ThreadPoolExecutor.isTerminating()" tpe
 
-external set_core_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_core_pool_size"
+let set_core_pool_size tpe sz =
+  Java.call "ThreadPoolExecutor.setCorePoolSize(int)" tpe sz
 
-external set_keep_alive_time : t -> int64 -> TimeUnit.t -> unit =
-  "ocamljava_threadpoolexecutor_set_keep_alive_time"
+let set_keep_alive_time tpe time timeunit =
+  Java.call "ThreadPoolExecutor.setKeepAliveTime(long,TimeUnit)" tpe time timeunit
 
-external set_maximum_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_maximum_pool_size"
+let set_maximum_pool_size tpe sz =
+  Java.call "ThreadPoolExecutor.setMaximumPoolSize(int)" tpe sz
 
-external set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit =
-  "ocamljava_threadpoolexecutor_set_rejected_execution_handler"
+let set_rejected_execution_handler tpe reh =
+  Java.call "ThreadPoolExecutor.setRejectedExecutionHandler(RejectedExecutionHandler)" tpe reh
 
-external shutdown : t -> unit =
-  "ocamljava_threadpoolexecutor_shutdown"
+let shutdown tpe =
+  Java.call "ThreadPoolExecutor.shutdown()" tpe
 
 external shutdown_now : t -> 'a Future.t list =
   "ocamljava_threadpoolexecutor_shutdown_now"
 
 external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
   "ocamljava_threadpoolexecutor_submit"
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

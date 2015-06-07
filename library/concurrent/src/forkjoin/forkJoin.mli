@@ -52,7 +52,7 @@ external split : ForkJoinPool.t -> ('a -> ('a * 'a) option) -> ('b -> 'b -> 'b) 
 
     let join x y = x + y
 
-    let parallel_fib pool = split pool fork join fib
+    let parallel_fib n = split pool fork join fib n
     ]}. *)
 
 external split_list : ForkJoinPool.t -> ('a -> 'a list) -> ('b -> 'b -> 'b) -> ('a -> 'b) -> 'a -> 'b =

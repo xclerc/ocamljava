@@ -19,7 +19,7 @@
 (** Atomic containers for stamped values. *)
 
 
-type 'a t
+type 'a t = java'util'concurrent'atomic'AtomicStampedReference java_instance
 (** The type of atomic containers for stamped values.
 
     {b WARNING:} physical comparison is used by the container.
@@ -38,40 +38,59 @@ type 'a t
 type stamp = int32
 (** The type of stamps. *)
 
-external make : 'a -> stamp -> 'a t =
-  "ocamljava_atomicstampedreference_make"
+val make : 'a -> stamp -> 'a t
 (** Returns a new container holding the passed value, with the passed
     stamp. *)
 
-external attempt_stamp : 'a t -> 'a -> stamp -> bool =
-  "ocamljava_atomicstampedreference_attempt_stamp"
+val attempt_stamp : 'a t -> 'a -> stamp -> bool
 (** [attempt_stamp a e s] sets the stamp to [s] if the current value is
     [e]. Returns whether the value of [a] was equal to [e]. *)
 
-external compare_and_set : 'a t -> 'a -> 'a -> stamp -> stamp -> bool =
-  "ocamljava_atomicstampedreference_compare_and_set"
+val compare_and_set : 'a t -> 'a -> 'a -> stamp -> stamp -> bool
 (** [compare_and_set a er ur es us] atomically sets the value of [a] to
     [ur] and stamp to [us] if the current value is [er] and the current
     stamp is [es]. Returns whether the value of [a] was equal to [er] and
     the stamp was equal to [es]. *)
 
-external get : 'a t -> 'a * stamp =
-  "ocamljava_atomicstampedreference_get"
+val get : 'a t -> 'a * stamp
 (** Returns the current value and stamp. *)
 
-external get_reference : 'a t -> 'a =
-  "ocamljava_atomicstampedreference_get_reference"
+val get_reference : 'a t -> 'a
 (** Returns the current value. *)
 
-external get_stamp : 'a t -> stamp =
-  "ocamljava_atomicstampedreference_get_stamp"
+val get_stamp : 'a t -> stamp
 (** Returns the current stamp. *)
 
-external set : 'a t -> 'a -> stamp -> unit =
-  "ocamljava_atomicstampedreference_set"
+val set : 'a t -> 'a -> stamp -> unit
 (** [set a x s] sets the value of [a] to [x], and the stamp to [s]. *)
 
-external weak_compare_and_set : 'a t -> 'a -> 'a -> stamp -> stamp -> bool =
-  "ocamljava_atomicstampedreference_weak_compare_and_set"
-(** Similar to [compare_and_set], with a {i weak} semantics: may be
+val weak_compare_and_set : 'a t -> 'a -> 'a -> stamp -> stamp -> bool
+(** Similar to {!compare_and_set}, with a {i weak} semantics: may be
     faster on some platforms, but does not provide ordering guarantees. *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

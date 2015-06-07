@@ -25,11 +25,11 @@ val cancel : 'a t -> bool -> bool
 (** [cancel f i] attemps to cancel future [f], [i] indicating whether to
     interrupt the computation if already started. Returns whether the
     future was cancelled; see
-    {java java.util.concurrent.Future.cancel(boolean)}. *)
+    {java java.util.concurrent.Future#cancel(boolean)}. *)
 
 val get : 'a t -> 'a
 (** Waits for the computation to complete, and returns its result; see
-    {java java.util.concurrent.Future.get()}.
+    {java java.util.concurrent.Future#get()}.
 
     @raise Java_exception if the thread is interrupted
     @raise Java_exception is the computation raised an uncaught exception
@@ -38,7 +38,7 @@ val get : 'a t -> 'a
 val get_time : 'a t -> java_long -> TimeUnit.t -> 'a
 (** [get_time f t u] is similar to [get f], except that the current
     thread will at most wait for [t] (time value whose unit is [u]); see
-    {java java.util.concurrent.Future.get(long, java.util.concurrent.TimeUnit)}.
+    {java java.util.concurrent.Future#get(long, java.util.concurrent.TimeUnit)}.
 
     @raise Java_exception if the thread is interrupted
     @raise Java_exception is the computation raised an uncaught exception
@@ -47,8 +47,35 @@ val get_time : 'a t -> java_long -> TimeUnit.t -> 'a
 
 val is_cancelled : 'a t -> bool
 (** Tests whether the task was cancelled before completion; see
-    {java java.util.concurrent.Future.isCancelled()}. *)
+    {java java.util.concurrent.Future#isCancelled()}. *)
 
 val is_done : 'a t -> bool
 (** Tests whether the computation is completed; see
-    {java java.util.concurrent.Future.isDone()}. *)
+    {java java.util.concurrent.Future#isDone()}. *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

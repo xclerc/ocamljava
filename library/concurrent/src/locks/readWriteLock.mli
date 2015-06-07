@@ -38,3 +38,30 @@ val read_lock : t -> Lock.t
 val write_lock : t -> Lock.t
 (** Returns the write lock of the read/write lock; see
     {java java.util.concurrent.locks.ReentrantReadWriteLock#writeLock()}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

@@ -59,3 +59,36 @@ let set_daemon group b =
 
 let set_max_priority group prio =
   Java.call "ThreadGroup.setMaxPriority(int)" group prio
+
+let enumerate_threads group ?(recurse = true) dest =
+  Java.call "ThreadGroup.enumerate(Thread[],boolean)" group dest recurse
+
+let enumerate_groups group ?(recurse = true) dest =
+  Java.call "ThreadGroup.enumerate(ThreadGroup[],boolean)" group dest recurse
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

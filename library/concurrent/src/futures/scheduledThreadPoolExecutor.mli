@@ -19,166 +19,162 @@
 (** Thread pools for scheduled futures. *)
 
 
-type t
+type t = java'util'concurrent'ScheduledThreadPoolExecutor java_instance
 (** The type of thread pools to be used for scheduled futures. *)
 
-external make : int32 -> RejectedExecutionHandler.t -> t =
-  "ocamljava_scheduledthreadpoolexecutor_make"
-(** [make cps reh] returns a new thread pool with:
+val make : core_pool_size:java_int -> RejectedExecutionHandler.t -> t
+(** [make core_pool_size:cps reh] returns a new thread pool with:
     - [cps] as its core pool size (number of threads kept in the pool,
       even if idle);
     - [reh] policy for blocked computations.
 
-    Raises [Invalid_argument] if [cps] is negative. *)
+    @raise Java_exception if [cps] is negative *)
 
-external await_termination : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_threadpoolexecutor_await_termination"
+val await_termination : t -> java_long -> TimeUnit.t -> bool
 (** Same as {!ThreadPoolExecutor.await_termination}. *)
 
-external get_active_count : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_active_count"
+val get_active_count : t -> java_int
 (** Same as {!ThreadPoolExecutor.get_active_count}. *)
 
-external get_completed_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_completed_task_count"
+val get_completed_task_count : t -> java_long
 (** Same as {!ThreadPoolExecutor.get_completed_task_count}. *)
 
-external get_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_continue_existing_periodic_tasks_after_shutdown_policy"
+val get_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool
 (** Tests whether periodic tasks should continue execution after
-    shutdown. *)
+    shutdown; see
+    {java java.util.concurrent.ThreadPoolExecutor#getContinueExistingPeriodicTasksAfterShutdownPolicy()}. *)
 
-external get_core_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_core_pool_size"
+val get_core_pool_size : t -> java_int
 (** Same as {!ThreadPoolExecutor.get_core_pool_size}. *)
 
-external get_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_execute_existing_delayed_tasks_after_shutdown_policy"
+val get_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool
 (** Tests whether delayed tasks should continue execution after
-    shutdown. *)
+    shutdown; see
+    {java java.util.concurrent.ThreadPoolExecutor#getExecuteExistingDelayedTasksAfterShutdownPolicy()}. *)
 
-external get_keep_alive_time : t -> TimeUnit.t -> int64 =
-  "ocamljava_threadpoolexecutor_get_keep_alive_time"
+val get_keep_alive_time : t -> TimeUnit.t -> java_long
 (** Same as {!ThreadPoolExecutor.get_keep_alive_time}. *)
 
-external get_largest_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_largest_pool_size"
+val get_largest_pool_size : t -> java_int
 (** Same as {!ThreadPoolExecutor.get_largest_pool_size}. *)
 
-external get_maximum_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_maximum_pool_size"
+val get_maximum_pool_size : t -> java_int
 (** Same as {!ThreadPoolExecutor.get_maximum_pool_size}. *)
 
-external get_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_pool_size"
+val get_pool_size : t -> java_int
 (** Same as {!ThreadPoolExecutor.get_pool_size}. *)
 
-external get_rejected_execution_handler : t -> RejectedExecutionHandler.t =
-  "ocamljava_threadpoolexecutor_get_rejected_execution_handler"
+val get_rejected_execution_handler : t -> RejectedExecutionHandler.t
 (** Same as {!ThreadPoolExecutor.get_rejected_execution_handler}. *)
 
-external get_remove_on_cancel_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_remove_on_cancel_policy"
-(** Tests whether tasks should be removed when cancelled. *)
+val get_remove_on_cancel_policy : t -> bool
+(** Tests whether tasks should be removed when cancelled; see
+    {java java.util.concurrent.ThreadPoolExecutor#getRemoveOnCancelPolicy()}. *)
 
-external get_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_task_count"
+val get_task_count : t -> java_long
 (** Same as {!ThreadPoolExecutor.get_task_count}. *)
 
-external invoke_all : t -> (unit -> 'a) list -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_invoke_all"
+val invoke_all : t -> (unit -> 'a) list -> 'a Future.t list
 (** Same as {!ThreadPoolExecutor.invoke_all}. *)
 
-external invoke_all_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_invoke_all_time"
+val invoke_all_time : t -> (unit -> 'a) list -> java_long -> TimeUnit.t -> 'a Future.t list
 (** Same as {!ThreadPoolExecutor.invoke_all_time}. *)
 
-external invoke_any : t -> (unit -> 'a) list -> 'a =
-  "ocamljava_threadpoolexecutor_invoke_any"
+val invoke_any : t -> (unit -> 'a) list -> 'a
 (** Same as {!ThreadPoolExecutor.invoke_any}. *)
 
-external invoke_any_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a =
-  "ocamljava_threadpoolexecutor_invoke_any_time"
+val invoke_any_time : t -> (unit -> 'a) list -> java_long -> TimeUnit.t -> 'a
 (** Same as {!ThreadPoolExecutor.invoke_any_time}. *)
 
-external is_shutdown : t -> bool =
-  "ocamljava_threadpoolexecutor_is_shutdown"
+val is_shutdown : t -> bool
 (** Same as {!ThreadPoolExecutor.is_shutdown}. *)
 
-external is_terminated : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminated"
+val is_terminated : t -> bool
 (** Same as {!ThreadPoolExecutor.is_terminated}. *)
 
-external is_terminating : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminating"
+val is_terminating : t -> bool
 (** Same as {!ThreadPoolExecutor.is_terminating}. *)
 
-external schedule : t -> ('a -> 'b) -> 'a -> int64 -> TimeUnit.t -> 'b ScheduledFuture.t =
-  "ocamljava_scheduledthreadpoolexecutor_schedule"
+val schedule : t -> ('a -> 'b) -> 'a -> java_long -> TimeUnit.t -> 'b ScheduledFuture.t
 (** [schedule p f x t u] is similar to [submit p f x], except that the
     evaluation of [f x] with start after [t] (time value whose unit is
     [u]).
 
-    Raises [Failure] if pool limits are reached. *)
+    @raise Java_exception if pool limits are reached *)
 
-external schedule_at_fixed_rate : t -> ('a -> unit) -> 'a -> int64 -> int64 -> TimeUnit.t -> unit ScheduledFuture.t =
-  "ocamljava_scheduledthreadpoolexecutor_schedule_at_fixed_rate" "ocamljava_scheduledthreadpoolexecutor_schedule_at_fixed_rate"
+val schedule_at_fixed_rate : t -> ('a -> unit) -> 'a -> java_long -> java_long -> TimeUnit.t -> unit ScheduledFuture.t
 (** [schedule_at_fixed_rate p f x t d u] is similar to [schedule p f x t u],
     except that [f x] will be re-evaluated at [t + d], [t + 2 * d], {i etc.}
 
-    Raises [Failure] if pool limits are reached.
+    @raise Java_exception if pool limits are reached
+    @raise Java_exception if [d] is negative *)
 
-    Raises [Invalid_argument] if [d] is negative. *)
-
-external schedule_with_fixed_delay : t -> ('a -> unit) -> 'a -> int64 -> int64 -> TimeUnit.t -> unit ScheduledFuture.t =
-  "ocamljava_scheduledthreadpoolexecutor_schedule_with_fixed_delay" "ocamljava_scheduledthreadpoolexecutor_schedule_with_fixed_delay"
+val schedule_with_fixed_delay : t -> ('a -> unit) -> 'a -> java_long -> java_long -> TimeUnit.t -> unit ScheduledFuture.t
 (** [schedule_with_fixed_delay p f x t d u] is similar to [schedule p f x t u],
     except that [f x] will be repeatedly re-evaluated, respecting a delay
     of [d] between the end of one execution and the beginning of the next
     one.
 
-    Raises [Failure] if pool limits are reached.
+    @raise Java_exception if pool limits are reached
+    @raise Java_exception if [d] is negative *)
 
-    Raises [Invalid_argument] if [d] is negative. *)
-
-external set_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_continue_existing_periodic_tasks_after_shutdown_policy"
+val set_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool -> unit
 (** Changes whether periodic tasks should continue execution after
-    shutdown. *)
+    shutdown; see
+    {java java.util.concurrent.ThreadPoolExecutor#setContinueExistingPeriodicTasksAfterShutdownPolicy(boolean)}. *)
 
-external set_core_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_core_pool_size"
+val set_core_pool_size : t -> java_int -> unit
 (** Same as {!ThreadPoolExecutor.set_core_pool_size}. *)
 
-external set_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_execute_existing_delayed_tasks_after_shutdown_policy"
+val set_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool -> unit
 (** changes whether delayed tasks should continue execution after
-    shutdown. *)
+    shutdown; see
+    {java java.util.concurrent.ThreadPoolExecutor#setExecuteExistingDelayedTasksAfterShutdownPolicy(boolean)}. *)
 
-external set_keep_alive_time : t -> int64 -> TimeUnit.t -> unit =
-  "ocamljava_threadpoolexecutor_set_keep_alive_time"
+val set_keep_alive_time : t -> java_long -> TimeUnit.t -> unit
 (** Same as {!ThreadPoolExecutor.set_keep_alive_time}. *)
 
-external set_maximum_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_maximum_pool_size"
+val set_maximum_pool_size : t -> java_int -> unit
 (** Same as {!ThreadPoolExecutor.set_maximum_pool_size}. *)
 
-external set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit =
-  "ocamljava_threadpoolexecutor_set_rejected_execution_handler"
+val set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit
 (** Same as {!ThreadPoolExecutor.set_rejected_execution_handler}. *)
 
-external set_remove_on_cancel_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_remove_on_cancel_policy"
+val set_remove_on_cancel_policy : t -> bool -> unit
 (** Changes whether tasks should be removed when cancelled. *)
 
-external shutdown : t -> unit =
-  "ocamljava_threadpoolexecutor_shutdown"
+val shutdown : t -> unit
 (** Same as {!ThreadPoolExecutor.shutdown}. *)
 
-external shutdown_now : t -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_shutdown_now"
+val shutdown_now : t -> 'a Future.t list
 (** Same as {!ThreadPoolExecutor.shutdown_now}. *)
 
-external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
-  "ocamljava_threadpoolexecutor_submit"
+val submit : t -> ('a -> 'b) -> 'a -> 'b Future.t
 (** Same as {!ThreadPoolExecutor.submit}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

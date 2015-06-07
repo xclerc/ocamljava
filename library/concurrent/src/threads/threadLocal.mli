@@ -47,3 +47,30 @@ external set : 'a t -> 'a -> unit =
   "ocamljava_threadlocal_set"
 (** Modifies the value of the thread-local variable for the current
     thread; see {java java.lang.ThreadLocal#set(T)}. *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

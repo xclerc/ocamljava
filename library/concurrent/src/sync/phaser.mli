@@ -87,7 +87,7 @@ val await_advance_interruptibly_time : t -> java_int -> java_long -> TimeUnit.t 
 
 val bulk_register : t -> java_int -> java_int
 (** [bulk_register p n] adds [n] unarrived parties to phaser [p]; see
-    {java java.util.concurrent.Phaser#bilkRegister(int)}.
+    {java java.util.concurrent.Phaser#bulkRegister(int)}.
 
     @raise Java_exception if [n] is negative
     @raise Java_exception if the maximum number of parties has
@@ -133,3 +133,30 @@ val register : t -> java_int
 
     @raise Java_exception if the maximum number of parties has already
                           been reached *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

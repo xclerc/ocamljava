@@ -22,5 +22,6 @@ true: -traverse
 
 # Options
 <src/**/*.ml{,i}>: warnings
+<src/**/*.ml{,i}>: java-extensions, use_javalib
+<**/*.docdir>: java-extensions, sort, html5, title(Concurrent library)
 <src/**/*.{cmj,jar}>: java-package(org.ocamljava.library.concurrent)
-

@@ -35,7 +35,7 @@ val make : ?fair: bool -> java_int -> t
 val acquire : t -> java_int -> unit
 (** [acquire s p] acquires [p] permits from semaphore [s], blocking until
     they are available; see
-    {java java.util.concurrent.Semaphore#acquires(int)}.
+    {java java.util.concurrent.Semaphore#acquire(int)}.
 
     @raise Java_exception if [p] is negative
     @raise Java_exception if the thread is interrupted *)
@@ -54,7 +54,7 @@ val available_permits : t -> java_int
 val drain_permits : t -> java_int
 (** Acquires and returns all available permits from the semaphore,
     returning immediately; see
-    {java java.util.concurrent.Semaphore#drainPermits(int, boolean)}. *)
+    {java java.util.concurrent.Semaphore#drainPermits()}. *)
 
 val get_queue_length : t -> java_int
 (** Returns an estimate of the number of threads waiting on the semaphore
@@ -92,3 +92,30 @@ val try_acquire_time : t -> java_int -> java_long -> TimeUnit.t -> bool
 
     @raise Java_exception if [p] is negative
     @raise Java_exception if the thread is interrupted *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

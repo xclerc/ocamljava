@@ -39,7 +39,7 @@ val await : t -> java_int
 val await_time : t -> java_long -> TimeUnit.t -> java_int
 (** [await_time b t u] is similar to [await b], except that the current
     thread will at most wait for [t] (time value whose unit is [u]); see
-    {java java.util.concurrent.CyclicBarrier#await(long,java.util.concurrent.TimeUnit)}.
+    {java java.util.concurrent.CyclicBarrier#await(long, java.util.concurrent.TimeUnit)}.
 
     @Raises Java_exception if the barrier is broken.
     @Raises Java_exception if the thread is interrupted.
@@ -63,3 +63,30 @@ val reset : t -> unit
 (** Resets the barrier to its original state. The barrier will be broken
     if there are threads currently waiting on it; see
     {java java.util.concurrent.CyclicBarrier#reset()}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

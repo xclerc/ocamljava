@@ -26,6 +26,7 @@ val make : ?parallelism:java_int -> bool -> t
 (** [make parallelism:p async] returns a new thread pool with parallelism [p]
     (target number of active threads in pool). If [async] is [true], then a
     FIFO scheduling is used for tasks.
+    See {java java.util.concurrent.ForkJoinPool#ForkJoinPool(int)}.
 
     @raise Java_exception if [p] is less than [1] *)
 
@@ -100,3 +101,30 @@ val shutdown_now : t -> unit
 (** Begins a shhutdown by cancelling all submitted tasks, and cancelling
     running tasks; see
     {java java.util.concurrent.ForkJoinPool#shutdownNow()}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

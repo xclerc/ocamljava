@@ -40,4 +40,31 @@ val is_done : 'a t -> bool
 
 val get_delay : 'a t -> TimeUnit.t -> java_long
 (** Returns the remaining delay for the computation, in the passed time
-    unit. *)
+    unit; see {java java.util.concurrent.Delayed#getDelay(java.util.concurrent.TimeUnit)}. *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

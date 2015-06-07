@@ -16,49 +16,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'RejectedExecutionHandler
+open Class'java'util'concurrent'ScheduledThreadPoolExecutor
+open Class'java'util'concurrent'TimeUnit
 
-external make : int32 -> RejectedExecutionHandler.t -> t =
+type t = _'ScheduledThreadPoolExecutor java_instance
+
+external scheduledthreadpoolexecutor_make : int32 -> RejectedExecutionHandler.t -> t =
   "ocamljava_scheduledthreadpoolexecutor_make"
 
-external await_termination : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_threadpoolexecutor_await_termination"
+let make ~core_pool_size rhe =
+  scheduledthreadpoolexecutor_make core_pool_size rhe
 
-external get_active_count : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_active_count"
+let await_termination stpe time timeunit =
+  Java.call "ScheduledThreadPoolExecutor.awaitTermination(long,TimeUnit)" stpe time timeunit
 
-external get_completed_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_completed_task_count"
+let get_active_count stpe =
+  Java.call "ScheduledThreadPoolExecutor.getActiveCount()" stpe
 
-external get_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_continue_existing_periodic_tasks_after_shutdown_policy"
+let get_completed_task_count stpe =
+  Java.call "ScheduledThreadPoolExecutor.getCompletedTaskCount()" stpe
 
-external get_core_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_core_pool_size"
+let get_continue_existing_periodic_tasks_after_shutdown_policy stpe =
+  Java.call "ScheduledThreadPoolExecutor.getContinueExistingPeriodicTasksAfterShutdownPolicy()" stpe
 
-external get_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_execute_existing_delayed_tasks_after_shutdown_policy"
+let get_core_pool_size stpe =
+  Java.call "ScheduledThreadPoolExecutor.getCorePoolSize()" stpe
 
-external get_keep_alive_time : t -> TimeUnit.t -> int64 =
-  "ocamljava_threadpoolexecutor_get_keep_alive_time"
+let get_execute_existing_delayed_tasks_after_shutdown_policy stpe =
+  Java.call "ScheduledThreadPoolExecutor.getExecuteExistingDelayedTasksAfterShutdownPolicy()" stpe
 
-external get_largest_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_largest_pool_size"
+let get_keep_alive_time stpe timeunit =
+  Java.call "ScheduledThreadPoolExecutor.getKeepAliveTime(TimeUnit)" stpe timeunit
 
-external get_maximum_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_maximum_pool_size"
+let get_largest_pool_size stpe =
+  Java.call "ScheduledThreadPoolExecutor.getLargestPoolSize()" stpe
 
-external get_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_pool_size"
+let get_maximum_pool_size stpe =
+  Java.call "ScheduledThreadPoolExecutor.getMaximumPoolSize()" stpe
 
-external get_rejected_execution_handler : t -> RejectedExecutionHandler.t =
-  "ocamljava_threadpoolexecutor_get_rejected_execution_handler"
+let get_pool_size stpe =
+  Java.call "ScheduledThreadPoolExecutor.getPoolSize()" stpe
 
-external get_remove_on_cancel_policy : t -> bool =
-  "ocamljava_scheduledthreadpoolexecutor_get_remove_on_cancel_policy"
+let get_rejected_execution_handler stpe =
+  Java.call "ScheduledThreadPoolExecutor.getRejectedExecutionHandler()" stpe
 
-external get_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_task_count"
+let get_remove_on_cancel_policy stpe =
+  Java.call "ScheduledThreadPoolExecutor.getRemoveOnCancelPolicy()" stpe
+
+let get_task_count stpe =
+  Java.call "ScheduledThreadPoolExecutor.getTaskCount()" stpe
 
 external invoke_all : t -> (unit -> 'a) list -> 'a Future.t list =
   "ocamljava_threadpoolexecutor_invoke_all"
@@ -72,14 +79,14 @@ external invoke_any : t -> (unit -> 'a) list -> 'a =
 external invoke_any_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a =
   "ocamljava_threadpoolexecutor_invoke_any_time"
 
-external is_shutdown : t -> bool =
-  "ocamljava_threadpoolexecutor_is_shutdown"
+let is_shutdown stpe =
+  Java.call "ScheduledThreadPoolExecutor.isShutdown()" stpe
 
-external is_terminated : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminated"
+let is_terminated stpe =
+  Java.call "ScheduledThreadPoolExecutor.isTerminated()" stpe
 
-external is_terminating : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminating"
+let is_terminating stpe =
+  Java.call "ScheduledThreadPoolExecutor.isTerminating()" stpe
 
 external schedule : t -> ('a -> 'b) -> 'a -> int64 -> TimeUnit.t -> 'b ScheduledFuture.t =
   "ocamljava_scheduledthreadpoolexecutor_schedule"
@@ -90,32 +97,62 @@ external schedule_at_fixed_rate : t -> ('a -> unit) -> 'a -> int64 -> int64 -> T
 external schedule_with_fixed_delay : t -> ('a -> unit) -> 'a -> int64 -> int64 -> TimeUnit.t -> unit ScheduledFuture.t =
   "ocamljava_scheduledthreadpoolexecutor_schedule_with_fixed_delay" "ocamljava_scheduledthreadpoolexecutor_schedule_with_fixed_delay"
 
-external set_continue_existing_periodic_tasks_after_shutdown_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_continue_existing_periodic_tasks_after_shutdown_policy"
+let set_continue_existing_periodic_tasks_after_shutdown_policy stpe b =
+  Java.call "ScheduledThreadPoolExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(boolean)"
+    stpe b
 
-external set_core_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_core_pool_size"
+let set_core_pool_size stpe sz =
+  Java.call "ScheduledThreadPoolExecutor.setCorePoolSize(int)" stpe sz
 
-external set_execute_existing_delayed_tasks_after_shutdown_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_execute_existing_delayed_tasks_after_shutdown_policy"
+let set_execute_existing_delayed_tasks_after_shutdown_policy stpe b =
+  Java.call "ScheduledThreadPoolExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(boolean)"
+    stpe b
 
-external set_keep_alive_time : t -> int64 -> TimeUnit.t -> unit =
-  "ocamljava_threadpoolexecutor_set_keep_alive_time"
+let set_keep_alive_time stpe time timeunit =
+  Java.call "ScheduledThreadPoolExecutor.setKeepAliveTime(long,TimeUnit)" stpe time timeunit
 
-external set_maximum_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_maximum_pool_size"
+let set_maximum_pool_size stpe sz =
+  Java.call "ScheduledThreadPoolExecutor.setMaximumPoolSize(int)" stpe sz
 
-external set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit =
-  "ocamljava_threadpoolexecutor_set_rejected_execution_handler"
+let set_rejected_execution_handler stpe reh =
+  Java.call "ScheduledThreadPoolExecutor.setRejectedExecutionHandler(RejectedExecutionHandler)"
+    stpe reh
 
-external set_remove_on_cancel_policy : t -> bool -> unit =
-  "ocamljava_scheduledthreadpoolexecutor_set_remove_on_cancel_policy"
+let set_remove_on_cancel_policy stpe b =
+  Java.call "ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(boolean)" stpe b
 
-external shutdown : t -> unit =
-  "ocamljava_threadpoolexecutor_shutdown"
+let shutdown stpe =
+  Java.call "ScheduledThreadPoolExecutor.shutdown()" stpe
 
 external shutdown_now : t -> 'a Future.t list =
   "ocamljava_threadpoolexecutor_shutdown_now"
 
 external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
   "ocamljava_threadpoolexecutor_submit"
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

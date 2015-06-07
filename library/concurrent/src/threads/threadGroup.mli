@@ -28,7 +28,7 @@ type t = java'lang'ThreadGroup java_instance
 
 val make : ?parent:t -> JavaString.t -> t
 (** Returns a new group with optional parent, and name; see
-    {java java.lang.ThreadGroup#Thread(java.lang.ThreadGroup, java.lang.String)}. *)
+    {java java.lang.ThreadGroup#ThreadGroup(java.lang.ThreadGroup, java.lang.String)}. *)
 
 val active_count : t -> java_int
 (** Returns the number of active threads in this group (including
@@ -71,7 +71,7 @@ val is_destroyed : t -> bool
 
 val parent_of : t -> t -> bool
 (** [parent_of p c] tests whether [p] is an ancestor of [c]; see
-    {java java.lang.ThreadGroup#parentOf(java.lang.Thread)}. *)
+    {java java.lang.ThreadGroup#parentOf(java.lang.ThreadGroup)}. *)
 
 val set_daemon : t -> bool -> unit
 (** Sets the daemon status of the group. Daemon groups are automatically
@@ -81,3 +81,42 @@ val set_daemon : t -> bool -> unit
 val set_max_priority : t -> java_int -> unit
 (** Sets the maximum priority of the group; see
     {java java.lang.ThreadGroup#setMaxPriority(int)}. *)
+
+val enumerate_threads : t -> ?recurse:bool -> java'lang'Thread java_instance JavaReferenceArray.t -> int32
+(** Enumerates (recursively by default) the threads in the group by
+    storing them in the passed array, and returning the number of
+    actually stored threads; see
+    {java java.lang.ThreadGroup#enumerate(java.lang.Thread[], boolean)}. *)
+
+val enumerate_groups : t -> ?recurse:bool -> java'lang'ThreadGroup java_instance JavaReferenceArray.t -> int32
+(** Enumerates (recursively by default) the groups in the group by
+    storing them in the passed array, and returning the number of
+    actually stored groups; see
+    {java java.lang.ThreadGroup#enumerate(java.lang.ThreadGroup[], boolean)}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

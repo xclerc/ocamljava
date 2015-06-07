@@ -97,14 +97,14 @@ val is_interrupted : t -> bool
 
 val join : t -> unit
 (** Waits for the termination of the passed thread; see
-    {java java.lang.Thread#currentThreadjoin()}.
+    {java java.lang.Thread#join()}.
 
     @raise Java_exception if the thread is interrupted *)
 
 val join_time : t -> java_long -> unit
 (** [join_time t m] is similar to [join t], except that the current
     thread will at most wait for [m] milliseconds; see
-    {java java.lang.Thread#joint(long)}.
+    {java java.lang.Thread#join(long)}.
 
     @raise Java_exception if [m] is invalid
     @raise Java_exception if the thread is interrupted *)
@@ -156,3 +156,30 @@ val start : t -> unit
 val yield : unit -> unit
 (** Indicates that the current thread wants to yield its use of a
     processor; see {java java.lang.Thread#yield()}. *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

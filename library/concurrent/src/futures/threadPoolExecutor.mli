@@ -19,12 +19,11 @@
 (** Thread pools for futures. *)
 
 
-type t
+type t = java'util'concurrent'ThreadPoolExecutor java_instance
 (** The type of thread pools to be used for futures. *)
 
-external make : int32 -> int32 -> int64 -> TimeUnit.t -> RejectedExecutionHandler.t -> t =
-  "ocamljava_threadpoolexecutor_make"
-(** [make cps mps kat u reh] returns a new thread pool with:
+val make : core_pool_size:java_int -> max_pool_size:java_int -> java_long -> TimeUnit.t -> RejectedExecutionHandler.t -> t
+(** [make core_pool_size:cps max_pool_size:mps kat u reh] returns a new thread pool with:
     - [cps] as its core pool size (number of threads kept in the pool,
       even if idle);
     - [mps] as its maximum pool size (maximum number of threads in the
@@ -34,143 +33,153 @@ external make : int32 -> int32 -> int64 -> TimeUnit.t -> RejectedExecutionHandle
     - [u] time unit for [kat];
     - [reh] policy for blocked computations.
 
-    Raises [Invalid_argument] if a size is negative. *)
+    @raise Java_exception if a size is negative *)
 
-external await_termination : t -> int64 -> TimeUnit.t -> bool =
-  "ocamljava_threadpoolexecutor_await_termination"
+val await_termination : t -> java_long -> TimeUnit.t -> bool
 (** Waits for pool termination, waiting at most wait for [t] (time value
-    whose unit is [u]).
+    whose unit is [u]); see {java java.util.concurrent.ThreadPoolExecutor#awaitTermination(long, java.util.concurrent.TimeUnit)}.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external get_active_count : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_active_count"
-(** Returns an estimate of the number of active threads in the pool. *)
+val get_active_count : t -> java_int
+(** Returns an estimate of the number of active threads in the pool; see
+    {java java.util.concurrent.ThreadPoolExecutor#getActiveCount()}. *)
 
-external get_completed_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_completed_task_count"
+val get_completed_task_count : t -> java_long
 (** Returns an estimate of the number of completed computations in the
-    pool. *)
+    pool; see {java java.util.concurrent.ThreadPoolExecutor#getCompletedTaskCount()}. *)
 
-external get_core_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_core_pool_size"
-(** Returns the core size of the pool. *)
+val get_core_pool_size : t -> java_int
+(** Returns the core size of the pool; see
+    {java java.util.concurrent.ThreadPoolExecutor#getCorePoolSize()}. *)
 
-external get_keep_alive_time : t -> TimeUnit.t -> int64 =
-  "ocamljava_threadpoolexecutor_get_keep_alive_time"
-(** Returns the keep alive time for thread outside of the core.*)
+val get_keep_alive_time : t -> TimeUnit.t -> java_long
+(** Returns the keep alive time for thread outside of the core; see
+    {java java.util.concurrent.ThreadPoolExecutor#getKeepAliveTime(java.util.concurrent.TimeUnit)}.*)
 
-external get_largest_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_largest_pool_size"
-(** Returns the largest size reached by the pool. *)
+val get_largest_pool_size : t -> java_int
+(** Returns the largest size reached by the pool; see
+    {java java.util.concurrent.ThreadPoolExecutor#getLargestPoolSize()}. *)
 
-external get_maximum_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_maximum_pool_size"
-(** Returns the maximum size of the pool. *)
+val get_maximum_pool_size : t -> java_int
+(** Returns the maximum size of the pool; see
+    {java java.util.concurrent.ThreadPoolExecutor#getMaximumPoolSize()}. *)
 
-external get_pool_size : t -> int32 =
-  "ocamljava_threadpoolexecutor_get_pool_size"
-(** Returns an estimate of the current pool size. *)
+val get_pool_size : t -> java_int
+(** Returns an estimate of the current pool size; see
+    {java java.util.concurrent.ThreadPoolExecutor#getPoolSize()}. *)
 
-external get_rejected_execution_handler : t -> RejectedExecutionHandler.t =
-  "ocamljava_threadpoolexecutor_get_rejected_execution_handler"
-(** Returns the policy for blocked computations. *)
+val get_rejected_execution_handler : t -> RejectedExecutionHandler.t
+(** Returns the policy for blocked computations; see
+    {java java.util.concurrent.ThreadPoolExecutor#getRejectedExecutionHandler()}. *)
 
-external get_task_count : t -> int64 =
-  "ocamljava_threadpoolexecutor_get_task_count"
+val get_task_count : t -> java_long
 (** Returns an estimate of number of task that have been submitted for
-    execution. *)
+    execution; see {java java.util.concurrent.ThreadPoolExecutor#getTaskCount()}. *)
 
-external invoke_all : t -> (unit -> 'a) list -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_invoke_all"
+val invoke_all : t -> (unit -> 'a) list -> 'a Future.t list
 (** [invoke_all p l] submits all functions from [l] to pool [p], and then
     waits for the completion of all functions. Returns the list of
     created futures; it is guaranteed that all futures have completed.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external invoke_all_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_invoke_all_time"
+val invoke_all_time : t -> (unit -> 'a) list -> java_long -> TimeUnit.t -> 'a Future.t list
 (** [invoke_all_time p l t u] is similar to [invoke_all p l], except that
     the current thread will at most wait for [t] (time value whose unit
     is [u]).
 
-    Raises [Runtime.Interrupted] if the thread is interrupted. *)
+    @raise Java_exception if the thread is interrupted *)
 
-external invoke_any : t -> (unit -> 'a) list -> 'a =
-  "ocamljava_threadpoolexecutor_invoke_any"
+val invoke_any : t -> (unit -> 'a) list -> 'a
 (** [invoke_any p l] submits all function from [l] to pool [p], and then
     waits for the completion of a function. Returns the value computed by
     the first function completing its execution.
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception if no function completes without raising an
+                          exception *)
 
-    Raises [Failure] if no function completes without raising an
-    exception. *)
-
-external invoke_any_time : t -> (unit -> 'a) list -> int64 -> TimeUnit.t -> 'a =
-  "ocamljava_threadpoolexecutor_invoke_any_time"
+val invoke_any_time : t -> (unit -> 'a) list -> java_long -> TimeUnit.t -> 'a
 (** [invoke_any_time p l t u] is similar to [invoke_any p l], except that
     the current thread will at most wait for [t] (time value whose unit
     is [u]).
 
-    Raises [Runtime.Interrupted] if the thread is interrupted.
+    @raise Java_exception if the thread is interrupted
+    @raise Java_exception f time has elapsed without any function
+                          completing its execution
+    @raise Java_exception if no function completes without raising an
+                          exception *)
 
-    Raises [Failure] if no function completes without raising an
-    exception.
+val is_shutdown : t -> bool
+(** Tests whether the pool has been shutdown; see
+    {java java.util.concurrent.ThreadPoolExecutor#isShutdown()}. *)
 
-    Raises [Runtime.Timeout] f time has elapsed without any function
-    completing its execution. *)
+val is_terminated : t -> bool
+(** Tests whether the pool has been terminated; see
+    {java java.util.concurrent.ThreadPoolExecutor#isTerminated()}. *)
 
-external is_shutdown : t -> bool =
-  "ocamljava_threadpoolexecutor_is_shutdown"
-(** Tests whether the pool has been shutdown. *)
+val is_terminating : t -> bool
+(** Tests whether the pool is in the process of terminating; see
+    {java java.util.concurrent.ThreadPoolExecutor#isTerminating()}. *)
 
-external is_terminated : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminated"
-(** Tests whether the pool has been shutdown. *)
-
-external is_terminating : t -> bool =
-  "ocamljava_threadpoolexecutor_is_terminating"
-(** Tests whether the pool is in the process shutdowning. *)
-
-external set_core_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_core_pool_size"
+val set_core_pool_size : t -> java_int -> unit
 (** Changes the core size of the pool (number of threads kept in the
-    pool, even if idle).
+    pool, even if idle); see
+    {java java.util.concurrent.ThreadPoolExecutor#setCorePoolSize(int)}. *)
 
-    Raises [Invalid_argument] if parameter is negative. *)
-
-external set_keep_alive_time : t -> int64 -> TimeUnit.t -> unit =
-  "ocamljava_threadpoolexecutor_set_keep_alive_time"
+val set_keep_alive_time : t -> java_long -> TimeUnit.t -> unit
 (** Changes the keep alive time (how long to keep alive idle threads not
-    in the core).
+    in the core); see
+    {java java.util.concurrent.ThreadPoolExecutor#setKeepAliveTime(long, java.util.concurrent.TimeUnit)}. *)
 
-    Raises [Invalid_argument] if parameter is negative. *)
-
-external set_maximum_pool_size : t -> int32 -> unit =
-  "ocamljava_threadpoolexecutor_set_maximum_pool_size"
+val set_maximum_pool_size : t -> java_int -> unit
 (** Changes the maximum pool size (maximum number of threads in the
-    pool).
+    pool); see
+    {java java.util.concurrent.ThreadPoolExecutor#setMaximumPoolSize(int)}. *)
 
-    Raises [Invalid_argument] if parameter is negative. *)
+val set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit
+(** Changes the policy for blocked computations; see
+    {java java.util.concurrent.ThreadPoolExecutor#setRejectedExecutionHandler(java.util.concurrent.RejectedExecutionHandler)}. *)
 
-external set_rejected_execution_handler : t -> RejectedExecutionHandler.t -> unit =
-  "ocamljava_threadpoolexecutor_set_rejected_execution_handler"
-(** Changes the policy for blocked computations. *)
-
-external shutdown : t -> unit =
-  "ocamljava_threadpoolexecutor_shutdown"
+val shutdown : t -> unit
 (** Begins a shutdown, executing all submitted tasks, but refusing new
-    tasks. *)
+    tasks; see
+    {java java.util.concurrent.ThreadPoolExecutor#shutdown()}. *)
 
-external shutdown_now : t -> 'a Future.t list =
-  "ocamljava_threadpoolexecutor_shutdown_now"
+val shutdown_now : t -> 'a Future.t list
 (** Begins a shhutdown by cancelling all submitted tasks, and cancelling
-    running tasks. *)
+    running tasks; see
+    {java java.util.concurrent.ThreadPoolExecutor#shutdownNow()}. *)
 
-external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
-  "ocamljava_threadpoolexecutor_submit"
+val submit : t -> ('a -> 'b) -> 'a -> 'b Future.t
 (** [submit p f x] submits to [p] and returns a future computing [f x].
 
-    Raises [Failure] if pool limits are reached. *)
+    @raise Java_exception if pool limits are reached *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

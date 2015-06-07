@@ -27,7 +27,8 @@ let parallelism_int = Int32.to_int parallelism
 
 let default_pool =
   ThreadPoolExecutor.make
-    parallelism (Int32.mul 2l parallelism)
+    ~core_pool_size:parallelism
+    ~max_pool_size:(Int32.mul 2l parallelism)
     1L TimeUnit.seconds
     RejectedExecutionHandler.caller_runs_policy
 

@@ -43,3 +43,30 @@ let try_lock_time l time timeunit =
 
 let unlock l =
   Java.call "Lock.unlock()" l
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

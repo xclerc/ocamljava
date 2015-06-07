@@ -19,7 +19,7 @@
 (** Atomic containers for values. *)
 
 
-type 'a t
+type 'a t = java'util'concurrent'atomic'AtomicReference java_instance
 (** The type of atomic containers for values.
 
     {b WARNING:} physical comparison is used by the container.
@@ -35,34 +35,54 @@ type 'a t
     Any other type can be safely stored (caching of {i some} [int] values
     ensure that sum types are correctly handled). *)
 
-external make : 'a -> 'a t =
-  "ocamljava_atomicreference_make"
+val make : 'a -> 'a t
 (** Returns a new container holding the passed value. *)
 
-external compare_and_set : 'a t -> 'a -> 'a -> bool =
-  "ocamljava_atomicreference_compare_and_set"
+val compare_and_set : 'a t -> 'a -> 'a -> bool
 (** [compare_and_set a e u] atomically sets the value of [a] to [u] if
     the current value is [e]. Returns whether the value of [a] was equal
     to [e]. *)
 
-external get : 'a t -> 'a =
-  "ocamljava_atomicreference_get"
+val get : 'a t -> 'a
 (** Returns the current value. *)
 
-external get_and_set : 'a t -> 'a -> 'a =
-  "ocamljava_atomicreference_get_and_set"
+val get_and_set : 'a t -> 'a -> 'a
 (** [get_and_set a x] atomically sets the value of [a] to [x], and
     returns the previous value. *)
 
-external lazy_set : 'a t -> 'a -> unit =
-  "ocamljava_atomicreference_lazy_set"
+val lazy_set : 'a t -> 'a -> unit
 (** [lazy_set a x] eventually sets the value of [a] to [x]. *)
 
-external set : 'a t -> 'a -> unit =
-  "ocamljava_atomicreference_set"
+val set : 'a t -> 'a -> unit
 (** [set a x] sets the value of [a] to [x]. *)
 
-external weak_compare_and_set : 'a t -> 'a -> 'a -> bool =
-  "ocamljava_atomicreference_weak_compare_and_set"
-(** Similar to [compare_and_set], with a {i weak} semantics: may be
+val weak_compare_and_set : 'a t -> 'a -> 'a -> bool
+(** Similar to {!compare_and_set}, with a {i weak} semantics: may be
     faster on some platforms, but does not provide ordering guarantees. *)
+
+
+(** {6 Null value} *)
+
+val null : 'a t
+(** The [null] value. *)
+
+external is_null : 'a t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : 'a t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : 'a t -> 'a t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : 'a t option -> 'a t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

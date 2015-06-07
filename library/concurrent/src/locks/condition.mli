@@ -61,10 +61,10 @@ val await_uninterruptibly : t -> unit
     @raise Java_exception if the current thread does not hold the
                           associated lock *)
 
-val await_until : t -> java'util'Date java_extends -> bool
+val await_until : t -> JavaDate.t -> bool
 (** [await_until c d] waits until the date [d] is reached.
     Returns whether the date was actually reached; see
-    {java java.util.concurrent.locks.Condition#awaitUntil()}.
+    {java java.util.concurrent.locks.Condition#awaitUntil(java.util.Date)}.
 
     @raise Java_exception if the current thread does not hold the
                           associated lock
@@ -83,3 +83,30 @@ val signal_all : t -> unit
 
     @raise Java_exception if the current thread does not hold the
                           associated lock *)
+
+
+(** {6 Null value} *)
+
+val null : t
+(** The [null] value. *)
+
+external is_null : t -> bool =
+  "java is_null"
+(** [is_null obj] returns [true] iff [obj] is equal to [null]. *)
+
+external is_not_null : t -> bool =
+  "java is_not_null"
+(** [is_not_null obj] returns [false] iff [obj] is equal to [null]. *)
+
+
+(** {6 Miscellaneous} *)
+
+val wrap : t -> t option
+(** [wrap obj] wraps the reference [obj] into an option type:
+    - [Some x] if [obj] is not [null];
+    - [None] if [obj] is [null]. *)
+
+val unwrap : t option -> t
+(** [unwrap obj] unwraps the option [obj] into a bare reference:
+    - [Some x] is mapped to [x];
+    - [None] is mapped to [null]. *)

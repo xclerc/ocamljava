@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type 'a t
+type 'a t = java'util'concurrent'atomic'AtomicMarkableReference java_instance
 
 type mark = bool
 
@@ -43,3 +43,30 @@ external set : 'a t -> 'a -> mark -> unit =
 
 external weak_compare_and_set : 'a t -> 'a -> 'a -> mark -> mark -> bool =
   "ocamljava_atomicmarkablereference_weak_compare_and_set"
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

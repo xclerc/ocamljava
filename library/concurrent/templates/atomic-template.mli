@@ -16,36 +16,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** Helper entities for thread pool executors. *)
+(** Atomic containers for [$(ocaml_type)] values. *)
 
 
-type t = java'util'concurrent'ExecutorCompletionService java_instance
-(** The type of completion services, providing utilities to wait for
-    future completions. *)
+type t = $(ocaml_java_type)
+(** The type of atomic containers for [$(ocaml_type)] values. *)
 
-val make : ThreadPoolExecutor.t -> t
-(** Returns a new completion service based on the passed thread pool;
-    see {java java.util.concurrent.ExecutorCompletionService#ExecutorCompletionService(java.util.concurrent.Executor)}. *)
+val make : $(ocaml_type) -> t
+(** Returns a new container holding the passed value. *)
 
-val poll : t -> 'a Future.t option
-(** Returns (and removes from the service) a completed task if any, or
-    returns [None]; see {java java.util.concurrent.ExecutorCompletionService#poll()}. *)
+$(add_and_get)
 
-val poll_time : t -> java_long -> TimeUnit.t -> 'a Future.t option
-(** [poll_time s t u] is similar to [pool s], except that the current
-    thread will at most wait for [t] (time value whose unit is [u]); see
-    {java java.util.concurrent.ExecutorCompletionService#poll(long, java.util.concurrent.TimeUnit)}.
+val compare_and_set : t -> $(ocaml_type) -> $(ocaml_type) -> bool
+(** [compare_and_set a e u] atomically sets the value of [a] to [u] if
+    the current value is [e]. Returns whether the value of [a] was equal
+    to [e]. *)
 
-    @raise Java_exception if the thread is interrupted *)
+$(decrement_and_get)
 
-val submit : t -> ('a -> 'b) -> 'a -> 'b Future.t
-(** Same as {!ThreadPoolExecutor.submit}. *)
+val get : t -> $(ocaml_type)
+(** Returns the current value. *)
 
-val take : t -> 'a Future.t
-(** Waits for a task to complete, and returns it; see
-    {java java.util.concurrent.ExecutorCompletionService.html#take()}.
+$(get_and_add)
 
-    @raise Java_exception if the thread is interrupted *)
+$(get_and_decrement)
+
+$(get_and_increment)
+
+val get_and_set : t -> $(ocaml_type) -> $(ocaml_type)
+(** [get_and_set a x] atomically sets the value of [a] to [x], and
+    returns the previous value. *)
+
+$(increment_and_get)
+
+val lazy_set : t -> $(ocaml_type) -> unit
+(** [lazy_set a x] eventually sets the value of [a] to [x]. *)
+
+val set : t -> $(ocaml_type) -> unit
+(** [set a x] sets the value of [a] to [x]. *)
+
+val weak_compare_and_set : t -> $(ocaml_type) -> $(ocaml_type) -> bool
+(** Similar to {!compare_and_set}, with a {i weak} semantics: may be
+    faster on some platforms, but does not provide ordering guarantees. *)
 
 
 (** {6 Null value} *)

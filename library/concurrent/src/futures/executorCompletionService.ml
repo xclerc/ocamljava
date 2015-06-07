@@ -16,19 +16,58 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-type t
+open Class'java'util'concurrent'Executor
+open Class'java'util'concurrent'ExecutorCompletionService
+open Class'java'util'concurrent'TimeUnit
 
-external make : ThreadPoolExecutor.t -> t =
-  "ocamljava_executorcompletionservice_make"
+type t = _'ExecutorCompletionService java_instance
 
-external poll : t -> 'a Future.t option =
-  "ocamljava_executorcompletionservice_poll"
+let make tpe =
+  Java.make "ExecutorCompletionService(Executor)" tpe
 
-external poll_time : t -> int64 -> TimeUnit.t -> 'a Future.t option =
-  "ocamljava_executorcompletionservice_poll_time"
+let poll ecs =
+  let res = Java.call "ExecutorCompletionService.poll()" ecs in
+  if Java.is_null res then
+    None
+  else
+    Some res
+
+let poll_time ecs time timeunit =
+  let res = Java.call "ExecutorCompletionService.poll(long,TimeUnit)" ecs time timeunit in
+  if Java.is_null res then
+    None
+  else
+    Some res
 
 external submit : t -> ('a -> 'b) -> 'a -> 'b Future.t =
   "ocamljava_executorcompletionservice_submit"
 
-external take : t -> 'a Future.t =
-  "ocamljava_executorcompletionservice_take"
+let take ecs =
+  Java.call "ExecutorCompletionService.take()" ecs
+
+
+(* Null value *)
+
+external null : unit -> 'a java_instance =
+  "java null"
+
+let null = null ()
+
+external is_null : 'a java_instance -> bool =
+  "java is_null"
+
+external is_not_null : 'a java_instance -> bool =
+  "java is_not_null"
+
+
+(* Miscellaneous *)
+
+let wrap x =
+  if is_null x then
+    None
+  else
+    Some x
+
+let unwrap = function
+  | Some x -> x
+  | None   -> null

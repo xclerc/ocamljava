@@ -45,4 +45,4 @@ val days : t
 
 val convert : src:t -> dst:t -> java_long -> java_long
 (** [convert ~src ~dst x] converts the value [x] from unit [src] to unit
-    [dst]; see {java java.util.concurrent.TimeUnit#convert(long,java.util.concurrent.TimeUnit)} *)
+    [dst]; see {java java.util.concurrent.TimeUnit#convert(long, java.util.concurrent.TimeUnit)} *)
