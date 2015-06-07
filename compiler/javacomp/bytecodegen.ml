@@ -638,12 +638,33 @@ let rec compile_expression is_tail ofs curr_expr =
         compile_switch true is_tail ofs arg consts blocks actions default
       end
   | Mconvert (src, dst, expr) ->
-      let rec optimize_conversion src expr =
-        match expr with
-        | Mconvert (s, _, e) -> optimize_conversion s e
-        | _ -> src, expr in
-      let src, expr = optimize_conversion src expr in
-      compile_conv ofs src dst expr
+      begin match is_tail, expr with
+      (* push down conversion to avoid the loss of optimization opportunities *)
+      | true, Mifthenelse (cond, ifso, ifno) ->
+          compile_expression is_tail ofs
+            (Mifthenelse (cond,
+                          Mconvert (src, dst, ifso),
+                          Mconvert (src, dst, ifno)))
+      | true, Mtrywith (body, idx, handler) ->
+          compile_expression is_tail ofs
+            (Mtrywith (Mconvert (src, dst, body),
+                       idx,
+                       Mconvert (src, dst, handler)))
+      | true, Mswitch (arg, consts, blocks, actions, default) ->
+          compile_expression is_tail ofs
+            (Mswitch (arg,
+                      consts,
+                      blocks,
+                      Array.map (fun x -> Mconvert (src, dst, x)) actions,
+                      Mconvert (src, dst, default)))
+      | _ ->
+          let rec optimize_conversion src expr =
+            match expr with
+            | Mconvert (s, _, e) -> optimize_conversion s e
+            | _ -> src, expr in
+          let src, expr = optimize_conversion src expr in
+          compile_conv ofs src dst expr
+      end
   | Minit (Some idx) ->
       node
         [ push_int32 (Int32.of_int idx) ;
