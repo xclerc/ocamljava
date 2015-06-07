@@ -34,17 +34,17 @@ val make : ?defaults:t -> unit -> t
 val get_property : t -> JavaString.t -> JavaString.t option
 (** [get_property props key] returns the value of the property whose key
     is [key] in [props] if found, [None] otherwise; see
-    {java java.util.Properties.getProperty(java.lang.String)}. *)
+    {java java.util.Properties#getProperty(java.lang.String)}. *)
   
 val get_property_default : t -> JavaString.t -> JavaString.t -> JavaString.t
 (** [get_property_default props key def] returns the value of the
     property whose key is [key] in [props] if found, [def] otherwise; see
-    {java java.util.Properties.getProperty(java.lang.String, java.lang.String)}. *)
+    {java java.util.Properties#getProperty(java.lang.String, java.lang.String)}. *)
 
 val string_property_names : t -> JavaString.t list
 (** [string_property_names props] returns the list of the keys for the
     properties defined in [props] (including defaults); see
-    {java java.util.Properties.stringPropertyNames()}. *)
+    {java java.util.Properties#stringPropertyNames()}. *)
 
 
 (** {6 Properties modification} *)
@@ -52,34 +52,34 @@ val string_property_names : t -> JavaString.t list
 val set_property : t -> JavaString.t -> JavaString.t -> JavaString.t option
 (** [set_property props key value] set the property with key [key] to
     value [value] in [props], returning the previous value if any; see
-    {java java.util.Properties.setProperty(java.lang.String, java.lang.String)}. *)
+    {java java.util.Properties#setProperty(java.lang.String, java.lang.String)}. *)
 
 
 (** {6 I/O operations} *)
 
 val load : t -> java'io'InputStream java_extends -> unit
 (** [load props str] loads the properties from stream [str] into [props];
-    see {java java.util.Properties.load(java.io.InputStream)}.
+    see {java java.util.Properties#load(java.io.InputStream)}.
 
     @raise Java_exception if an i/o error occurs *)
 
 val load_from_xml : t -> java'io'InputStream java_extends -> unit
 (** [load_xml props str] loads the properties from stream [str] into
-    [props]; see {java java.util.Properties.loadFromXML(java.io.InputStream)}.
+    [props]; see {java java.util.Properties#loadFromXML(java.io.InputStream)}.
 
     @raise Java_exception if an i/o error occurs *)
 
 val store : t -> ?comment:JavaString.t -> java'io'OutputStream java_extends -> unit
 (** [store props str] stores the properties [props] onto the stream [str]
     with optional comment [commment]; see
-    {java java.util.Properties.store(java.io.OutputStream, java.lang.String)}.
+    {java java.util.Properties#store(java.io.OutputStream, java.lang.String)}.
 
     @raise Java_exception if an i/o error occurs *)
 
 val store_to_xml : t -> ?comment:JavaString.t -> java'io'OutputStream java_extends -> unit
 (** [store_to_xml props str] stores the properties [props] onto the
     stream [str] with optional comment [commment]; see
-    {java java.util.Properties.storeToXML(java.io.OutputStream, java.lang.String)}.
+    {java java.util.Properties#storeToXML(java.io.OutputStream, java.lang.String)}.
 
     @raise Java_exception if an i/o error occurs *)
 
