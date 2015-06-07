@@ -230,6 +230,10 @@ external print_endline : java'lang'String java_instance -> unit =
 (** [print_endline s] prints [s] followed by a newline character onto the
     standard ouput. *)
 
+external print_newline : unit -> unit =
+  "ocamljava_javastring_print_newline"
+(** [print_newline ()] prints a newline character onto the standard ouput. *)
+
 external prerr_string : java'lang'String java_instance -> unit =
   "ocamljava_javastring_prerr_string"
 (** [prerr_string s] prints [s] onto the error ouput. *)
@@ -238,6 +242,10 @@ external prerr_endline : java'lang'String java_instance -> unit =
   "ocamljava_javastring_prerr_endline"
 (** [prerr_endline s] prints [s] followed by a newline character onto the
     error ouput. *)
+
+external prerr_newline : unit -> unit =
+  "ocamljava_javastring_prerr_newline"
+(** [prerr_newline ()] prints a newline character onto the error ouput. *)
 
 external output_string : out_channel -> java'lang'String java_instance -> unit =
   "ocamljava_javastring_output_string"

@@ -266,11 +266,17 @@ external print_string : _'String java_instance -> unit =
 external print_endline : _'String java_instance -> unit =
   "ocamljava_javastring_print_endline"
 
+external print_newline : unit -> unit =
+  "ocamljava_javastring_print_newline"
+
 external prerr_string : _'String java_instance -> unit =
   "ocamljava_javastring_prerr_string"
 
 external prerr_endline : _'String java_instance -> unit =
   "ocamljava_javastring_prerr_endline"
+
+external prerr_newline : unit -> unit =
+  "ocamljava_javastring_prerr_newline"
 
 external output_string : out_channel -> _'String java_instance -> unit =
   "ocamljava_javastring_output_string"
