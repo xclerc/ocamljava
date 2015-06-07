@@ -400,7 +400,7 @@ let () =
       || (Pathname.check_extension filename "mll") then begin
           let module_name =
             filename
-            |> Pathname.remove_extension 
+            |> Pathname.remove_extension
             |> Pathname.basename
             |> String.capitalize in
           if not (List.mem module_name excluded_modules) then
