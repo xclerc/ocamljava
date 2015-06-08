@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: overview of the concurrent library</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -85,7 +86,7 @@ table {
 <li>minimalistic software transactional memory (<code>STM</code> module).</li>
 </ul>
 <h4 id="section"></h4>
-<p>Besides these modules, <code>TimeUnit</code> defines the various time units and a conversion function, and <code>Runtime</code> gives access to timers, number of logical processors, and memory statistics.</p>
+<p>Besides these modules, <code>TimeUnit</code> defines the various time units and a conversion function.</p>
 <h4 id="section-1"></h4>
 <p>The <code>doc</code> directory of the binary distribution contains the <kbd>ocamldoc</kbd>-generated documentation for all modules. Most modules from the first five categories above are the counterparts of Java classes with the same name in the package <code>java.util.concurrent</code> (and its sub-packages). It is thus possible to get additional information from the JDK documentation.</p>
 <h1 id="basics">Basics</h1>
@@ -102,35 +103,31 @@ table {
 <li><code>Exchanger</code> for simple rendez-vous allowing to swap data between two threads;</li>
 <li><code>CountDownLatch</code> for one-use barriers;</li>
 <li><code>CyclicBarrier</code> for reusable barriers;</li>
-<li>`<code>Phaser</code> for customizable barriers.</li>
+<li><code>Phaser</code> for customizable barriers.</li>
 </ul>
 <h4 id="section-3"></h4>
 <p>Here is an example of threads with a locally-stored accumulator variable:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">acc</span> <span class="o">=</span> <span class="nn">ThreadLocal</span><span class="p">.</span><span class="n">make</span> <span class="mi">0</span> <span class="c">(* initial value *)</span>
 
-let acc = ThreadLocal.make 0 (* initial value *)
+<span class="k">let</span> <span class="n">compute</span> <span class="n">x</span> <span class="o">=</span>
+  <span class="o">...</span>
+  <span class="k">let</span> <span class="n">old</span> <span class="o">=</span> <span class="nn">ThreadLocal</span><span class="p">.</span><span class="n">get</span> <span class="n">acc</span> <span class="k">in</span> <span class="c">(* read access *)</span>
+  <span class="o">...</span>
+  <span class="nn">ThreadLocal</span><span class="p">.</span><span class="n">set</span> <span class="n">acc</span> <span class="o">(</span><span class="n">f</span> <span class="n">old</span><span class="o">)</span> <span class="c">(* write access *)</span>
+  <span class="o">...</span>
 
-let compute x =
-  ...
-  let old = ThreadLocal.get acc in (* read access *)
-  ...
-  ThreadLocal.set acc (f old) (* write access *)
-  ...
-
-let () =
- let threads =
-    List.map
-      (fun s -&gt;
-        Thread.make
-          None (* thread group *)
-          None (* thread name *)
-          (compute s) n)
-      [ 1; 2; 3; 5; 7; 11; 13 ] in
-  List.iter Thread.start threads;
-  List.iter Thread.join threads</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+ <span class="k">let</span> <span class="n">threads</span> <span class="o">=</span>
+    <span class="nn">List</span><span class="p">.</span><span class="n">map</span>
+      <span class="o">(</span><span class="k">fun</span> <span class="n">s</span> <span class="o">-&gt;</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">make</span> <span class="n">compute</span> <span class="n">s</span><span class="o">)</span>
+      <span class="o">[</span> <span class="mi">1</span><span class="o">;</span> <span class="mi">2</span><span class="o">;</span> <span class="mi">3</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="mi">7</span><span class="o">;</span> <span class="mi">11</span><span class="o">;</span> <span class="mi">13</span> <span class="o">]</span> <span class="k">in</span>
+  <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">start</span> <span class="n">threads</span><span class="o">;</span>
+  <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">join</span> <span class="n">threads</span></code></pre>
+</div>
 <h1 id="atomics">Atomics</h1>
 <p>The atomic containers have module names that slightly differ from the equivalent Java class names, the complete mapping being given by the following table. All the atomic containers provide <em>compare-and-set</em> operations, thus allowing to write lock-free algorithms.</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">OCaml module name</th>
@@ -189,71 +186,75 @@ let () =
 <p>(1): physical comparison is used by the container. As OCaml-Java uses boxed values for OCaml <code>int</code> values, the container should not be used to store <code>int</code> values. Any other type can be safely stored (caching of <code>int</code> values ensure that sum types are correctly handled).</p>
 <h4 id="section-4"></h4>
 <p>Here is an example of atomic use, comparing the use of a bare <code>Pervasives.ref</code> value with an atomic one:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="bp">()</span> <span class="o">=</span> <span class="nn">Random</span><span class="p">.</span><span class="n">self_init</span> <span class="bp">()</span>
 
-let () = Random.self_init ()
+<span class="k">let</span> <span class="n">a</span> <span class="o">=</span> <span class="nn">AtomicInt64</span><span class="p">.</span><span class="n">make</span> <span class="mi">0</span><span class="n">L</span> <span class="c">(* accesses to the value are atomic *)</span>
+<span class="k">let</span> <span class="n">b</span> <span class="o">=</span> <span class="n">ref</span> <span class="mi">0</span><span class="n">L</span> <span class="c">(* accesses to the value are not atomic *)</span>
 
-let a = AtomicInt64.make 0L (* accesses to the value are atomic *)
-let b = ref 0L (* accesses to the value are not atomic *)
+<span class="k">let</span> <span class="n">print</span> <span class="n">s</span> <span class="n">n</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">l</span> <span class="o">=</span> <span class="n">ref</span> <span class="mi">0</span><span class="n">L</span> <span class="k">in</span>
+  <span class="k">for</span> <span class="o">_</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">to</span> <span class="n">n</span> <span class="k">do</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nn">Int64</span><span class="p">.</span><span class="n">of_int</span> <span class="o">(</span><span class="nn">Random</span><span class="p">.</span><span class="n">int</span> <span class="mi">250</span><span class="o">)</span> <span class="k">in</span>
+    <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;%s (waiting %Ld)</span><span class="se">\n</span><span class="s2">%!&quot;</span> <span class="n">s</span> <span class="n">t</span><span class="o">;</span>
+    <span class="n">b</span> <span class="o">:=</span> <span class="nn">Int64</span><span class="p">.</span><span class="n">add</span> <span class="o">!</span><span class="n">b</span> <span class="n">t</span><span class="o">;</span>
+    <span class="n">l</span> <span class="o">:=</span> <span class="nn">Int64</span><span class="p">.</span><span class="n">add</span> <span class="o">!</span><span class="n">l</span> <span class="n">t</span><span class="o">;</span>
+    <span class="n">ignore</span> <span class="o">(</span><span class="nn">AtomicInt64</span><span class="p">.</span><span class="n">add_and_get</span> <span class="n">a</span> <span class="n">t</span><span class="o">);</span>
+    <span class="nn">Thread</span><span class="p">.</span><span class="n">sleep</span> <span class="n">t</span>
+  <span class="k">done</span><span class="o">;</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;l = %Ld</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">!</span><span class="n">l</span>
 
-let print s n =
-  let l = ref 0L in
-  for _i = 1 to n do
-    let t = Int64.of_int (Random.int 250) in
-    Printf.printf &quot;%s (waiting %Ld)\n%!&quot; s t;
-    b := Int64.add !b t;
-    l := Int64.add !l t;
-    ignore (AtomicInt64.add_and_get a t);
-    Thread.sleep t
-  done;
-  Printf.printf &quot;l = %Ld\n&quot; !l
-
-let () =
-  let n = 10 in
-  let threads =
-    List.map
-      (fun s -&gt; Thread.make None None (print s) n)
-      [ &quot;hello&quot;; &quot;salut&quot; ] in
-  List.iter Thread.start threads;
-  List.iter Thread.join threads;
-  Printf.printf &quot;a = %Ld, b = %Ld\n&quot; (AtomicInt64.get a) !b</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">10</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">threads</span> <span class="o">=</span>
+    <span class="nn">List</span><span class="p">.</span><span class="n">map</span>
+      <span class="o">(</span><span class="k">fun</span> <span class="n">s</span> <span class="o">-&gt;</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">make</span> <span class="o">(</span><span class="n">print</span> <span class="n">s</span><span class="o">)</span> <span class="n">n</span><span class="o">)</span>
+      <span class="o">[</span> <span class="s2">&quot;hello&quot;</span><span class="o">;</span> <span class="s2">&quot;salut&quot;</span> <span class="o">]</span> <span class="k">in</span>
+  <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">start</span> <span class="n">threads</span><span class="o">;</span>
+  <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="nn">Thread</span><span class="p">.</span><span class="n">join</span> <span class="n">threads</span><span class="o">;</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;a = %Ld, b = %Ld</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">(</span><span class="nn">AtomicInt64</span><span class="p">.</span><span class="n">get</span> <span class="n">a</span><span class="o">)</span> <span class="o">!</span><span class="n">b</span></code></pre>
+</div>
 <h1 id="futures">Futures</h1>
 <p>Futures are similar to lazy values in the sense that, once created, it is possible to <em>wait</em> for their evaluation (though <code>Future.get</code>). However, they differ from lazy values as their evaluation is done in the background by another thread. Basic future manipulation is done through the <code>Future</code> module, but they are created by submitting a computation to a thread pool (by <code>submit</code>, or some <code>invoke</code> variant), as provided by the <code>ThreadPoolExecutor</code> module. Such pools need to be shutdown at program termination: as they contain threads, they prevent the JVM from ending the program (unless <code>exit</code> is explicitly called). Here is a basic example of future use:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">pool</span> <span class="o">=</span>
+  <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">make</span>
+    <span class="o">~</span><span class="n">core_pool_size</span><span class="o">:</span><span class="mi">4</span><span class="n">l</span>
+    <span class="o">~</span><span class="n">max_pool_size</span><span class="o">:</span><span class="mi">4</span><span class="n">l</span>
+    <span class="mi">1</span><span class="n">L</span> <span class="nn">TimeUnit</span><span class="p">.</span><span class="nc">Seconds</span> <span class="c">(* keep-alive time for threads outside core *)</span>
+    <span class="nn">RejectedExecutionHandler</span><span class="p">.</span><span class="nc">Discard_policy</span> <span class="c">(* how to handle rejected execution *)</span>
 
-let pool =
-  ThreadPoolExecutor.make
-    4l (* core pool size *)
-    4l (* max pool size *)
-    1L TimeUnit.Seconds (* keep-alive time for threads outside core *)
-    RejectedExecutionHandler.Discard_policy (* how to handle rejected execution *)
+<span class="k">let</span> <span class="n">compute</span> <span class="n">x</span> <span class="o">=</span>
+  <span class="o">...</span>
 
-let compute x =
-  ...
-
-let () =
-  let f = ThreadPoolExecutor.submit pool compute 137 in
-  ...
-  Printf.printf &quot;result = %d\n&quot; (Future.get f);
-  ThreadPoolExecutor.shutdown pool</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">f</span> <span class="o">=</span> <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">submit</span> <span class="n">pool</span> <span class="n">compute</span> <span class="mi">137</span> <span class="k">in</span>
+  <span class="o">...</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;result = %d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">(</span><span class="nn">Future</span><span class="p">.</span><span class="n">get</span> <span class="n">f</span><span class="o">);</span>
+  <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">shutdown</span> <span class="n">pool</span></code></pre>
+</div>
 <h4 id="section-5"></h4>
 <p>It is also possible to launch several computations in parallel and wait for the first one to return:</p>
-<pre><code>let () =
-  let l = [ 1; 2; 3; 5; 7; 11; 13 ] in
-  let res = ThreadPoolExecutor.invoke_any pool (List.map compute l) in
-  let others = ThreadPoolExecutor.shutdown_now pool in (* get all futures still running *)
-  List.iter (fun f -&gt; ignore (Future.cancel f true)) others;
-  Printf.printf &quot;result = %d\n&quot; res</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">l</span> <span class="o">=</span> <span class="o">[</span> <span class="mi">1</span><span class="o">;</span> <span class="mi">2</span><span class="o">;</span> <span class="mi">3</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="mi">7</span><span class="o">;</span> <span class="mi">11</span><span class="o">;</span> <span class="mi">13</span> <span class="o">]</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">invoke_any</span> <span class="n">pool</span> <span class="o">(</span><span class="nn">List</span><span class="p">.</span><span class="n">map</span> <span class="n">compute</span> <span class="n">l</span><span class="o">)</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">others</span> <span class="o">=</span> <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">shutdown_now</span> <span class="n">pool</span> <span class="k">in</span> <span class="c">(* get all futures still running *)</span>
+  <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="o">(</span><span class="k">fun</span> <span class="n">f</span> <span class="o">-&gt;</span> <span class="n">ignore</span> <span class="o">(</span><span class="nn">Future</span><span class="p">.</span><span class="n">cancel</span> <span class="n">f</span> <span class="bp">true</span><span class="o">))</span> <span class="n">others</span><span class="o">;</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;result = %d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">res</span></code></pre>
+</div>
 <h4 id="section-6"></h4>
 <p>However, for <code>Future.cancel</code> to succeed, it is necessary for <code>compute</code> to <em>cooperate</em>: the <code>compute</code> function should periodically test whether is has been interrupted. A simple way to perform that test is to check the value returned by <code>Thread.interrupted</code> before each computation step:</p>
-<pre><code>let compute x =
-  ...
-  while (not !done) &amp;&amp; (not (Thread.interrupted ())) do
-    ...
-    perform computation step
-    ...
-  done;
-  ...</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">compute</span> <span class="n">x</span> <span class="o">=</span>
+  <span class="o">...</span>
+  <span class="k">while</span> <span class="o">(</span><span class="n">not</span> <span class="o">!</span><span class="k">done</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">not</span> <span class="o">(</span><span class="nn">Thread</span><span class="p">.</span><span class="n">interrupted</span> <span class="bp">()</span><span class="o">))</span> <span class="k">do</span>
+    <span class="o">...</span>
+    <span class="n">perform</span> <span class="n">computation</span> <span class="n">step</span>
+    <span class="o">...</span>
+  <span class="k">done</span><span class="o">;</span>
+  <span class="o">...</span></code></pre>
+</div>
 <h4 id="section-7"></h4>
 <p>Besides <em>simple</em> futures, it is also possible to use <em>scheduled</em> futures (through the <code>ScheduledFuture</code>, and <code>ScheduledThreadPoolExecutor</code> modules). It is possible to schedule a one-shot future through <code>schedule</code> by just specifying a delay before future evaluation. It is also possible to schedule a future that will be repeatedly evaluated according to a given periodicity:</p>
 <ul>
@@ -261,18 +262,21 @@ let () =
 <li><code>schedule_with_fixed_delay</code> allows to specify the period between one evaluation end and the next evaluation start.</li>
 </ul>
 <p>The following code will print <em>&quot;hello!&quot;</em> once per second:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">pool</span> <span class="o">=</span>
+  <span class="nn">ScheduledThreadPoolExecutor</span><span class="p">.</span><span class="n">make</span>
+    <span class="o">~</span><span class="n">core_pool_size</span><span class="o">:</span><span class="mi">4</span><span class="n">l</span>
+    <span class="nn">RejectedExecutionHandler</span><span class="p">.</span><span class="nc">Discard_policy</span>
 
-let pool = ScheduledThreadPoolExecutor.make 4l RejectedExecutionHandler.Discard_policy
-
-let () =
- let f =
-    ScheduledThreadPoolExecutor.schedule_at_fixed_rate
-      pool
-      print_endline &quot;hello!&quot;
-      1L 1L TimeUnit.Seconds (* one second before first call, one second between two calls *) in
-  ScheduledFuture.get f;
-  ScheduledThreadPoolExecutor.shutdown pool</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">f</span> <span class="o">=</span>
+    <span class="nn">ScheduledThreadPoolExecutor</span><span class="p">.</span><span class="n">schedule_at_fixed_rate</span>
+      <span class="n">pool</span>
+      <span class="n">print_endline</span> <span class="s2">&quot;hello!&quot;</span>
+      <span class="mi">1</span><span class="n">L</span> <span class="mi">1</span><span class="n">L</span> <span class="nn">TimeUnit</span><span class="p">.</span><span class="nc">Seconds</span> <span class="c">(* one second before first call, one second between two calls *)</span> <span class="k">in</span>
+  <span class="nn">ScheduledFuture</span><span class="p">.</span><span class="n">get</span> <span class="n">f</span><span class="o">;</span>
+  <span class="nn">ScheduledThreadPoolExecutor</span><span class="p">.</span><span class="n">shutdown</span> <span class="n">pool</span></code></pre>
+</div>
 <h4 id="section-8"></h4>
 <p>Finally, the <code>ExecutorCompletionService</code> module allows to either <em>poll</em> or <em>wait</em> until any of the submitted futures has completed evaluation.</p>
 <h1 id="forkjoin-computations">Fork/join computations</h1>
@@ -282,20 +286,24 @@ let () =
 <li>a function indicating how to combine the partial results of the sub-problems.</li>
 </ul>
 <p>As an exemple, a (very inefficient) way of computing the fibonacci function is:</p>
-<pre><code>let rec fib n =
-  if n &lt;= 1 then
-    1
-  else
-    (fib (n - 2)) + (fib (n - 1))</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="k">rec</span> <span class="n">fib</span> <span class="n">n</span> <span class="o">=</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="k">then</span>
+    <span class="mi">1</span>
+  <span class="k">else</span>
+    <span class="o">(</span><span class="n">fib</span> <span class="o">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="o">))</span> <span class="o">+</span> <span class="o">(</span><span class="n">fib</span> <span class="o">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">))</span></code></pre>
+</div>
 <p>that can be turned into a parallel version through:</p>
-<pre><code>let fork n =
-  if n &lt; threshold
-    then None (* below a given value, we do not fork *)
-    else Some (n - 1, n - 2) (* otherwise, we fork and create two subproblems *)
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">fork</span> <span class="n">n</span> <span class="o">=</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">threshold</span>
+    <span class="k">then</span> <span class="nc">None</span> <span class="c">(* below a given value, we do not fork *)</span>
+    <span class="k">else</span> <span class="nc">Some</span> <span class="o">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="o">)</span> <span class="c">(* otherwise, we fork and create two subproblems *)</span>
 
-let join x y = x + y
+<span class="k">let</span> <span class="n">join</span> <span class="n">x</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 
-let parallel_fib pool = Concurrent.ForkJoin.split pool fork join fib</code></pre>
+<span class="k">let</span> <span class="n">parallel_fib</span> <span class="n">pool</span> <span class="o">=</span> <span class="nn">Concurrent</span><span class="p">.</span><span class="nn">ForkJoin</span><span class="p">.</span><span class="n">split</span> <span class="n">pool</span> <span class="n">fork</span> <span class="n">join</span> <span class="n">fib</span></code></pre>
+</div>
 <p>where <code>pool</code> is a value with type <code>ForkJoinPool.t</code>.</p>
 <h4 id="section-9"></h4>
 <p>The behaviour of <code>parallel_fib</code> when passed a value <code>x</code> is the following:</p>
@@ -314,33 +322,36 @@ let parallel_fib pool = Concurrent.ForkJoin.split pool fork join fib</code></pre
 <li><code>reduce : key -&gt; value -&gt; output -&gt; output</code></li>
 </ul>
 <p>The computation is started by providing an <code>input Stream.t</code> that is used to launch <em>map</em> computations for the stream values in different threads. Results computed by threads are then stored into a map from <code>key</code> to <code>value</code>, using <code>combine</code> to merge the values for equivalent keys. Once all <em>map</em> computations have returned, <code>reduce</code> acts as a bare fold over the aforementioned map, calculating the final result.<br />Here is how to define a map/reduce computation:</p>
-<pre><code>module C = struct
-  type input = int
-  type key = int
-  type value = int
-  type output = (int * int) list
-  let compare_keys = Pervasives.compare
-
-  let map x = [x, compute x]
-  let combine _ x y = x + y
-  let reduce _ v acc = v + acc
-end</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">module</span> <span class="nc">C</span> <span class="o">=</span> <span class="k">struct</span>
+  <span class="k">type</span> <span class="n">input</span> <span class="o">=</span> <span class="kt">int</span>
+  <span class="k">type</span> <span class="n">key</span> <span class="o">=</span> <span class="kt">int</span>
+  <span class="k">type</span> <span class="k">value</span> <span class="o">=</span> <span class="kt">int</span>
+  <span class="k">type</span> <span class="n">output</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span> <span class="o">*</span> <span class="kt">int</span><span class="o">)</span> <span class="kt">list</span>
+  <span class="k">let</span> <span class="n">compare_keys</span> <span class="o">=</span> <span class="nn">Pervasives</span><span class="p">.</span><span class="n">compare</span>
+    
+  <span class="k">let</span> <span class="n">map</span> <span class="n">x</span> <span class="o">=</span> <span class="o">[</span><span class="n">x</span><span class="o">,</span> <span class="n">compute</span> <span class="n">x</span><span class="o">]</span>
+  <span class="k">let</span> <span class="n">combine</span> <span class="o">_</span> <span class="n">x</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+  <span class="k">let</span> <span class="n">reduce</span> <span class="o">_</span> <span class="n">v</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">acc</span>
+<span class="k">end</span></code></pre>
+</div>
 <p>that is then passed to the <code>MapReduce.Make</code> functor:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">pool</span> <span class="o">=</span>
+  <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">make</span>
+    <span class="o">~</span><span class="n">core_pool_size</span><span class="o">:</span><span class="mi">4</span><span class="n">l</span>
+    <span class="o">~</span><span class="n">max_pool_size</span><span class="o">:</span><span class="mi">4</span><span class="n">l</span>
+    <span class="mi">1</span><span class="n">L</span> <span class="nn">TimeUnit</span><span class="p">.</span><span class="nc">Days</span>
+    <span class="nn">RejectedExecutionHandler</span><span class="p">.</span><span class="nc">Discard_policy</span>
 
-let pool =
-  ThreadPoolExecutor.make
-    4l 4l
-    1L TimeUnit.Days
-    RejectedExecutionHandler.Discard_policy
+<span class="k">module</span> <span class="nc">MR</span> <span class="o">=</span> <span class="nn">MapReduce</span><span class="p">.</span><span class="nc">Make</span> <span class="o">(</span><span class="nc">C</span><span class="o">)</span>
 
-module MR = MapReduce.Make (C)
-
-let () =
-  let s = Stream.of_list [ 1; 2; 3; 5; 7; 9; 11; 13; ... ] in
-  let res = MR.compute pool s 0 in
-  Printf.printf &quot;result = %d\n&quot; res;
-  ThreadPoolExecutor.shutdown pool</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nn">Stream</span><span class="p">.</span><span class="n">of_list</span> <span class="o">[</span> <span class="mi">1</span><span class="o">;</span> <span class="mi">2</span><span class="o">;</span> <span class="mi">3</span><span class="o">;</span> <span class="mi">5</span><span class="o">;</span> <span class="mi">7</span><span class="o">;</span> <span class="mi">9</span><span class="o">;</span> <span class="mi">11</span><span class="o">;</span> <span class="mi">13</span><span class="o">;</span> <span class="o">...</span> <span class="o">]</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="nn">MR</span><span class="p">.</span><span class="n">compute</span> <span class="n">pool</span> <span class="n">s</span> <span class="mi">0</span> <span class="k">in</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;result = %d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">res</span><span class="o">;</span>
+  <span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">shutdown</span> <span class="n">pool</span></code></pre>
+</div>
 <h1 id="parallel-arrays">Parallel arrays</h1>
 <p>The <code>ParallelArray</code> module provides the same functions as the <code>Array</code> module from the standard library, except that the following ones take advantage of the multiple cores to execute operations in parallel:</p>
 <ul>
@@ -367,33 +378,35 @@ let () =
 <p>In order to get rid of these optional parameters, it is possible to use the <code>ParallelArray.Make</code> functor to set the parameters once for all function calls.</p>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> most functions have the same signature as in the <code>Array</code> module, but it is not possible for the <em>fold</em> functions. Indeed, as folds are executed on parts of the array, an additional function is needed in order to combine the results from those partial folds. This leads to the following type for the <code>fold_left</code> function:</p>
-<pre><code>?pool:ThreadPoolExecutor.t -&gt;
-?chunk_size:int -&gt;
-(&#39;a -&gt; &#39;b -&gt; &#39;a) -&gt; (* original fold function *)
-(&#39;a -&gt; &#39;a -&gt; &#39;a) -&gt; (* function used to combine results from partial folds *)
-&#39;a -&gt;
-&#39;b array -&gt;
-&#39;a</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="o">?</span><span class="n">pool</span><span class="o">:</span><span class="nn">ThreadPoolExecutor</span><span class="p">.</span><span class="n">t</span> <span class="o">-&gt;</span>
+<span class="o">?</span><span class="n">chunk_size</span><span class="o">:</span><span class="kt">int</span> <span class="o">-&gt;</span>
+<span class="o">(</span><span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="k">&#39;</span><span class="n">b</span> <span class="o">-&gt;</span> <span class="k">&#39;</span><span class="n">a</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="c">(* original fold function *)</span>
+<span class="o">(</span><span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="k">&#39;</span><span class="n">a</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="c">(* function used to combine results from partial folds *)</span>
+<span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span>
+<span class="k">&#39;</span><span class="n">b</span> <span class="kt">array</span> <span class="o">-&gt;</span>
+<span class="k">&#39;</span><span class="n">a</span></code></pre>
+</div>
 <p>Of course, the parallel folds will yield the same results as their classical counterparts iff passed functions are associative and commutative.</p>
 </div>
 <h4 id="section-14"></h4>
 <p>Here is an example comparing the use of <code>Array</code> and <code>ParallelArray</code>:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">10000</span>
 
-let size = 10000
+<span class="k">let</span> <span class="n">a</span> <span class="o">=</span> <span class="nn">Array</span><span class="p">.</span><span class="n">make</span> <span class="n">size</span> <span class="n">init_func</span>
 
-let a = Array.make size init_func
+<span class="k">let</span> <span class="n">sequential</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">b</span> <span class="o">=</span> <span class="nn">Array</span><span class="p">.</span><span class="n">map</span> <span class="n">compute_func</span> <span class="n">a</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="nn">Array</span><span class="p">.</span><span class="n">fold_left</span> <span class="o">(</span><span class="k">fun</span> <span class="n">acc</span> <span class="n">elem</span> <span class="o">-&gt;</span> <span class="n">acc</span> <span class="o">+</span> <span class="o">(</span><span class="n">aux_func</span> <span class="n">elem</span><span class="o">))</span> <span class="mi">0</span> <span class="n">b</span> <span class="k">in</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;result = %d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">res</span>
 
-let sequential () =
-  let b = Array.map compute_func a in
-  let res = Array.fold_left (fun acc elem -&gt; acc + (aux_func elem)) 0 b in
-  Printf.printf &quot;result = %d\n&quot; res
-
-let parallel () =
-  let b = ParallelArray.map compute_func a in
-  let res = ParallelArray.fold_left (fun acc elem -&gt; acc + (aux_func elem)) (+) 0 b in
-  Printf.printf &quot;result = %d\n&quot; res;
-  ParallelArray.shutdown_now () (* stop threads from the default ParallelArray pool *)</code></pre>
+<span class="k">let</span> <span class="n">parallel</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">b</span> <span class="o">=</span> <span class="nn">ParallelArray</span><span class="p">.</span><span class="n">map</span> <span class="n">compute_func</span> <span class="n">a</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="nn">ParallelArray</span><span class="p">.</span><span class="n">fold_left</span> <span class="o">(</span><span class="k">fun</span> <span class="n">acc</span> <span class="n">elem</span> <span class="o">-&gt;</span> <span class="n">acc</span> <span class="o">+</span> <span class="o">(</span><span class="n">aux_func</span> <span class="n">elem</span><span class="o">))</span> <span class="o">(+)</span> <span class="mi">0</span> <span class="n">b</span> <span class="k">in</span>
+  <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;result = %d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">res</span><span class="o">;</span>
+  <span class="nn">ParallelArray</span><span class="p">.</span><span class="n">shutdown_now</span> <span class="bp">()</span> <span class="c">(* stop threads from the default ParallelArray pool *)</span></code></pre>
+</div>
 <h1 id="stm">STM</h1>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> the current implementation has only been lightly tested.</p>
@@ -407,25 +420,25 @@ let parallel () =
 <li><code>STM.run_read_only</code> that executes a transaction that cannot modify values.</li>
 </ul>
 <p>A transaction function is passed to one of these functions in order to specify the transaction behavior. The transaction function can access <code>STM.ref</code> values through accessor functions. As an example, the canonical banking account example can be written:</p>
-<pre><code>open Concurrent
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">account</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="n">name</span> <span class="o">:</span> <span class="kt">string</span><span class="o">;</span> <span class="c">(* bare value *)</span>
+    <span class="n">balance</span> <span class="o">:</span> <span class="kt">int</span> <span class="nn">STM</span><span class="p">.</span><span class="n">ref</span><span class="o">;</span> <span class="c">(* value protected by transactions *)</span>
+  <span class="o">}</span>
 
-type account = {
-    name : string; (* bare value *)
-    balance : int STM.ref; (* value protected by transactions *)
-  }
+<span class="k">let</span> <span class="n">make_account</span> <span class="n">n</span> <span class="n">b</span> <span class="o">=</span>
+  <span class="o">{</span> <span class="n">name</span> <span class="o">=</span> <span class="n">n</span><span class="o">;</span> <span class="n">balance</span> <span class="o">=</span> <span class="nn">STM</span><span class="p">.</span><span class="n">ref</span> <span class="n">b</span> <span class="o">}</span>
 
-let make_account n b =
-  { name = n; balance = STM.ref b }
+<span class="k">let</span> <span class="n">print_account</span> <span class="n">acc</span> <span class="o">=</span>
+  <span class="nn">STM</span><span class="p">.</span><span class="n">run_read_only</span> <span class="o">(</span><span class="k">fun</span> <span class="n">get</span> <span class="o">-&gt;</span>
+    <span class="nn">Printf</span><span class="p">.</span><span class="n">printf</span> <span class="s2">&quot;%s = %dn&quot;</span> <span class="n">acc</span><span class="o">.</span><span class="n">name</span> <span class="o">(</span><span class="n">get</span> <span class="n">acc</span><span class="o">.</span><span class="n">balance</span><span class="o">))</span>
 
-let print_account acc =
-  STM.run_read_only (fun get -&gt;
-    Printf.printf &quot;%s = %d\n&quot; acc.name (get acc.balance))
-
-let transfer x y a =
-  STM.run (fun get set -&gt;
-    let xv, yv = get x.balance, get y.balance in
-    set x.balance (xv - a);
-    set y.balance (yv + a));</code></pre>
+<span class="k">let</span> <span class="n">transfer</span> <span class="n">x</span> <span class="n">y</span> <span class="n">a</span> <span class="o">=</span>
+  <span class="nn">STM</span><span class="p">.</span><span class="n">run</span> <span class="o">(</span><span class="k">fun</span> <span class="n">get</span> <span class="n">set</span> <span class="o">-&gt;</span>
+    <span class="k">let</span> <span class="n">xv</span><span class="o">,</span> <span class="n">yv</span> <span class="o">=</span> <span class="n">get</span> <span class="n">x</span><span class="o">.</span><span class="n">balance</span><span class="o">,</span> <span class="n">get</span> <span class="n">y</span><span class="o">.</span><span class="n">balance</span> <span class="k">in</span>
+    <span class="n">set</span> <span class="n">x</span><span class="o">.</span><span class="n">balance</span> <span class="o">(</span><span class="n">xv</span> <span class="o">-</span> <span class="n">a</span><span class="o">);</span>
+    <span class="n">set</span> <span class="n">y</span><span class="o">.</span><span class="n">balance</span> <span class="o">(</span><span class="n">yv</span> <span class="o">+</span> <span class="n">a</span><span class="o">));</span></code></pre>
+</div>
 
     </div>
   </div>

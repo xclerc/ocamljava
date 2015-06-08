@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: 2.0 alpha</title>
 <link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -42,14 +43,14 @@ table {
           &nbsp;Optimizer
         </a>
         
-        <a href="#concurrency" class="list-group-item">
-          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
-          &nbsp;Concurrency
-        </a>
-        
         <a href="#java-access" class="list-group-item">
           <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
           &nbsp;Java access
+        </a>
+        
+        <a href="#concurrency" class="list-group-item">
+          <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
+          &nbsp;Concurrency
         </a>
         
         <a href="#applets" class="list-group-item">
@@ -90,7 +91,7 @@ table {
 <p>OCaml-Java is relased under the QPL/LGPL licences.</p>
 <h1 id="first-steps">First steps</h1>
 <p>The new <kbd>ocamljava</kbd> compiler is akin to the <kbd>ocamlc</kbd>/<kbd>ocamlopt</kbd> compilers from the original OCaml distribution. However, rather than producing OCaml bytecode, or native code, it will compile source files to Java classes. The following table presents the correspondence between the files manipulated by the various OCaml compilers.</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;"></th>
@@ -159,7 +160,7 @@ ocamljava -o myprog.jar source.cmj</code></pre>
 <pre><code>java -jar myprog.jar</code></pre>
 <h4 id="section-2"></h4>
 <p>The binary distribution of OCaml-Java ships with the command-line tools listed in the following table.</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">command name</th>
@@ -230,7 +231,7 @@ ocamljava -o myprog.jar source.cmj</code></pre>
 <ul>
 <li>tail calls are optimized only for direct self-recursion;</li>
 <li>evaluation order is not guaranteed to be the same as in <kbd>ocamlc</kbd>/<kbd>ocamlopt</kbd> (however, it should not be a major problem as evaluation order is not specified in the OCaml language);</li>
-<li>stack overflow as well as memory shortage are not diagnosed by the OCaml-Java runtime;</li>
+<li>stack overflow as well as memory shortage are not diagnosed by the OCaml-Java runtime (resulting in Java exceptions);</li>
 <li>backtrace support is rudimentary;</li>
 <li><kbd>ocamljava</kbd> may fail to compile some (very) large functions (Java set a hard limit on method length).</li>
 </ul>
@@ -242,13 +243,13 @@ ocamljava -o myprog.jar source.cmj</code></pre>
 </div>
 <h1 id="optimizer">Optimizer</h1>
 <p>Since version 2.0-early-access5, the distribution features a post-compilation optimizer (namely <kbd>ocamljar</kbd>) that can be applied to a linked OCaml-Java program (that is, a jar file) in order to produce an optimized version of the program. An overview of the tool is available <a href="pages/ocamljar.html">here</a>.</p>
+<h1 id="java-access">Java access</h1>
+<p>Since version 2.0-early-access8, the distribution includes a new extension to the OCaml typer that allows to create and manipulate Java instances using OCaml code. An overview of these extensions is available <a href="pages/javaext.html">here</a>.</p>
 <h1 id="concurrency">Concurrency</h1>
-<p>The current version of OCaml-Java ships with a draft version of the <code>Concurrent</code> library which is a pack of several modules that are bare wrappers around Java classes. The <code>doc</code> directory contains the <kbd>ocamldoc</kbd>-generated documentation for these modules. An overview of the library is available <a href="pages/concurrency.html">here</a>.</p>
+<p>The current version of OCaml-Java ships with a draft version of the <code>concurrent</code> library which provides several modules that are bare wrappers around Java classes. The <code>doc</code> directory contains the <kbd>ocamldoc</kbd>-generated documentation for these modules. An overview of the library is available <a href="pages/concurrency.html">here</a>.</p>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> by default, OCaml-Java favors compatibility with the original OCaml implementation, meaning that it is based on a global runtime lock. In order to leverage the power of the <code>concurrent</code> library, it is necessary to disable the runtime lock by linking the program with the <kbd>-runtime-parameter runtime-lock=off</kbd> command-line option.</p>
 </div>
-<h1 id="java-access">Java access</h1>
-<p>Since version 2.0-early-access8, the distribution includes a new extension to the OCaml typer that allows to create and manipulate Java instances using OCaml code. An overview of these extensions is available <a href="pages/javaext.html">here</a>.</p>
 <h1 id="applets">Applets</h1>
 <p>Since version 2.0-early-access9, the distribution allows to write applets. Applets can be based on the Java AWT toolkit, the Java Swing toolkit, or the OCaml Graphics module. More information on how to develop and deploy applet is available <a href="pages/applets.html">here</a>.</p>
 <h1 id="servlets">Servlets</h1>

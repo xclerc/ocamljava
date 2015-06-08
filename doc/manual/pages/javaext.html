@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: creating and manipulating Java instances from OCaml code</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -27,9 +28,9 @@ table {
           &nbsp;Types
         </a>
         
-        <a href="#xxx" class="list-group-item">
+        <a href="#java-pervasives" class="list-group-item">
           <span class="glyphicon glyphicon-tag" aria-hidden="true"></span>
-          &nbsp;XXX
+          &nbsp;Java pervasives
         </a>
         
         <a href="#functions" class="list-group-item">
@@ -68,12 +69,12 @@ table {
 </div>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> in order to enable the extensions, it is necessary to pass the <kbd>-java-extensions</kbd> switch to the <kbd>ocamljava</kbd> compiler, and to link with the <code>javalib</code> library. Thus resulting in the following command-line for a one-file application:</p>
-<pre><code>ocamljava javalib.cmja -java-extensions source.ml</code></pre>
+<pre><code>ocamljava -I + javalib javalib.cmja -java-extensions source.ml</code></pre>
 <p>The same command-line switch should be passed to <kbd>ocamldoc</kbd> when generating documentation. This command-line switch can be requested in an <kbd>ocamlbuild</kbd> <code>_tags</code> file through the <code>java-extensions</code> tag.</p>
 </div>
 <h1 id="types">Types</h1>
 <p>In order to be able to manipulate Java elements from OCaml sources, it is necessary to choose a mapping from Java types to OCaml types. The following table shows how Java primitive types are mapped to OCaml predefined types.</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">Java type</th>
@@ -124,23 +125,40 @@ table {
 <li>a Java class name, <em>e.g.</em> <code>java'lang'String</code>.</li>
 </ul>
 <p>When writing a Java class name, single quotes have to be used instead of dots to abide the OCaml syntactic rules. Thus leading to the type expression <code>java'lang'String java_instance</code> to designate in OCaml an instance of the <code>java.lang.String</code> class.</p>
-<h1 id="xxx">XXX</h1>
-<p>JavaPervasives</p>
+<h1 id="java-pervasives">Java pervasives</h1>
+<p>When Java extensions are enabled, the <code>JavaPervasives</code> module is automatically opened at the beginning of each file (just like the <code>Pervasives</code> module in vanilla OCaml). This module defines the following functions:</p>
+<ul>
+<li><code>!@</code>, a shorthand for <code>JavaString.of_string</code>, thus allowing the write Java string literals <code>!@&quot;a string value&quot;</code>;</li>
+<li><code>^^^</code>, an equivalent of <code>Pervasives.(^)</code> (concatenation over <code>string</code> values) for <code>JavaString.t</code> values;</li>
+<li><code>|.</code>, akin to <code>Pervasives.(@@)</code> with a different priority.</li>
+</ul>
+<p>The idiomatic use of the <code>|.</code> operator is to chain calls to Java methods, like in the following code:</p>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;...&quot;</span>
+<span class="o">|&gt;</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;...&quot;</span> <span class="o">|.</span> <span class="n">p1</span> <span class="o">|.</span> <span class="o">...</span> <span class="o">|.</span> <span class="n">pn</span>
+<span class="o">|&gt;</span> <span class="o">...</span></code></pre>
+</div>
 <h1 id="functions">Functions</h1>
 <p>Once the mapping from Java types to OCaml types is defined, we need mechanisms to create new instances, call methods, and access fields. This is done through functions from the <code>Java</code> module.</p>
 <h4 id="section-2"></h4>
 <p>A new instance is built by calling <code>Java.make</code> with a first parameter describing the constructor to be used (as a string literal), the other parameters being the parameters actually passed to the constructor. For example, the following code builds a bare object and an <code>Integer</code>:</p>
-<pre><code>let obj = Java.make &quot;java.lang.Object()&quot;
-let itg = Java.make &quot;java.lang.Integer(int)&quot; 123l</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">obj</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;java.lang.Object()&quot;</span>
+<span class="k">let</span> <span class="n">itg</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;java.lang.Integer(int)&quot;</span> <span class="mi">123</span><span class="n">l</span></code></pre>
+</div>
 <h4 id="section-3"></h4>
 <p>A similar mechanism is used to invoke methods, through the <code>Java.call</code> function. The first parameter to this function is a descriptor to the method to be called. The other parameters are the parameters passed to the function, including the instance on which the method should be invoked (if the method is not static). For example, the following code retrieves the hash code of the previously-created object and then tests whether the two instances are equal:</p>
-<pre><code>let obj_hash = Java.call &quot;java.lang.Object.hashCode():int&quot; obj
-let eq = Java.call &quot;java.lang.Object.equals(java.lang.Object):boolean&quot; obj itg</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">obj_hash</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.lang.Object.hashCode():int&quot;</span> <span class="n">obj</span>
+<span class="k">let</span> <span class="n">eq</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.lang.Object.equals(java.lang.Object):boolean&quot;</span> <span class="n">obj</span> <span class="n">itg</span></code></pre>
+</div>
 <h4 id="section-4"></h4>
 <p>It is noteworthy that the subtyping relationship over Java instances is preserved, so that it is possible to define a function retrieving the hash code, and then apply it to <code>Object</code> and <code>Integer</code> instances:</p>
-<pre><code>let hash_code x = Java.call &quot;java.lang.Object.hashCode():int&quot; x
-let obj_hash = hash_code obj
-let itg_hash = hash_code itg</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">hash_code</span> <span class="n">x</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.lang.Object.hashCode():int&quot;</span> <span class="n">x</span>
+<span class="k">let</span> <span class="n">obj_hash</span> <span class="o">=</span> <span class="n">hash_code</span> <span class="n">obj</span>
+<span class="k">let</span> <span class="n">itg_hash</span> <span class="o">=</span> <span class="n">hash_code</span> <span class="n">itg</span></code></pre>
+</div>
 <h4 id="section-5"></h4>
 <p>When calling a Java method with a variable number of arguments, it is possible to choose how arguments will be passed: through a Java array, or through an OCaml literal array. The choice is made by using one of the two allowed variants for the method (or constructor descriptor):</p>
 <ul>
@@ -148,106 +166,125 @@ let itg_hash = hash_code itg</code></pre>
 <li><code>&quot;C.m(T...)&quot;</code> implies the use of an OCaml literal array.</li>
 </ul>
 <p>The following example applies these notations to the <code>Arrays.asList</code> method:</p>
-<pre><code>let a1 =
-  let res = Java.make_array &quot;Object[]&quot; 5l in
-  ...
-  res
-let l1 = Java.call &quot;Arrays.asList(Object[])&quot; a1
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">a1</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make_array</span> <span class="s2">&quot;Object[]&quot;</span> <span class="mi">5</span><span class="n">l</span> <span class="k">in</span>
+  <span class="o">...</span>
+  <span class="n">res</span>
+<span class="k">let</span> <span class="n">l1</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;Arrays.asList(Object[])&quot;</span> <span class="n">a1</span>
 
-let l2 =
-  Java.call &quot;Arrays.asList(Object...)&quot;
-  [| Java.null ;
-     Java.make &quot;Object()&quot; () ;
-     (JavaString.of_string &quot;xyz&quot; :&gt; java&#39;lang&#39;Object java_instance) |]</code></pre>
+<span class="k">let</span> <span class="n">l2</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;Arrays.asList(Object...)&quot;</span>
+  <span class="o">[|</span> <span class="nn">Java</span><span class="p">.</span><span class="n">null</span> <span class="o">;</span>
+     <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;Object()&quot;</span> <span class="bp">()</span> <span class="o">;</span>
+     <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;xyz&quot;</span> <span class="o">:&gt;</span> <span class="n">java&#39;lang&#39;Object</span> <span class="n">java_instance</span><span class="o">)</span> <span class="o">|]</span></code></pre>
+</div>
 <h4 id="section-6"></h4>
 <p>Accessing fields to read (respectively write) their values is done through the <code>Java.get</code> function (respectively <code>Java.set</code>). The first parameter to the function is a descriptor of the Java field to access, and the second parameter the instance to use (or <code>unit</code> if the field is static). For example, we can retrieve the maximum integer value and and increment the width of a dimension by:</p>
-<pre><code>let max_int = Java.get &quot;java.lang.Integer.MAX_VALUE:int&quot; ()
-let incr_width dim =
-  let w = Java.get &quot;java.awt.Dimension.width:int&quot; dim in
-  Java.set &quot;java.awt.Dimension.width:int&quot; dim (Int32.succ w)</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">max_int</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">get</span> <span class="s2">&quot;java.lang.Integer.MAX_VALUE:int&quot;</span> <span class="bp">()</span>
+<span class="k">let</span> <span class="n">incr_width</span> <span class="n">dim</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">w</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">get</span> <span class="s2">&quot;java.awt.Dimension.width:int&quot;</span> <span class="n">dim</span> <span class="k">in</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">set</span> <span class="s2">&quot;java.awt.Dimension.width:int&quot;</span> <span class="n">dim</span> <span class="o">(</span><span class="nn">Int32</span><span class="p">.</span><span class="n">succ</span> <span class="n">w</span><span class="o">)</span></code></pre>
+</div>
 <h4 id="section-7"></h4>
 <p>Finally, it is possible to implement a Java interface with OCaml code through the <code>Java.proxy</code> function. The first parameter to the function is a descriptor designating a Java interface, while the second parameter is an OCaml object implementing the methods specified by the Java interface. The <code>Java.proxy</code> function then returns a fully-functional instance of the interface. For example, the following code implements an <em>action listener</em> and registers it with a previously created button:</p>
-<pre><code>let button = Java.make &quot;java.awt.Button()&quot;
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">button</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;java.awt.Button()&quot;</span>
 
-let listener =
-  Java.proxy &quot;java.awt.event.ActionListener&quot; (object
-    method actionPerformed _ =
-      print_endline &quot;clicked!&quot;
-  end)
-
-let () =
-  Java.call &quot;java.awt.Button.addActionListener(java.awt.event.ActionListener):void&quot;
-    button listener</code></pre>
+<span class="k">let</span> <span class="n">listener</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">proxy</span> <span class="s2">&quot;java.awt.event.ActionListener&quot;</span> <span class="o">(</span><span class="k">object</span>
+    <span class="k">method</span> <span class="n">actionPerformed</span> <span class="o">_</span> <span class="o">=</span>
+      <span class="n">print_endline</span> <span class="s2">&quot;clicked!&quot;</span>
+  <span class="k">end</span><span class="o">)</span>
+  
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.awt.Button.addActionListener(java.awt.event.ActionListener):void&quot;</span>
+    <span class="n">button</span> <span class="n">listener</span></code></pre>
+</div>
 <h1 id="sugar">Sugar</h1>
 <p>So far, we have seen how to create and manipulate Java instances from purely OCaml code. However, the resulting code is quite verbose. We thus introduce some syntactic sugar to allow terser programs. Firstly, it is possible to remove the return type of a method or the type of a field as long as there is no ambiguity. Secondly, the type of a method parameter can be replaced by an underscore provided there is no ambiguity. The combination of these rules already allows us to switch from</p>
-<pre><code>let eq = Java.call &quot;java.lang.Object.equals(java.lang.Object):boolean&quot; obj itg</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">eq</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.lang.Object.equals(java.lang.Object):boolean&quot;</span> <span class="n">obj</span> <span class="n">itg</span></code></pre>
+</div>
 <p>to</p>
-<pre><code>let eq = Java.call &quot;java.lang.Object.equals(_)&quot; obj itg</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">eq</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;java.lang.Object.equals(_)&quot;</span> <span class="n">obj</span> <span class="n">itg</span></code></pre>
+</div>
 <p>Another notation, <code>(-)</code> allows to match any number of parameters, allowing to write</p>
-<pre><code>let x = Java.call &quot;Integer.rotateLeft(-)&quot; y z</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;Integer.rotateLeft(-)&quot;</span> <span class="n">y</span> <span class="n">z</span></code></pre>
+</div>
 <h4 id="section-8"></h4>
 <p>It is noteworthy that the types are not affected by these shorthand notations, and that the compiler will issue an error if there is an ambiguity.</p>
 <h4 id="section-9"></h4>
 <p>Lastly, we introduce a mechanism akin to the Java <code>import pack.*</code> directive through a special form of the OCaml <code>open</code> directive. Importing all the classes of the Java package <em>pack</em> is done by writing <code>open Package'pack</code> (note that, as in Java, the <code>java.lang</code> package is always opened). Thus leading to a revised version of our proxy example:</p>
-<pre><code>open Package&#39;java&#39;awt
-open Package&#39;java&#39;awt&#39;event
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">open</span> <span class="nc">Package&#39;java&#39;awt</span>
+<span class="k">open</span> <span class="nc">Package&#39;java&#39;awt&#39;event</span>
 
-let button = Java.make &quot;Button()&quot;
+<span class="k">let</span> <span class="n">button</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;Button()&quot;</span>
 
-let listener =
-  Java.proxy &quot;ActionListener&quot; (object
-    method actionPerformed _ =
-      print_endline &quot;clicked!&quot;
-  end)
+<span class="k">let</span> <span class="n">listener</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">proxy</span> <span class="s2">&quot;ActionListener&quot;</span> <span class="o">(</span><span class="k">object</span>
+    <span class="k">method</span> <span class="n">actionPerformed</span> <span class="o">_</span> <span class="o">=</span>
+      <span class="n">print_endline</span> <span class="s2">&quot;clicked!&quot;</span>
+  <span class="k">end</span><span class="o">)</span>
 
-let () = Java.call &quot;Button.addActionListener(_)&quot; button listener</code></pre>
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;Button.addActionListener(_)&quot;</span> <span class="n">button</span> <span class="n">listener</span></code></pre>
+</div>
 <h4 id="section-10"></h4>
 <p>Opened packages also allow to reduce the verbosity of type expressions, allowing to replace the package name by an underscore. The type of the aforementioned <code>hash_code</code> function can then be written:</p>
-<pre><code>val hash_code : _&#39;Object java_extends -&gt; int32</code></pre>
-<p>rather than:</p>
-<pre><code>val hash_code : java&#39;lang&#39;Object java_extends -&gt; int32</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">val</span> <span class="n">hash_code</span> <span class="o">:</span> <span class="o">_</span><span class="k">&#39;</span><span class="nc">Object</span> <span class="n">java_extends</span> <span class="o">-&gt;</span> <span class="n">int32rather</span> <span class="n">than</span><span class="o">:</span></code></pre>
+</div>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">val</span> <span class="n">hash_code</span> <span class="o">:</span> <span class="n">java&#39;lang&#39;Object</span> <span class="n">java_extends</span> <span class="o">-&gt;</span> <span class="n">int32</span></code></pre>
+</div>
 <h1 id="example">Example</h1>
 <p>The following code builds a simple Celsius-Fahrenheit converter based on a Swing GUI. The code is derived from the Clojure code sample available <a href="http://clojure.org/jvm_hosted">here</a>. The code uses the <code>JavaString</code> module for conversion between Java and OCaml strings.</p>
-<pre><code>open Package&#39;java&#39;awt
-open Package&#39;java&#39;awt&#39;event
-open Package&#39;javax&#39;swing
-
-let () =
-   let str = JavaString.of_string in
-   let open Java in
-   let title = str &quot;Celsius Converter&quot; in
-   let frame = make &quot;JFrame(String)&quot; title in
-   let temp_text = make &quot;JTextField()&quot; () in
-   let celsius_label = make &quot;JLabel(String)&quot; (str &quot;Celsius&quot;) in
-   let convert_button = make &quot;JButton(String)&quot; (str &quot;Convert&quot;) in
-   let farenheit_label = make &quot;JLabel(String)&quot; (str &quot;Farenheit&quot;) in
-   let handler = proxy &quot;ActionListener&quot; (object
-     method actionPerformed _ =
-       try
-         let c = call &quot;JTextField.getText()&quot; temp_text in
-         let c = call &quot;Double.parseDouble(_)&quot; c in
-         let f = (c *. 1.8) +. 32.0 in
-         let f = Printf.sprintf &quot;%f Farenheit&quot; f in
-         call &quot;JLabel.setText(_)&quot; farenheit_label (str f)
-       with Java_exception je -&gt;
-         let je_msg = call &quot;Throwable.getMessage()&quot; je in
-         let je_msg = JavaString.to_string je_msg in
-         let msg = str (Printf.sprintf &quot;invalid float value (%s)&quot; je_msg) in
-         let error = get &quot;JOptionPane.ERROR_MESSAGE&quot; () in
-         call &quot;JOptionPane.showMessageDialog(_,_,_,_)&quot;
-           frame msg title error
-   end) in
-   let () = call &quot;JButton.addActionListener(_)&quot; convert_button handler in
-   let layout = make &quot;GridLayout(_,_,_,_)&quot; 2l 2l 3l 3l in
-   call &quot;JFrame.setLayout(_)&quot; frame layout;
-   ignore (call &quot;JFrame.add(Component)&quot; frame temp_text);
-   ignore (call &quot;JFrame.add(Component)&quot; frame celsius_label);
-   ignore (call &quot;JFrame.add(Component)&quot; frame convert_button);
-   ignore (call &quot;JFrame.add(Component)&quot; frame farenheit_label);
-   call &quot;JFrame.setSize(_,_)&quot; frame 300l 80l;
-   let exit = get &quot;WindowConstants.EXIT_ON_CLOSE&quot; () in
-   call &quot;JFrame.setDefaultCloseOperation(int)&quot; frame exit;
-   call &quot;JFrame.setVisible(_)&quot; frame true</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">open</span> <span class="nc">Package&#39;java&#39;awt</span>
+<span class="k">open</span> <span class="nc">Package&#39;java&#39;awt&#39;event</span>
+<span class="k">open</span> <span class="nc">Package&#39;javax&#39;swing</span>
+    
+<span class="k">let</span> <span class="bp">()</span> <span class="o">=</span>
+  <span class="k">let</span> <span class="n">str</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="k">open</span> <span class="nc">Java</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">title</span> <span class="o">=</span> <span class="n">str</span> <span class="s2">&quot;Celsius Converter&quot;</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">frame</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;JFrame(String)&quot;</span> <span class="n">title</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">temp_text</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;JTextField()&quot;</span> <span class="bp">()</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">celsius_label</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;JLabel(String)&quot;</span> <span class="o">(</span><span class="n">str</span> <span class="s2">&quot;Celsius&quot;</span><span class="o">)</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">convert_button</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;JButton(String)&quot;</span> <span class="o">(</span><span class="n">str</span> <span class="s2">&quot;Convert&quot;</span><span class="o">)</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">farenheit_label</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;JLabel(String)&quot;</span> <span class="o">(</span><span class="n">str</span> <span class="s2">&quot;Farenheit&quot;</span><span class="o">)</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">proxy</span> <span class="s2">&quot;ActionListener&quot;</span> <span class="o">(</span><span class="k">object</span>
+    <span class="k">method</span> <span class="n">actionPerformed</span> <span class="o">_</span> <span class="o">=</span>
+      <span class="k">try</span>
+        <span class="k">let</span> <span class="n">c</span> <span class="o">=</span> <span class="n">call</span> <span class="s2">&quot;JTextField.getText()&quot;</span> <span class="n">temp_text</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">c</span> <span class="o">=</span> <span class="n">call</span> <span class="s2">&quot;Double.parseDouble(_)&quot;</span> <span class="n">c</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">f</span> <span class="o">=</span> <span class="o">(</span><span class="n">c</span> <span class="o">*.</span> <span class="mi">1</span><span class="o">.</span><span class="mi">8</span><span class="o">)</span> <span class="o">+.</span> <span class="mi">32</span><span class="o">.</span><span class="mi">0</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">f</span> <span class="o">=</span> <span class="nn">Printf</span><span class="p">.</span><span class="n">sprintf</span> <span class="s2">&quot;%f Farenheit&quot;</span> <span class="n">f</span> <span class="k">in</span>
+        <span class="n">call</span> <span class="s2">&quot;JLabel.setText(_)&quot;</span> <span class="n">farenheit_label</span> <span class="o">(</span><span class="n">str</span> <span class="n">f</span><span class="o">)</span>
+      <span class="k">with</span> <span class="nc">Java_exception</span> <span class="n">je</span> <span class="o">-&gt;</span>
+        <span class="k">let</span> <span class="n">je_msg</span> <span class="o">=</span> <span class="n">call</span> <span class="s2">&quot;Throwable.getMessage()&quot;</span> <span class="n">je</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">je_msg</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">to_string</span> <span class="n">je_msg</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">str</span> <span class="o">(</span><span class="nn">Printf</span><span class="p">.</span><span class="n">sprintf</span> <span class="s2">&quot;invalid float value (%s)&quot;</span> <span class="n">je_msg</span><span class="o">)</span> <span class="k">in</span>
+        <span class="k">let</span> <span class="n">error</span> <span class="o">=</span> <span class="n">get</span> <span class="s2">&quot;JOptionPane.ERROR_MESSAGE&quot;</span> <span class="bp">()</span> <span class="k">in</span>
+        <span class="n">call</span> <span class="s2">&quot;JOptionPane.showMessageDialog(_,_,_,_)&quot;</span>
+          <span class="n">frame</span> <span class="n">msg</span> <span class="n">title</span> <span class="n">error</span>
+  <span class="k">end</span><span class="o">)</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="bp">()</span> <span class="o">=</span> <span class="n">call</span> <span class="s2">&quot;JButton.addActionListener(_)&quot;</span> <span class="n">convert_button</span> <span class="n">handler</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">layout</span> <span class="o">=</span> <span class="n">make</span> <span class="s2">&quot;GridLayout(_,_,_,_)&quot;</span> <span class="mi">2</span><span class="n">l</span> <span class="mi">2</span><span class="n">l</span> <span class="mi">3</span><span class="n">l</span> <span class="mi">3</span><span class="n">l</span> <span class="k">in</span>
+  <span class="n">call</span> <span class="s2">&quot;JFrame.setLayout(_)&quot;</span> <span class="n">frame</span> <span class="n">layout</span><span class="o">;</span>
+  <span class="n">ignore</span> <span class="o">(</span><span class="n">call</span> <span class="s2">&quot;JFrame.add(Component)&quot;</span> <span class="n">frame</span> <span class="n">temp_text</span><span class="o">);</span>
+  <span class="n">ignore</span> <span class="o">(</span><span class="n">call</span> <span class="s2">&quot;JFrame.add(Component)&quot;</span> <span class="n">frame</span> <span class="n">celsius_label</span><span class="o">);</span>
+  <span class="n">ignore</span> <span class="o">(</span><span class="n">call</span> <span class="s2">&quot;JFrame.add(Component)&quot;</span> <span class="n">frame</span> <span class="n">convert_button</span><span class="o">);</span>
+  <span class="n">ignore</span> <span class="o">(</span><span class="n">call</span> <span class="s2">&quot;JFrame.add(Component)&quot;</span> <span class="n">frame</span> <span class="n">farenheit_label</span><span class="o">);</span>
+  <span class="n">call</span> <span class="s2">&quot;JFrame.setSize(_,_)&quot;</span> <span class="n">frame</span> <span class="mi">300</span><span class="n">l</span> <span class="mi">80</span><span class="n">l</span><span class="o">;</span>
+  <span class="k">let</span> <span class="n">exit</span> <span class="o">=</span> <span class="n">get</span> <span class="s2">&quot;WindowConstants.EXIT_ON_CLOSE&quot;</span> <span class="bp">()</span> <span class="k">in</span>
+  <span class="n">call</span> <span class="s2">&quot;JFrame.setDefaultCloseOperation(int)&quot;</span> <span class="n">frame</span> <span class="n">exit</span><span class="o">;</span>
+  <span class="n">call</span> <span class="s2">&quot;JFrame.setVisible(_)&quot;</span> <span class="n">frame</span> <span class="bp">true</span></code></pre>
+</div>
 <h1 id="exceptions">Exceptions</h1>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> Up to version 2.0-early-access11, all exceptions where encapsulated into <code>Java_exception</code>.</p>
@@ -259,32 +296,36 @@ let () =
 <li><code>Java_error</code> for instances of <code>java.lang.Error</code>.</li>
 </ul>
 <p>These exceptions are defined as follows:</p>
-<pre><code>exception Java_exception of java&#39;lang&#39;Exception java_instance
-exception Java_error of java&#39;lang&#39;Error java_instance</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">exception</span> <span class="nc">Java_exception</span> <span class="k">of</span> <span class="n">java&#39;lang&#39;Exception</span> <span class="n">java_instance</span>
+<span class="k">exception</span> <span class="nc">Java_error</span> <span class="k">of</span> <span class="n">java&#39;lang&#39;Error</span> <span class="n">java_instance</span></code></pre>
+</div>
 <p>The <code>Java.instanceof</code> and <code>Java.cast</code> functions can be used to respectively test whether a given object is an instance of a given class, and to cast it to a given class. Both functions accept as their first parameter the name of the class as a string literal. The following code illustrates how OCaml and Java exceptions can be mixed:</p>
-<pre><code>open Package&#39;java&#39;io
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">open</span> <span class="nc">Package&#39;java&#39;io</span>
 
-let f ... =
-  try
-    ...
-  with
-  | Not_found -&gt;
-    (* predefined OCaml Not_found exception *)
-    ...
-  | Java_exception t when Java.instanceof &quot;IOException&quot; t -&gt;
-    (* Java exception that is a subclass of java.io.IOException *)
-    ...
-  | Java_exception _ -&gt;
-    (* any other Java exception inheriting from java.lang.Exception *)
-    ...
-  | _ -&gt;
-    (* any other OCaml exception *)
-    ...</code></pre>
+<span class="k">let</span> <span class="n">f</span> <span class="o">...</span> <span class="o">=</span>
+  <span class="k">try</span>
+    <span class="o">...</span>
+  <span class="k">with</span>
+  <span class="o">|</span> <span class="nc">Not_found</span> <span class="o">-&gt;</span>
+    <span class="c">(* predefined OCaml Not_found exception *)</span>
+    <span class="o">...</span>
+  <span class="o">|</span> <span class="nc">Java_exception</span> <span class="n">t</span> <span class="k">when</span> <span class="nn">Java</span><span class="p">.</span><span class="n">instanceof</span> <span class="s2">&quot;IOException&quot;</span> <span class="n">t</span> <span class="o">-&gt;</span>
+    <span class="c">(* Java exception that is a subclass of java.io.IOException *)</span>
+    <span class="o">...</span>
+  <span class="o">|</span> <span class="nc">Java_exception</span> <span class="o">_</span> <span class="o">-&gt;</span>
+    <span class="c">(* any other Java exception inheriting from java.lang.Exception *)</span>
+    <span class="o">...</span>
+  <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span>
+    <span class="c">(* any other OCaml exception *)</span>
+    <span class="o">...</span></code></pre>
+</div>
 <h4 id="section-12"></h4>
 <p>Java exceptions are raised from OCaml code by calling the <code>Java.throw</code> function with a parameter of type <code>java'lang'Throwable java_extends</code>.</p>
 <h1 id="arrays">Arrays</h1>
 <p>For effiency reasons, Java arrays are mapped to specialized implementations, as shown by the following table:</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">Java type</th>
@@ -333,7 +374,9 @@ let f ... =
 <p>note 1: each array type has a type parameter representing the OCaml type of array elements.<br />note 2: all primitive array types share a common signature, namely <code>JavaArraySignature.T</code>.</p>
 <h4 id="section-13"></h4>
 <p>Array instances are created through either the <code>Java.make_array</code> function, or any of the <code>make</code> functions from the various modules. The <code>Java.make_array</code> function accepts as its first parameter an array descriptor, and as additional parameters <code>int32</code> values for the various dimensions. For example, a 2x3 <code>byte</code> matrix can be created through:</p>
-<pre><code>let m = Java.make_array &quot;byte[][]&quot; 2l 3l</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">m</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make_array</span> <span class="s2">&quot;byte[][]&quot;</span> <span class="mi">2</span><span class="n">l</span> <span class="mi">3</span><span class="n">l</span></code></pre>
+</div>
 <h4 id="section-14"></h4>
 <p>It is also possible to use a uniform representation for arrays by wrapping array instances into <code>JavaArray.t</code> values. The <code>JavaArray.t</code> type is a GADT that unifies all specialized arrays types into one common type. This allows to write generic code over arrays, at the price of an indirection. The <code>JavaArray</code> modules provides the functions to wrap the various kinds of arrays into <code>JavaArray.t</code> values.</p>
 

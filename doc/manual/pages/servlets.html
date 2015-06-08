@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: developing servlets</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -49,9 +50,9 @@ table {
       <hr>
       <p>This page contains the information explaining how to develop Java servlets using OCaml-Java. The first sections describe how to compile and link servlets, as well as listeners. Then, a section explains how to deploy compiled servlets. Finally, the last section consists in a complete example of a simple HTTP servlet.</p>
 <h1 id="compilation">Compilation</h1>
-<p>Servlets and related listeners are Java classes that extend or implement a given Java type. However, when <kbd>ocamljava</kbd> is used to compile OCaml modules, its default behavior is to generate Java with only <em>static</em> methods, for the various OCaml functions. As such, <kbd>ocamljava</kbd>-compiled modules cannot be used as servlets by a servlet container. This is why a dedicated compilation mode, triggered by the <kbd>-servlet</kbd> command-line switch, is introduced.</p>
-<p>The <kbd>-servlet</kbd> command-line switch informs the compiler that a proper Java class should be generated for latter use by a servlet container. The command-line switch takes a parameter used to indicate the kind of servlet or listener the user is interested in. Of course, the different servlet/listener kinds requires differents sets of functions to define their behaviour. The following table indicates the module type that a module should implement in order to be successfully compiled.</p>
-<table class="table table-condensed table-striped table-bordered">
+<p>Servlets and related listeners are Java classes that extend or implement a given Java type. However, when <kbd>ocamljava</kbd> is used to compile OCaml modules, its default behavior is to generate Java classes with only <em>static</em> methods, for the various OCaml functions. As such, <kbd>ocamljava</kbd>-compiled modules cannot be used as servlets by a servlet container. This is why a dedicated compilation mode, triggered by the <kbd>-servlet</kbd> command-line switch, is introduced.</p>
+<p>The <kbd>-servlet</kbd> command-line switch informs the compiler that a proper Java class should be generated for latter use by a servlet container. The command-line switch takes a parameter used to indicate the kind of servlet or listener the user is interested in. Of course, the different servlet/listener kinds requires differents sets of functions to define their behaviour. The following table indicates the module type that a module should abide to in order to be successfully compiled.</p>
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">Java type</th>
@@ -116,65 +117,71 @@ table {
 <p>This example shows how to compile and link a simple servlet greeting a user whose name is passed to the servlet as a <em>GET</em> parameter. We first define the signature of our module in <code>hello.mli</code>; as it is an HTTP servlet, the file is simply:</p>
 <pre><code>include JavaServlet.HTTP</code></pre>
 <p>As we are only interested in answering to <em>GET</em> requests, we only redefine the <code>do_get</code> function (note that the type <code>t</code> of the module is used to store data in the servlet instance), leading to the following contents for <code>hello.ml</code>:</p>
-<pre><code>type t = unit
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">t</span> <span class="o">=</span> <span class="kt">unit</span>
+    
+<span class="k">let</span> <span class="n">init</span> <span class="o">_</span> <span class="o">=</span> <span class="bp">()</span>
+    
+<span class="k">include</span> <span class="nn">JavaServlet</span><span class="p">.</span><span class="nc">Default_HTTP</span>
+    
+<span class="k">let</span> <span class="n">print</span> <span class="n">out</span> <span class="n">s</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;javax.servlet.ServletOutputStream.println(String)&quot;</span>
+    <span class="n">out</span>
+    <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="n">s</span><span class="o">)</span>
+    
+<span class="k">let</span> <span class="n">get</span> <span class="n">req</span> <span class="n">s</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;javax.servlet.ServletRequest.getParameter(String)&quot;</span>
+    <span class="n">req</span>
+    <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="n">s</span><span class="o">)</span>
+  <span class="o">|&gt;</span> <span class="nn">Java</span><span class="p">.</span><span class="n">wrap</span>
 
-let init _ = ()
+<span class="k">let</span> <span class="n">do_get</span> <span class="o">_</span> <span class="o">_</span> <span class="n">req</span> <span class="n">resp</span> <span class="o">=</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;javax.servlet.http.HttpServletResponse.setContentType(_)&quot;</span>
+    <span class="n">resp</span>
+    <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;text/html&quot;</span><span class="o">);</span>
+  <span class="k">let</span> <span class="n">out</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;javax.servlet.http.HttpServletResponse.getOutputStream()&quot;</span> <span class="n">resp</span> <span class="k">in</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;&lt;html&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;  &lt;body&gt;&quot;</span><span class="o">;</span>
+  <span class="k">begin</span> <span class="k">match</span> <span class="n">get</span> <span class="n">req</span> <span class="s2">&quot;name&quot;</span> <span class="k">with</span>
+  <span class="o">|</span> <span class="nc">Some</span> <span class="n">name</span> <span class="o">-&gt;</span>
+      <span class="n">already_seen</span> <span class="o">:=</span> <span class="n">name</span> <span class="o">::</span> <span class="o">!</span><span class="n">already_seen</span><span class="o">;</span>
+      <span class="n">print</span> <span class="n">out</span> <span class="o">(</span><span class="nn">Printf</span><span class="p">.</span><span class="n">sprintf</span> <span class="s2">&quot;    Hi %s!&lt;br&gt;&quot;</span> <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">to_string</span> <span class="n">name</span><span class="o">))</span>
+  <span class="o">|</span> <span class="nc">None</span> <span class="o">-&gt;</span>
+      <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;    Hi!&lt;br&gt;&quot;</span>
+  <span class="k">end</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;    &lt;form action=</span><span class="se">\&quot;</span><span class="s2">hello</span><span class="se">\&quot;</span><span class="s2"> method=</span><span class="se">\&quot;</span><span class="s2">get</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;      &lt;input type=</span><span class="se">\&quot;</span><span class="s2">text</span><span class="se">\&quot;</span><span class="s2"> name=</span><span class="se">\&quot;</span><span class="s2">name</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;      &lt;input type=</span><span class="se">\&quot;</span><span class="s2">submit</span><span class="se">\&quot;</span><span class="s2"> value=</span><span class="se">\&quot;</span><span class="s2">go</span><span class="se">\&quot;</span><span class="s2">&gt;&lt;br&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;    &lt;/form&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;  &lt;/body&gt;&quot;</span><span class="o">;</span>
+  <span class="n">print</span> <span class="n">out</span> <span class="s2">&quot;&lt;/html&gt;&quot;</span>
 
-include JavaServlet.Default_HTTP
-
-let print out s =
-  Java.call &quot;javax.servlet.ServletOutputStream.println(String)&quot;
-    out
-    (JavaString.of_string s)
-
-let get req s =
-  Java.call &quot;javax.servlet.ServletRequest.getParameter(String)&quot;
-    req
-    (JavaString.of_string s)
-  |&gt; Java.wrap
-
-let do_get _ _ req resp =
-  Java.call &quot;javax.servlet.http.HttpServletResponse.setContentType(_)&quot;
-    resp
-    (JavaString.of_string &quot;text/html&quot;);
-  let out = Java.call &quot;javax.servlet.http.HttpServletResponse.getOutputStream()&quot; resp in
-  print out &quot;&lt;html&gt;&quot;;
-  print out &quot;  &lt;body&gt;&quot;;
-  begin match get req &quot;name&quot; with
-  | Some name -&gt; already_seen := name :: !already_seen;
-                 print out (Printf.sprintf &quot;    Hi %s!&lt;br&gt;&quot; (JavaString.to_string name))
-  | None      -&gt; print out &quot;    Hi!&lt;br&gt;&quot;
-  end;
-  print out &quot;    &lt;form action=\&quot;hello\&quot; method=\&quot;get\&quot;&gt;&quot;;
-  print out &quot;      &lt;input type=\&quot;text\&quot; name=\&quot;name\&quot;&gt;&quot;;
-  print out &quot;      &lt;input type=\&quot;submit\&quot; value=\&quot;go\&quot;&gt;&lt;br&gt;&quot;;
-  print out &quot;    &lt;/form&gt;&quot;;
-  print out &quot;  &lt;/body&gt;&quot;;
-  print out &quot;&lt;/html&gt;&quot;
-
-let do_options _ _ _ resp =
-  JavaServlet.options resp [`GET; `OPTIONS]</code></pre>
+<span class="k">let</span> <span class="n">do_options</span> <span class="o">_</span> <span class="o">_</span> <span class="o">_</span> <span class="n">resp</span> <span class="o">=</span>
+  <span class="nn">JavaServlet</span><span class="p">.</span><span class="n">options</span> <span class="n">resp</span> <span class="o">[`</span><span class="nc">GET</span><span class="o">;</span> <span class="o">`</span><span class="nc">OPTIONS</span><span class="o">]</span></code></pre>
+</div>
 <p>The code of the servlet heavily relies on the Java extensions that are presented <a href="javaext.html">here</a>.</p>
 <p>In order to deploy this code, a <code>web.xml</code> file is also necessary, with a contents akin to:</p>
-<pre><code>&lt;web-app xmlns=&quot;http://xmlns.jcp.org/xml/ns/javaee&quot;
-         xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
-         xsi:schemaLocation=&quot;http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd&quot;
-         version=&quot;3.1&quot;&gt;
+<div class="highlight">
+<pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;web-app</span> <span class="na">xmlns=</span><span class="s">&quot;http://xmlns.jcp.org/xml/ns/javaee&quot;</span>
+         <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+         <span class="na">xsi:schemaLocation=</span><span class="s">&quot;http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd&quot;</span>
+         <span class="na">version=</span><span class="s">&quot;3.1&quot;</span><span class="nt">&gt;</span>
 
-  &lt;display-name&gt;Hello Application&lt;/display-name&gt;
-  &lt;description&gt;...&lt;/description&gt;
+  <span class="nt">&lt;display-name&gt;</span>Hello Application<span class="nt">&lt;/display-name&gt;</span>
+  <span class="nt">&lt;description&gt;</span>...<span class="nt">&lt;/description&gt;</span>
 
-  &lt;servlet&gt;
-    &lt;servlet-name&gt;HelloImpl&lt;/servlet-name&gt;
-    &lt;servlet-class&gt;pack.HelloImpl&lt;/servlet-class&gt;
-  &lt;/servlet&gt;
+  <span class="nt">&lt;servlet&gt;</span>
+    <span class="nt">&lt;servlet-name&gt;</span>HelloImpl<span class="nt">&lt;/servlet-name&gt;</span>
+    <span class="nt">&lt;servlet-class&gt;</span>pack.HelloImpl<span class="nt">&lt;/servlet-class&gt;</span>
+  <span class="nt">&lt;/servlet&gt;</span>
 
-  &lt;servlet-mapping&gt;
-    &lt;servlet-name&gt;HelloImpl&lt;/servlet-name&gt;
-    &lt;url-pattern&gt;/hello&lt;/url-pattern&gt;
-  &lt;/servlet-mapping&gt;
-
-&lt;/web-app&gt;</code></pre>
+  <span class="nt">&lt;servlet-mapping&gt;</span>
+    <span class="nt">&lt;servlet-name&gt;</span>HelloImpl<span class="nt">&lt;/servlet-name&gt;</span>
+    <span class="nt">&lt;url-pattern&gt;</span>/hello<span class="nt">&lt;/url-pattern&gt;</span>
+  <span class="nt">&lt;/servlet-mapping&gt;</span>
+    
+<span class="nt">&lt;/web-app&gt;</span></code></pre>
+</div>
 <p>The following commands are then used to build the archive:</p>
 <pre><code>ocamljava -c hello.mli
 ocamljava -c -java-extensions hello.ml

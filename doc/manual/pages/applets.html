@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: developing applets</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -55,13 +56,15 @@ table {
       <p>This page contains the information explaining how to develop Java applets using OCaml-Java. The first sections describe how to link applets respectively based on the Java AWT toolkit, the Java Swing toolkit, and the OCaml Graphics module. Then, a section explains how to deploy compiled applets. Finally, the last section consists in a complete example of a Swing-based applet.</p>
 <h1 id="awt-applets">AWT applets</h1>
 <p>To produce an AWT applet using the <kbd>ocamljava</kbd> compiler, it is necessary to link with the command-line switch <kbd>-applet awt</kbd>. In order to be able to successfully link with this command-line switch, the main module has to abide the module type defined as <code>JavaApplet.AWT</code>. The definition of this module type is:</p>
-<pre><code>val applet_info : java&#39;lang&#39;String java_instance
-val parameter_info : parameter_info
-val init : java&#39;applet&#39;Applet java_instance -&gt; unit
-val start : java&#39;applet&#39;Applet java_instance -&gt; unit
-val stop : java&#39;applet&#39;Applet java_instance -&gt; unit
-val destroy : java&#39;applet&#39;Applet java_instance -&gt; unit</code></pre>
-<p>The bare values <code>applet_info</code> and <code>parameter_info</code> define the values returned respectively by the <code>getAppletInfo()</code> and <code>getParameterInfo()</code> methods of the produced applet. The functions <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> give the implementation of the applet methods having the very same name. The passed parameter is simply the applet instance.</p>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">val</span> <span class="n">applet_info</span> <span class="o">:</span> <span class="n">java&#39;lang&#39;String</span> <span class="n">java_instance</span>
+<span class="k">val</span> <span class="n">parameter_info</span> <span class="o">:</span> <span class="n">parameter_info</span>
+<span class="k">val</span> <span class="n">init</span> <span class="o">:</span> <span class="n">java&#39;applet&#39;Applet</span> <span class="n">java_instance</span> <span class="o">-&gt;</span> <span class="kt">unit</span>
+<span class="k">val</span> <span class="n">start</span> <span class="o">:</span> <span class="n">java&#39;applet&#39;Applet</span> <span class="n">java_instance</span> <span class="o">-&gt;</span> <span class="kt">unit</span>
+<span class="k">val</span> <span class="n">stop</span> <span class="o">:</span> <span class="n">java&#39;applet&#39;Applet</span> <span class="n">java_instance</span> <span class="o">-&gt;</span> <span class="kt">unit</span>
+<span class="k">val</span> <span class="n">destroy</span> <span class="o">:</span> <span class="n">java&#39;applet&#39;Applet</span> <span class="n">java_instance</span> <span class="o">-&gt;</span> <span class="kt">unit</span></code></pre>
+</div>
+<p>The bare values <code>applet_info</code> and <code>parameter_info</code> define the values returned respectively by the <code>getAppletInfo()</code> and <code>getParameterInfo()</code> methods of the produced applet. The functions <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> give the implementations of the applet methods having the very same names. The passed parameter is simply the applet instance.</p>
 <h1 id="swing-applets">Swing applets</h1>
 <p>An applet based on Swing is very similar to an applet based on AWT. The link is done by passing the <kbd>-applet swing</kbd> command-line switch, which implies that the main module should abide the <code>JavaApplet.Swing</code> module type. This module type only differs from <code>JavaApplet.AWT</code> in the type of the parameter passed to the <code>init</code>, <code>start</code>, <code>stop</code>, and <code>destroy</code> functions: <code>javax'swing'JApplet java_instance</code> instead of <code>java'applet'Applet java_instance</code>.</p>
 <h1 id="graphics-applets">Graphics applets</h1>
@@ -71,73 +74,81 @@ val destroy : java&#39;applet&#39;Applet java_instance -&gt; unit</code></pre>
 <li>an additional function, namely <code>run</code>, with type <code>JavaApplet.graphics_event -&gt; unit</code> is requested.</li>
 </ul>
 <p>The <code>run</code> function is called for every event happening on the canvas containing the drawing area of the <code>Graphics</code> module. For example, the following module defines an applet that draws a small square around every pixel clicked by the user:</p>
-<pre><code>let applet_info = JavaString.of_string &quot;simple Graphics applet&quot;
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">applet_info</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;simple Graphics applet&quot;</span>
 
-let parameter_info = JavaApplet.parameter_info_of_list []
+<span class="k">let</span> <span class="n">parameter_info</span> <span class="o">=</span> <span class="nn">JavaApplet</span><span class="p">.</span><span class="n">parameter_info_of_list</span> <span class="bp">[]</span>
 
-let init () = ()
+<span class="k">let</span> <span class="n">init</span> <span class="bp">()</span> <span class="o">=</span> <span class="bp">()</span>
 
-let start () = ()
+<span class="k">let</span> <span class="n">start</span> <span class="bp">()</span> <span class="o">=</span> <span class="bp">()</span>
 
-let run event =
-  if event.JavaApplet.button then begin
-    let x = event.JavaApplet.mouse_x in
-    let y = event.JavaApplet.mouse_y in
-    Graphics.draw_rect (x - 5) (y - 5) 11 11
-  end
+<span class="k">let</span> <span class="n">run</span> <span class="n">event</span> <span class="o">=</span>
+  <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="nn">JavaApplet</span><span class="p">.</span><span class="n">button</span> <span class="k">then</span> <span class="k">begin</span>
+    <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="nn">JavaApplet</span><span class="p">.</span><span class="n">mouse_x</span> <span class="k">in</span>
+    <span class="k">let</span> <span class="n">y</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="nn">JavaApplet</span><span class="p">.</span><span class="n">mouse_y</span> <span class="k">in</span>
+    <span class="nn">Graphics</span><span class="p">.</span><span class="n">draw_rect</span> <span class="o">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">5</span><span class="o">)</span> <span class="o">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">5</span><span class="o">)</span> <span class="mi">11</span> <span class="mi">11</span>
+  <span class="k">end</span>
 
-let stop () = ()
+<span class="k">let</span> <span class="n">stop</span> <span class="bp">()</span> <span class="o">=</span> <span class="bp">()</span>
 
-let destroy () = ()</code></pre>
+<span class="k">let</span> <span class="n">destroy</span> <span class="bp">()</span> <span class="o">=</span> <span class="bp">()</span></code></pre>
+</div>
 <h1 id="deployment">Deployment</h1>
 <p>In order to embed an applet into an HTML page, it is necessary to specify its archive, and the fully-qualified name of the class implementing the applet. The archive is simply the jar file produced by the <kbd>ocamljava</kbd> compiler. When using the applet linking mode, <kbd>ocamljava</kbd> produces a class named <code>ocamljavaApplet</code> located in the package specified by the <kbd>-java-package</kbd> command-line switch (defaulting to <code>pack</code>).</p>
 <h4 id="section"></h4>
-<p>The OCaml-Java runtime library relies on operations that needs privileged rights to be used inside an applet. For this very reason, it is mandatory to sign the jar file containing the applet. This is done by executing <kbd>jarsigner <jar-file> <alias></kbd> where <em>alias</em> refers to an alias of a <code>crt</code> file. If you have no signing key, it is usually possible to create one and export it to a <code>crt</code> file through:</p>
-<pre><code>keytool -genkey -keyalg rsa -alias &lt;em&gt;alias&lt;/em&gt;
-keytool -export -alias &lt;em&gt;alias&lt;/em&gt; -file cert.crt</code></pre>
+<p>The OCaml-Java runtime library relies on operations that needs privileged rights to be used inside an applet. For this very reason, it is mandatory to sign the jar file containing the applet. This is done by executing <kbd>jarsigner &lt;jar-file&gt; &lt;alias&gt;</kbd> where <em>alias</em> refers to an alias of a <code>crt</code> file. If you have no signing key, it is usually possible to create one and export it to a <code>crt</code> file through:</p>
+<pre><code>keytool -genkey -keyalg rsa -alias my_alias
+keytool -export -alias my_alias -file cert.crt</code></pre>
 <h1 id="example">Example</h1>
 <p>In this section, we will develop a simple Swing-based applet. Its GUI will contain a text field and a button, and a click on the button will trigger a modal dialog displaying the contents of the text field. The initial contents of the text field we be retrieved from an applet parameter. The code of the applet heavily relies on the Java extensions that are presented <a href="javaext.html">here</a>.</p>
 <h4 id="section-1"></h4>
-<p>Firstly, we have to define the description of the applet and its parameters. This is done through the following code, using the <code>JavaString</code> to convert OCaml strings into Java ones:</p>
-<pre><code>let applet_info = JavaString.of_string &quot;Applet example&quot;
-let parameter_info =
-  JavaApplet.(parameter_info_of_list [
-              { param_name = JavaString.of_string &quot;default_text&quot;;
-                param_type = JavaString.of_string &quot;string&quot;;
-                param_desc = JavaString.of_string &quot;initial value of text field&quot; }])</code></pre>
+<p>First, we have to define the description of the applet and its parameters. This is done through the following code, using the <code>JavaString</code> module to convert OCaml strings into Java ones:</p>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">applet_info</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;Applet example&quot;</span>
+<span class="k">let</span> <span class="n">parameter_info</span> <span class="o">=</span>
+  <span class="nn">JavaApplet</span><span class="p">.</span><span class="err">(</span><span class="n">parameter_info_of_list</span> <span class="o">[</span>
+              <span class="o">{</span> <span class="n">param_name</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;default_text&quot;</span><span class="o">;</span>
+                <span class="n">param_type</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;string&quot;</span><span class="o">;</span>
+                <span class="n">param_desc</span> <span class="o">=</span> <span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;initial value of text field&quot;</span> <span class="o">}])</span></code></pre>
+</div>
 <h4 id="section-2"></h4>
 <p>Then, we have to provide an <code>init</code> function that is responsible for the GUI creation:</p>
-<pre><code>let init japplet =
-  (* retrieve the parameter value *)
-  let text =
-    Java.call &quot;JApplet.getParameter(_)&quot;
-      japplet
-      (JavaString.of_string &quot;default_text&quot;) in
-  (* build a textfield and a button *)
-  let textfield = Java.make &quot;JTextField(String)&quot; text in
-  let button = Java.make &quot;JButton(String)&quot; (JavaString.of_string &quot;open&quot;) in
-  (* add an event handler to the button *)
-  Java.call &quot;JButton.addActionListener(_)&quot;
-    button
-    (Java.proxy &quot;ActionListener&quot; (object
-      method actionPerformed _ =
-        let contents = Java.call &quot;JTextField.getText()&quot; textfield in
-        ignore (Java.call &quot;JOptionPane.showMessageDialog(_,_)&quot; japplet contents)
-    end));
-  (* add the textfield and the button to the GUI *)
-  Java.call &quot;JApplet.add(Component,Object)&quot;
-    japplet
-    textfield
-    (Java.get &quot;BorderLayout.CENTER&quot; ());
-  Java.call &quot;JApplet.add(Component,Object)&quot;
-    japplet
-    button
-    (Java.get &quot;BorderLayout.EAST&quot; ())</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">init</span> <span class="n">japplet</span> <span class="o">=</span>
+  <span class="c">(* retrieve the parameter value *)</span>
+  <span class="k">let</span> <span class="n">text</span> <span class="o">=</span>
+    <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JApplet.getParameter(_)&quot;</span>
+      <span class="n">japplet</span>
+      <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;default_text&quot;</span><span class="o">)</span> <span class="k">in</span>
+  <span class="c">(* build a textfield and a button *)</span>
+  <span class="k">let</span> <span class="n">textfield</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;JTextField(String)&quot;</span> <span class="n">text</span> <span class="k">in</span>
+  <span class="k">let</span> <span class="n">button</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">make</span> <span class="s2">&quot;JButton(String)&quot;</span> <span class="o">(</span><span class="nn">JavaString</span><span class="p">.</span><span class="n">of_string</span> <span class="s2">&quot;open&quot;</span><span class="o">)</span> <span class="k">in</span>
+  <span class="c">(* add an event handler to the button *)</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JButton.addActionListener(_)&quot;</span>
+    <span class="n">button</span>
+    <span class="o">(</span><span class="nn">Java</span><span class="p">.</span><span class="n">proxy</span> <span class="s2">&quot;ActionListener&quot;</span> <span class="o">(</span><span class="k">object</span>
+      <span class="k">method</span> <span class="n">actionPerformed</span> <span class="o">_</span> <span class="o">=</span>
+        <span class="k">let</span> <span class="n">contents</span> <span class="o">=</span> <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JTextField.getText()&quot;</span> <span class="n">textfield</span> <span class="k">in</span>
+        <span class="n">ignore</span> <span class="o">(</span><span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JOptionPane.showMessageDialog(_,_)&quot;</span> <span class="n">japplet</span> <span class="n">contents</span><span class="o">)</span>
+    <span class="k">end</span><span class="o">));</span>
+  <span class="c">(* add the textfield and the button to the GUI *)</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JApplet.add(Component,Object)&quot;</span>
+    <span class="n">japplet</span>
+    <span class="n">textfield</span>
+    <span class="o">(</span><span class="nn">Java</span><span class="p">.</span><span class="n">get</span> <span class="s2">&quot;BorderLayout.CENTER&quot;</span> <span class="bp">()</span><span class="o">);</span>
+  <span class="nn">Java</span><span class="p">.</span><span class="n">call</span> <span class="s2">&quot;JApplet.add(Component,Object)&quot;</span>
+    <span class="n">japplet</span>
+    <span class="n">button</span>
+    <span class="o">(</span><span class="nn">Java</span><span class="p">.</span><span class="n">get</span> <span class="s2">&quot;BorderLayout.EAST&quot;</span> <span class="bp">()</span><span class="o">)</span></code></pre>
+</div>
 <h4 id="section-3"></h4>
 <p>Although we do not have any action to perform for the <code>start</code>, <code>stop</code>, and <code>destroy</code> events, we still have to provide the related functions. Otherwise, <kbd>ocamljava</kbd> will fail to link, indicating that the module does not abide to the applet module type signature. We therefore add the following no-op functions:</p>
-<pre><code>let start _ = ()
-let stop _ = ()
-let destroy _ = ()</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">let</span> <span class="n">start</span> <span class="o">_</span> <span class="o">=</span> <span class="bp">()</span>
+<span class="k">let</span> <span class="n">stop</span> <span class="o">_</span> <span class="o">=</span> <span class="bp">()</span>
+<span class="k">let</span> <span class="n">destroy</span> <span class="o">_</span> <span class="o">=</span> <span class="bp">()</span></code></pre>
+</div>
 <h4 id="section-4"></h4>
 <p>We can now compile and link the code, through the following commands:</p>
 <pre><code>ocamljava -java-extensions -c source.ml
@@ -146,19 +157,21 @@ ocamljava -applet swing -o app.jar javalib.cmja source.cmj</code></pre>
 <p>It is also necessary to sign the applet through:</p>
 <pre><code>jarsigner app.jar &lt;em&gt;alias&lt;/em&gt;</code></pre>
 <p>The last step to be able to test the applet is to write an HTML file embedding it, for example:</p>
-<pre><code>&lt;html&gt;
-  &lt;head&gt;
-    &lt;title&gt;Applet test&lt;/title&gt;
-  &lt;/head&gt;
-  &lt;body bgcolor=&quot;blue&quot;&gt;
-    &lt;applet code=&quot;pack.ocamljavaApplet&quot;
-            archive=&quot;path/to/app.jar&quot;
-            width=&quot;400&quot;
-            height=&quot;32&quot;&gt;
-      &lt;param name=&quot;default_text&quot; value=&quot;enter a text here&quot;/&gt;
-    &lt;/applet&gt;
-  &lt;/body&gt;
-&lt;/html&gt;</code></pre>
+<div class="highlight">
+<pre><code class="language-html" data-lang="html"><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;title&gt;</span>Applet test<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;applet</span> <span class="na">code=</span><span class="s">&quot;pack.ocamljavaApplet&quot;</span>
+            <span class="na">archive=</span><span class="s">&quot;path/to/app.jar&quot;</span>
+            <span class="na">width=</span><span class="s">&quot;400&quot;</span>
+            <span class="na">height=</span><span class="s">&quot;32&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;default_text&quot;</span> <span class="na">value=</span><span class="s">&quot;enter a text here&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/applet&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span></code></pre>
+</div>
 <h4 id="section-6"></h4>
 <p>The applet can now be tested by opening the HTML file in a Java-capable browser. It is noteworthy that the user will have to <em>validate</em> the applet, as it is a signed one.</p>
 

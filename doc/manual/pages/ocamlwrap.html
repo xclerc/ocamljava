@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: accessing OCaml code from the Java language</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -87,15 +88,15 @@ table {
     <div class="col-xs-12 col-sm-9">
       <h1>OCaml-Java: accessing OCaml code from the Java language</h1>
       <hr>
-      <p>This page contains the information about the <tt>ocamlwrap</tt> tool that ships with the <em>alpha</em> version of OCaml-Java 2.0.</p>
+      <p>This page contains the information about the <kbd>ocamlwrap</kbd> tool that ships with the <em>alpha</em> version of OCaml-Java 2.0.</p>
 <div class="alert alert-warning">
-<p><strong>Warning!</strong> <code>ocamlwrap</code> is a new tool, still at the experimental stage.</p>
+<p><strong>Warning!</strong> <kbd>ocamlwrap</kbd> is a new tool, still at the experimental stage.</p>
 </div>
 <div class="alert alert-warning">
-<p><strong>Warning!</strong> <code>ocamlwrap</code> does not support the typer extension allowing to access Java elements.</p>
+<p><strong>Warning!</strong> <kbd>ocamlwrap</kbd> does not support the typer extension allowing to access Java elements.</p>
 </div>
 <h1 id="summary">Summary</h1>
-<p>Since version 2.0-early-access6, the distribution features the <code>ocamlwrap</code> tool in order to produce Java class definitions allowing to call <kbd>ocamljava</kbd>-compiled code from the Java language.</p>
+<p>Since version 2.0-early-access6, the distribution features the <kbd>ocamlwrap</kbd> tool in order to produce Java class definitions allowing to call <kbd>ocamljava</kbd>-compiled code from the Java language.</p>
 <h4 id="section"></h4>
 <p>The wrapper is invoked through a command line such as the following one:</p>
 <pre><code>ocamlwrap &lt;options&gt; file1.cmi[@pack1] ... filen.cmi[@packn]</code></pre>
@@ -103,7 +104,7 @@ table {
 <h4 id="section-1"></h4>
 <p>The available options are:</p>
 <table class="table table-condensed table-striped table-bordered">
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">command-line switch</th>
@@ -113,42 +114,47 @@ table {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>-class-name-prefix &lt;string&gt;</code></td>
+<td style="text-align: left;"><kbd>-class-name-prefix &lt;string&gt;</kdb></td>
 <td style="text-align: left;"><code>&quot;&quot;</code></td>
 <td style="text-align: left;">prefix for names of generated classes</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>-class-name-suffix &lt;string&gt;</code></td>
+<td style="text-align: left;"><kbd>-class-name-suffix &lt;string&gt;</kdb></td>
 <td style="text-align: left;"><code>&quot;Wrapper&quot;</code></td>
 <td style="text-align: left;">suffix for names of generated classes</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>-library-args &lt;string&gt;</code></td>
+<td style="text-align: left;"><kbd>-library-args &lt;string&gt;</kdb></td>
 <td style="text-align: left;"><code>new String[0]</code></td>
 <td style="text-align: left;">arguments passed for library initialization</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>-library-init &lt;li&gt;</code></td>
+<td style="text-align: left;"><kbd>-library-init &lt;li&gt;</kdb></td>
 <td style="text-align: left;"><code>explicit</code></td>
 <td style="text-align: left;">library initialization mode</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>-library-package &lt;string&gt;</code></td>
+<td style="text-align: left;"><kbd>-library-package &lt;string&gt;</kdb></td>
 <td style="text-align: left;"><em>none</em></td>
 <td style="text-align: left;">library package</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>-no-warnings</code></td>
+<td style="text-align: left;"><kbd>-no-warnings</kdb></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">whether to disable warnings</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>-package &lt;string&gt;</code></td>
+<td style="text-align: left;"><kbd>-package &lt;string&gt;</kdb></td>
 <td style="text-align: left;"><code>&quot;&quot;</code></td>
 <td style="text-align: left;">package of generated classes</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>-string-mapping &lt;sm&gt;         |</code>java-string<code>| mapping for OCaml</code>string<code>type             | |</code>-verbose`</td>
+<td style="text-align: left;"><kbd>-string-mapping &lt;sm&gt;</kdb></td>
+<td style="text-align: left;"><code>java-string</code></td>
+<td style="text-align: left;">mapping for OCaml <code>string</code> type</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><kbd>-verbose</kdb></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">whether to enable verbose mode</td>
 </tr>
@@ -160,7 +166,7 @@ table {
 <li><code>sm</code> is among <code>java-string</code>, <code>ocamlstring</code>, <code>byte-array</code></li>
 </ul>
 <h4 id="section-2"></h4>
-<p>The wrapper generates plain Java source files that can be read or passed to the <kbd>javadoc</kbd> tool in order to inspect the API. As the tool name suggests, <code>ocamlwrap</code> generates wrapers meaning that values are actually shared between the OCaml and Java runtimes. Side effects occuring on one side are thus observed on the other side.</p>
+<p>The wrapper generates plain Java source files that can be read or passed to the <kbd>javadoc</kbd> tool in order to inspect the API. As the tool name suggests, <kbd>ocamlwrap</kbd> generates wrapers meaning that values are actually shared between the OCaml and Java runtimes. Side effects occuring on one side are thus observed on the other side.</p>
 <h1 id="example">Example</h1>
 <p>Suppose a toy library made of a single <code>Lib</code> module. The library can be compiled (as a program) using the following commands:</p>
 <pre><code>ocamljava -java-package wraptest -c lib.mli
@@ -174,25 +180,29 @@ ocamljava -java-package wraptest -o lib.jar lib.cmj</code></pre>
 <pre><code>javac -cp lib.jar LibWrapper.java</code></pre>
 <h4 id="section-4"></h4>
 <p>For example, if <code>lib.mli</code> contains the following declarations:</p>
-<pre><code>type connection = {
-  login : string;
-  mutable timestamp : int64;
-}
-val connections_to : string -&gt; connection list</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">connection</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="n">login</span> <span class="o">:</span> <span class="kt">string</span><span class="o">;</span>
+  <span class="k">mutable</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="n">int64</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="k">val</span> <span class="n">connections_to</span> <span class="o">:</span> <span class="kt">string</span> <span class="o">-&gt;</span> <span class="n">connection</span> <span class="kt">list</span></code></pre>
+</div>
 <p>then, the Java code can look like:</p>
-<pre><code>public static void main(String[] args) throws Exception {
-    wraptest.ocamljavaMain.mainWithReturn(args);
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">wraptest</span><span class="o">.</span><span class="na">ocamljavaMain</span><span class="o">.</span><span class="na">mainWithReturn</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
 
-    ...
+    <span class="o">...</span>
 
-    for (LibWrapper.connection c : LibWrapper.connections_to(&quot;...&quot;)) {
-        log.printf(&quot;user %s since %d\n&quot;, c.getLogin(), c.getTimestamp());
-    }
-}</code></pre>
+    <span class="k">for</span> <span class="o">(</span><span class="n">LibWrapper</span><span class="o">.</span><span class="na">connection</span> <span class="n">c</span> <span class="o">:</span> <span class="n">LibWrapper</span><span class="o">.</span><span class="na">connections_to</span><span class="o">(</span><span class="s">&quot;...&quot;</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">log</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;user %s since %d\n&quot;</span><span class="o">,</span> <span class="n">c</span><span class="o">.</span><span class="na">getLogin</span><span class="o">(),</span> <span class="n">c</span><span class="o">.</span><span class="na">getTimestamp</span><span class="o">());</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>where the first line of the <code>main</code> method is mandatory, and responsible for calling the initialization code of the OCaml library. The following sections show how the various elements of a <code>mli</code> file are mapped to their Java equivalents.</p>
 <h1 id="core-types">Core types</h1>
 <p>The core (or predefined) types of the OCaml language are mapped as follows:</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">OCaml type</th>
@@ -315,7 +325,7 @@ val connections_to : string -&gt; connection list</code></pre>
 <h1 id="functions">Functions</h1>
 <p>Functions are translated in two different ways:</p>
 <ul>
-<li>as static methods if they are top-level functions of the module passed to the <code>ocamlwrap</code> tool;</li>
+<li>as static methods if they are top-level functions of the module passed to the <kbd>ocamlwrap</kbd> tool;</li>
 <li>as instances of classes with names <code>OCamlFunction</code><em>N</em><code>&lt;</code><em>T1</em>, ..., <em>Tn</em>, <em>TR</em><code>&gt;</code> (where <em>TR</em> is the return type, while the <em>Ti</em> are the parameter types).
 </li></li>
 </ul>
@@ -327,17 +337,21 @@ val connections_to : string -&gt; connection list</code></pre>
 </ul>
 <h4 id="section-7"></h4>
 <p>For example, if the OCaml code defines a function with the following signature:</p>
-<pre><code>val call : (int -&gt; int -&gt; string) -&gt; string</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">val</span> <span class="n">call</span> <span class="o">:</span> <span class="o">(</span><span class="kt">int</span> <span class="o">-&gt;</span> <span class="kt">int</span> <span class="o">-&gt;</span> <span class="kt">string</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="kt">string</span></code></pre>
+</div>
 <p>it is possible to invoke it with an instance of <code>OCamlFunction2&lt;OCamlInt,OCamlInt,OCamlString&gt;</code> through:</p>
-<pre><code>OCamlString s = LibWrapper.call(new OCamlFunction2&lt;OCamlInt, OCamlInt, OCamlString&gt;() {
-    public OCamlString execute(OCamlInt p0, OCamlInt p1) {
-       ...
-       return OCamlString.create(&quot;...&quot;);
-    }
-});</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="n">OCamlString</span> <span class="n">s</span> <span class="o">=</span> <span class="n">LibWrapper</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="k">new</span> <span class="n">OCamlFunction2</span><span class="o">&lt;</span><span class="n">OCamlInt</span><span class="o">,</span> <span class="n">OCamlInt</span><span class="o">,</span> <span class="n">OCamlString</span><span class="o">&gt;()</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="n">OCamlString</span> <span class="nf">execute</span><span class="o">(</span><span class="n">OCamlInt</span> <span class="n">p0</span><span class="o">,</span> <span class="n">OCamlInt</span> <span class="n">p1</span><span class="o">)</span> <span class="o">{</span>
+       <span class="o">...</span>
+       <span class="k">return</span> <span class="n">OCamlString</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">&quot;...&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">});</span></code></pre>
+</div>
 <h1 id="exceptions">Exceptions</h1>
-<p>The <code>ocamlwrap</code> tool takes care of converting exceptions between their OCaml and Java representations where needed. As a consequence, the developer only needs to know the mappings between OCaml and Java exceptions (see table below); catching and raising exceptions is done by manipulating the Java exceptions as usual.</p>
-<table class="table table-condensed table-striped table-bordered">
+<p>The <kbd>ocamlwrap</kbd> tool takes care of converting exceptions between their OCaml and Java representations where needed. As a consequence, the developer only needs to know the mappings between OCaml and Java exceptions (see table below); catching and raising exceptions is done by manipulating the Java exceptions as usual.</p>
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">OCaml exception</th>
@@ -399,34 +413,40 @@ val connections_to : string -&gt; connection list</code></pre>
 <p>Additionally, the <code>OCamlExn</code> class is used as the mapping for the OCaml <code>exn</code> type.</p>
 <h1 id="sum-types">Sum types</h1>
 <p>An OCaml sum type is mapped to a Java class providing factory methods to create the various cases, and accessors for each nested value of each case. For example, the following type:</p>
-<pre><code>type sum =
-  | Int of int
-  | String of string
-  | Empty
-  | Int_and_string of int * string</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">sum</span> <span class="o">=</span>
+  <span class="o">|</span> <span class="nc">Int</span> <span class="k">of</span> <span class="kt">int</span>
+  <span class="o">|</span> <span class="nc">String</span> <span class="k">of</span> <span class="kt">string</span>
+  <span class="o">|</span> <span class="nc">Empty</span>
+  <span class="o">|</span> <span class="nc">Int_and_string</span> <span class="k">of</span> <span class="kt">int</span> <span class="o">*</span> <span class="kt">string</span></code></pre>
+</div>
 <p>is mapped to the class:</p>
-<pre><code>class sum extends OCamlValue {
-  public long getInt0();
-  public String getString0();
-  public long getInt_and_string0();
-  public String getInt_and_string1();
-  public TAG tag();
-  public static sum createInt(long);
-  public static sum createString(String);
-  public static sum createEmpty();
-  public static sum createInt_and_string(long, String);
-  public static enum TAG { Int, String, Empty, Int_and_string }
-  public &lt;T&gt; T visit(Visitor&lt;T&gt; visitor);
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">sum</span> <span class="kd">extends</span> <span class="n">OCamlValue</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getInt0</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="nf">getString0</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getInt_and_string0</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="nf">getInt_and_string1</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="n">TAG</span> <span class="nf">tag</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="n">sum</span> <span class="nf">createInt</span><span class="o">(</span><span class="kt">long</span><span class="o">);</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="n">sum</span> <span class="nf">createString</span><span class="o">(</span><span class="n">String</span><span class="o">);</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="n">sum</span> <span class="nf">createEmpty</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="n">sum</span> <span class="nf">createInt_and_string</span><span class="o">(</span><span class="kt">long</span><span class="o">,</span> <span class="n">String</span><span class="o">);</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">enum</span> <span class="n">TAG</span> <span class="o">{</span> <span class="n">Int</span><span class="o">,</span> <span class="n">String</span><span class="o">,</span> <span class="n">Empty</span><span class="o">,</span> <span class="n">Int_and_string</span> <span class="o">}</span>
+  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="nf">visit</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">);</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>where the inner-class <code>TAG</code> is used to encode the various cases as a Java enum.</p>
 <h4 id="section-9"></h4>
 <p>The <code>visit</code> method allows to inspect the value through the <em>visitor</em> design pattern, with the <code>Visitor</code> interface generated for the sum type; in out example:</p>
-<pre><code>interface Visitor&lt;T&gt; {
-  T visitInt(long);
-  T visitString(String);
-  T visitEmpty();
-  T visitInt_and_string(long, String);
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">interface</span> <span class="nc">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="n">T</span> <span class="nf">visitInt</span><span class="o">(</span><span class="kt">long</span><span class="o">);</span>
+  <span class="n">T</span> <span class="nf">visitString</span><span class="o">(</span><span class="n">String</span><span class="o">);</span>
+  <span class="n">T</span> <span class="nf">visitEmpty</span><span class="o">();</span>
+  <span class="n">T</span> <span class="nf">visitInt_and_string</span><span class="o">(</span><span class="kt">long</span><span class="o">,</span> <span class="n">String</span><span class="o">);</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>The use of the visitor design pattern should be prefered to the use of the <code>tag</code> and accessor methods, as it provides guarantees close to the ones provided by OCaml pattern matching:</p>
 <ul>
 <li>exhaustivity;</li>
@@ -439,27 +459,35 @@ val connections_to : string -&gt; connection list</code></pre>
 <li>have their type declared.</li>
 </ul>
 <p>This means that one should declare:</p>
-<pre><code>type t = [ `A | `B of int ]
-val f : int -&gt; t</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">t</span> <span class="o">=</span> <span class="o">[</span> <span class="o">`</span><span class="nc">A</span> <span class="o">|</span> <span class="o">`</span><span class="nc">B</span> <span class="k">of</span> <span class="kt">int</span> <span class="o">]</span>
+<span class="k">val</span> <span class="n">f</span> <span class="o">:</span> <span class="kt">int</span> <span class="o">-&gt;</span> <span class="n">t</span></code></pre>
+</div>
 <p>rather than:</p>
-<pre><code>val f : int -&gt; [ `A | `B of int ]</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">val</span> <span class="n">f</span> <span class="o">:</span> <span class="kt">int</span> <span class="o">-&gt;</span> <span class="o">[</span> <span class="o">`</span><span class="nc">A</span> <span class="o">|</span> <span class="o">`</span><span class="nc">B</span> <span class="k">of</span> <span class="kt">int</span> <span class="o">]</span></code></pre>
+</div>
 <h4 id="section-10"></h4>
 <p>The combination of both aforementioned restrictions allows to treat polymorphic variants as bare sum types.</p>
 <h1 id="records">Records</h1>
 <p>The mapping of records is straightforward, following the convention of JavaBeans. This means that for each field named <code>xyz</code>, an accessor named <code>getXyz()</code> is generated allowing to retrieve the field value. If the field is mutable, another accesor named <code>setXyz(...)</code> is also generated allowing to modify the field value.</p>
 <h4 id="section-11"></h4>
 <p>For example, if the following record is defined in OCaml:</p>
-<pre><code>type connection = {
-  login : string;
-  mutable timestamp : int64;
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">type</span> <span class="n">connection</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="n">login</span> <span class="o">:</span> <span class="kt">string</span><span class="o">;</span>
+  <span class="k">mutable</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="n">int64</span><span class="o">;</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>it will result in the following Java class:</p>
-<pre><code>class connection extends OCamlValue {
-  public String getLogin();
-  public long getTimestamp();
-  public void setTimestamp(long);
-  public static connection create(String, long);
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">connection</span> <span class="kd">extends</span> <span class="n">OCamlValue</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="nf">getLogin</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getTimestamp</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setTimestamp</span><span class="o">(</span><span class="kt">long</span><span class="o">);</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="n">connection</span> <span class="nf">create</span><span class="o">(</span><span class="n">String</span><span class="o">,</span> <span class="kt">long</span><span class="o">);</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>where the <code>create(...)</code> method is a factory method allowing to create new instances.</p>
 <h1 id="polymorphism">Polymorphism</h1>
 <p>The <kbd>ocamlwrap</kbd> tool supports polymorphism both in type declarations, and in function declarations. However, the <kbd>ocamlwrap</kbd> tool is not always able to determine how to wrap a value. When this occurs, the generated Java methods will ask for additional parameters with types <code>Wrapper&lt;T&gt;</code>. An instance of <code>Wrapper&lt;T&gt;</code> is just an object that knows how to wrap a value into type <code>T</code>.</p>
@@ -473,17 +501,21 @@ val f : int -&gt; t</code></pre>
 <p>The current version of <kbd>ocamlwrap</kbd> provides only partial support for OCaml objects: it is only possible to wrap class types (meaning that classes and <em>immediate</em> objects are not supported).</p>
 <h4 id="section-13"></h4>
 <p>OCaml class types are mapped to Java abstract classes. For example, the following:</p>
-<pre><code>class type simple = object
-  method first_method : unit
-  method second_method : int -&gt; float
-  method third_method : int32
-end</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">class</span> <span class="k">type</span> <span class="n">simple</span> <span class="o">=</span> <span class="k">object</span>
+  <span class="k">method</span> <span class="n">first_method</span> <span class="o">:</span> <span class="kt">unit</span>
+  <span class="k">method</span> <span class="n">second_method</span> <span class="o">:</span> <span class="kt">int</span> <span class="o">-&gt;</span> <span class="kt">float</span>
+  <span class="k">method</span> <span class="n">third_method</span> <span class="o">:</span> <span class="n">int32</span>
+<span class="k">end</span></code></pre>
+</div>
 <p>is mapped to:</p>
-<pre><code>abstract class simple extends OCamlValue {
-  public abstract void first_method() ;
-  public abstract double second_method(long) ;
-  public abstract int third_method() ;
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">simple</span> <span class="kd">extends</span> <span class="n">OCamlValue</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">first_method</span><span class="o">()</span> <span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">double</span> <span class="nf">second_method</span><span class="o">(</span><span class="kt">long</span><span class="o">)</span> <span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">int</span> <span class="nf">third_method</span><span class="o">()</span> <span class="o">;</span>
+<span class="o">}</span></code></pre>
+</div>
 <h4 id="section-14"></h4>
 <p>There are essentially two ways of getting an instance of such a class:</p>
 <ul>
@@ -491,72 +523,88 @@ end</code></pre>
 <li>as the instance of a Java class inheriting from the abstract one.</li>
 </ul>
 <p>In the second case, a concrete Java class is defined as usual:</p>
-<pre><code>class MySimple extends LibWrapper.simple {
-  public void first_method() { System.out.println(&quot;in first method&quot;); }
-  public double second_method(long x) { return ((double) x) / 10.0; }
-  public int third_method() { return 1; }
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">MySimple</span> <span class="kd">extends</span> <span class="n">LibWrapper</span><span class="o">.</span><span class="na">simple</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">first_method</span><span class="o">()</span> <span class="o">{</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;in first method&quot;</span><span class="o">);</span> <span class="o">}</span>
+  <span class="kd">public</span> <span class="kt">double</span> <span class="nf">second_method</span><span class="o">(</span><span class="kt">long</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span> <span class="k">return</span> <span class="o">((</span><span class="kt">double</span><span class="o">)</span> <span class="n">x</span><span class="o">)</span> <span class="o">/</span> <span class="mf">10.0</span><span class="o">;</span> <span class="o">}</span>
+  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">third_method</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+<span class="o">}</span></code></pre>
+</div>
 <h4 id="section-15"></h4>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> Currently, class types can neither inherit from other class types, nor contain values.</p>
 </div>
 <h1 id="functors">Functors</h1>
-<p>The current version of <code>ocamlwrap</code> provides only lightweight support for OCaml functors, and module types can only contain functions and abstract type definitions. The mapping of module types is very similar to the one of class types, except that type declarations appear as generics. For example:</p>
-<pre><code>module type MT1 = sig
-  type t
-  val cost : t -&gt; int
-end</code></pre>
+<p>The current version of <kbd>ocamlwrap</kbd> provides only lightweight support for OCaml functors, and module types can only contain functions and abstract type definitions. The mapping of module types is very similar to the one of class types, except that type declarations appear as generics. For example:</p>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">module</span> <span class="k">type</span> <span class="nc">MT1</span> <span class="o">=</span> <span class="k">sig</span>
+  <span class="k">type</span> <span class="n">t</span>
+  <span class="k">val</span> <span class="n">cost</span> <span class="o">:</span> <span class="n">t</span> <span class="o">-&gt;</span> <span class="kt">int</span>
+<span class="k">end</span></code></pre>
+</div>
 <p>is mapped to:</p>
-<pre><code>abstract class MT1&lt;t extends OCamlValue&gt; extends OCamlValue {
-  public abstract long cost(t) ;
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">MT1</span><span class="o">&lt;</span><span class="n">t</span> <span class="kd">extends</span> <span class="n">OCamlValue</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">OCamlValue</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">long</span> <span class="nf">cost</span><span class="o">(</span><span class="n">t</span><span class="o">)</span> <span class="o">;</span>
+<span class="o">}</span></code></pre>
+</div>
 <h4 id="section-16"></h4>
 <p>The declaration of functors requires that all involved module types have been previously declared, thus leading to definitions like:</p>
-<pre><code>module type P = sig ... end
-module type R = sig ... end
-module M (X : P) : R with type ...</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">module</span> <span class="k">type</span> <span class="nc">P</span> <span class="o">=</span> <span class="k">sig</span> <span class="o">...</span> <span class="k">end</span>
+<span class="k">module</span> <span class="k">type</span> <span class="nc">R</span> <span class="o">=</span> <span class="k">sig</span> <span class="o">...</span> <span class="k">end</span>
+<span class="k">module</span> <span class="nc">M</span> <span class="o">(</span><span class="nc">X</span> <span class="o">:</span> <span class="nc">P</span><span class="o">)</span> <span class="o">:</span> <span class="nc">R</span> <span class="k">with</span> <span class="k">type</span> <span class="o">...</span></code></pre>
+</div>
 <p>rather than:</p>
-<pre><code>module M (X : sig ... end) : sig ... end</code></pre>
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">module</span> <span class="nc">M</span> <span class="o">(</span><span class="nc">X</span> <span class="o">:</span> <span class="k">sig</span> <span class="o">...</span> <span class="k">end</span><span class="o">)</span> <span class="o">:</span> <span class="k">sig</span> <span class="o">...</span> <span class="k">end</span></code></pre>
+</div>
 <p>Functors are mapped to static methods, just like ordinary top-level functions.</p>
 <h4 id="section-17"></h4>
 <p>It is possible to mix OCaml and Java by instantiating a functor whose parameters have been implemented in Java. For example, considering the following OCaml declarations:</p>
-<pre><code>module type MT1 = sig
-  type t
-  val cost : t -&gt; int
-end
+<div class="highlight">
+<pre><code class="language-ocaml" data-lang="ocaml"><span class="k">module</span> <span class="k">type</span> <span class="nc">MT1</span> <span class="o">=</span> <span class="k">sig</span>
+  <span class="k">type</span> <span class="n">t</span>
+  <span class="k">val</span> <span class="n">cost</span> <span class="o">:</span> <span class="n">t</span> <span class="o">-&gt;</span> <span class="kt">int</span>
+<span class="k">end</span>
 
-module type MT2 = sig
-  type element
-  type container
-  val make : unit -&gt; container
-  val add : container -&gt; element -&gt; unit
-  val total : container -&gt; int
-end
+<span class="k">module</span> <span class="k">type</span> <span class="nc">MT2</span> <span class="o">=</span> <span class="k">sig</span>
+  <span class="k">type</span> <span class="n">element</span>
+  <span class="k">type</span> <span class="n">container</span>
+  <span class="k">val</span> <span class="n">make</span> <span class="o">:</span> <span class="kt">unit</span> <span class="o">-&gt;</span> <span class="n">container</span>
+  <span class="k">val</span> <span class="n">add</span> <span class="o">:</span> <span class="n">container</span> <span class="o">-&gt;</span> <span class="n">element</span> <span class="o">-&gt;</span> <span class="kt">unit</span>
+  <span class="k">val</span> <span class="n">total</span> <span class="o">:</span> <span class="n">container</span> <span class="o">-&gt;</span> <span class="kt">int</span>
+<span class="k">end</span>
 
-module Make (P : MT1) : MT2 with type element = P.t</code></pre>
+<span class="k">module</span> <span class="nc">Make</span> <span class="o">(</span><span class="nc">P</span> <span class="o">:</span> <span class="nc">MT1</span><span class="o">)</span> <span class="o">:</span> <span class="nc">MT2</span> <span class="k">with</span> <span class="k">type</span> <span class="n">element</span> <span class="o">=</span> <span class="nn">P</span><span class="p">.</span><span class="n">t</span></code></pre>
+</div>
 <p>It is possible to develop an implementation for <code>MT1</code> in Java:</p>
-<pre><code>class MT1Impl extends LibWrapper.MT1&lt;OCamlString&gt; {
-  public MT1Impl() {
-    super(OCamlString.WRAPPER);
-  }
-  public long cost(OCamlString s) {
-    long res = 0L;
-    int len = s.length();
-    for (int i = 0; i &lt; len; i++) {
-      char ch = s.charAt(i);
-      if (ch == &#39;e&#39;) res++;
-    }
-    return res;
-  }
-}</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">MT1Impl</span> <span class="kd">extends</span> <span class="n">LibWrapper</span><span class="o">.</span><span class="na">MT1</span><span class="o">&lt;</span><span class="n">OCamlString</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="nf">MT1Impl</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">(</span><span class="n">OCamlString</span><span class="o">.</span><span class="na">WRAPPER</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">cost</span><span class="o">(</span><span class="n">OCamlString</span> <span class="n">s</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">res</span> <span class="o">=</span> <span class="mi">0L</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">len</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="kt">char</span> <span class="n">ch</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">ch</span> <span class="o">==</span> <span class="sc">&#39;e&#39;</span><span class="o">)</span> <span class="n">res</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre>
+</div>
 <p>And to pass it to the OCaml functor:</p>
-<pre><code>MT1Impl mt1 = new MT1Impl();
-LibWrapper.MT2&lt;OCamlString,OCamlValue&gt; mt2 = LibWrapper.Make(mt1);
-OCamlValue container = mt2.make();
-mt2.add(container, OCamlString.create(&quot;abc&quot;));
-mt2.add(container, OCamlString.create(&quot;def&quot;));
-mt2.add(container, OCamlString.create(&quot;ghi&quot;));
-System.out.printf(&quot;total=%d\n&quot;, mt2.total(container));</code></pre>
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="n">MT1Impl</span> <span class="n">mt1</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">MT1Impl</span><span class="o">();</span>
+<span class="n">LibWrapper</span><span class="o">.</span><span class="na">MT2</span><span class="o">&lt;</span><span class="n">OCamlString</span><span class="o">,</span><span class="n">OCamlValue</span><span class="o">&gt;</span> <span class="n">mt2</span> <span class="o">=</span> <span class="n">LibWrapper</span><span class="o">.</span><span class="na">Make</span><span class="o">(</span><span class="n">mt1</span><span class="o">);</span>
+<span class="n">OCamlValue</span> <span class="n">container</span> <span class="o">=</span> <span class="n">mt2</span><span class="o">.</span><span class="na">make</span><span class="o">();</span>
+<span class="n">mt2</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">container</span><span class="o">,</span> <span class="n">OCamlString</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">));</span>
+<span class="n">mt2</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">container</span><span class="o">,</span> <span class="n">OCamlString</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">&quot;def&quot;</span><span class="o">));</span>
+<span class="n">mt2</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">container</span><span class="o">,</span> <span class="n">OCamlString</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">&quot;ghi&quot;</span><span class="o">));</span>
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;total=%d\n&quot;</span><span class="o">,</span> <span class="n">mt2</span><span class="o">.</span><span class="na">total</span><span class="o">(</span><span class="n">container</span><span class="o">));</span></code></pre>
+</div>
 <h4 id="section-18"></h4>
 <div class="alert alert-warning">
 <p><strong>Warning!</strong> Contrary to other elements, the use of functors heavily relies on developer discipline. Indeed, in OCaml, applications of a functor to different parameters lead to different modules where embedded types are different from one application to the other. It is not possible to reflect these differences in the Java wrappers, thus leading to the possibility to mix the values generated by different functor applications, hence in turn breaking type safety.</p>

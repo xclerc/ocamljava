@@ -4,6 +4,7 @@
 <head>
 <title>OCaml-Java: scripting</title>
 <link href="../css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/syntax.css" rel="stylesheet">
 <style>
 table {
 }
@@ -48,31 +49,33 @@ table {
 </div>
 <h1 id="code-interpretation">Code interpretation</h1>
 <p>In order to be able to use the script engine, it is sufficient to add the archive <code>lib/ocamlrun-scripting.jar</code> to the classpath. It is then possible to interpret OCaml phrases from a Java application as shown by the following code sample:</p>
-<pre><code>import javax.script.*;
-import org.ocamljava.runtime.support.scripting.OCamlContext;
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">javax.script.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ocamljava.runtime.support.scripting.OCamlContext</span><span class="o">;</span>
 
-public final class SimpleInterpreted {
+<span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">SimpleInterpreted</span> <span class="o">{</span>
 
-    private static final String SCRIPT =
-        &quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;;;\n&quot; +
-        &quot;let n = Int32.to_int (get_binding \&quot;repetitions\&quot;);;\n&quot; +
-        &quot;let s : string = get_binding \&quot;message\&quot;;;\n&quot; +
-        &quot;for i = 1 to n do print_endline s done;;\n&quot;;
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SCRIPT</span> <span class="o">=</span>
+        <span class="s">&quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;;;\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;let n = Int32.to_int (get_binding \&quot;repetitions\&quot;);;\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;let s : string = get_binding \&quot;message\&quot;;;\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;for i = 1 to n do print_endline s done;;\n&quot;</span><span class="o">;</span>
 
-    public static void main(final String[] args) throws Throwable {
-        final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName(&quot;OCaml&quot;);
-        final ScriptContext ctxt = new OCamlContext();
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;repetitions&quot;, 3);
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;message&quot;, &quot;hello!!!&quot;);
-        engine.eval(SCRIPT, ctxt);
-    }
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">ScriptEngineManager</span> <span class="n">manager</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ScriptEngineManager</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">ScriptEngine</span> <span class="n">engine</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="na">getEngineByName</span><span class="o">(</span><span class="s">&quot;OCaml&quot;</span><span class="o">);</span>
+        <span class="kd">final</span> <span class="n">ScriptContext</span> <span class="n">ctxt</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">OCamlContext</span><span class="o">();</span>
+        <span class="n">ctxt</span><span class="o">.</span><span class="na">getBindings</span><span class="o">(</span><span class="n">ScriptContext</span><span class="o">.</span><span class="na">ENGINE_SCOPE</span><span class="o">).</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;repetitions&quot;</span><span class="o">,</span> <span class="mi">3</span><span class="o">);</span>
+        <span class="n">ctxt</span><span class="o">.</span><span class="na">getBindings</span><span class="o">(</span><span class="n">ScriptContext</span><span class="o">.</span><span class="na">ENGINE_SCOPE</span><span class="o">).</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;message&quot;</span><span class="o">,</span> <span class="s">&quot;hello!!!&quot;</span><span class="o">);</span>
+        <span class="n">engine</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="n">SCRIPT</span><span class="o">,</span> <span class="n">ctxt</span><span class="o">);</span>
+    <span class="o">}</span>
 
-}</code></pre>
+<span class="o">}</span></code></pre>
+</div>
 <p>where the external <code>get_binding</code> function allows to access bindings registered on the Java side of the application.</p>
 <h1 id="type-mapping">Type mapping</h1>
 <p>The mapping of Java types to OCaml types is given by the following table (notice that Java primitive types are necessarily promoted to their wrapper equivalents through the use of the binding API):</p>
-<table class="table table-condensed table-striped table-bordered">
+<table class="table table-condensed table-striped">
 <thead>
 <tr class="header">
 <th style="text-align: left;">Java type</th>
@@ -120,29 +123,31 @@ public final class SimpleInterpreted {
 </table>
 <h1 id="code-compilation">Code compilation</h1>
 <p>Besides interpretation, it is also possible to compile OCaml sources in order to benefit from better performance. To do so, the archive <code>lib/ocamljava.jar</code> has to be added to the classpath in addition to the archive <code>lib/ocamlrun-scripting.jar</code>. The following code shows how to compile and then run an OCaml snippet from a Java application.</p>
-<pre><code>import javax.script.*;
-import org.ocamljava.runtime.support.scripting.OCamlContext;
+<div class="highlight">
+<pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">javax.script.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ocamljava.runtime.support.scripting.OCamlContext</span><span class="o">;</span>
 
-public final class SimpleCompiled {
+<span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">SimpleCompiled</span> <span class="o">{</span>
 
-    private static final String SCRIPT =
-        &quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;\n&quot; +
-        &quot;let () =\n&quot; +
-        &quot;  let n = Int32.to_int (get_binding \&quot;repetitions\&quot;) in\n&quot; +
-        &quot;  let s : string = get_binding \&quot;message\&quot; in\n&quot; +
-        &quot;  for i = 1 to n do print_endline s done\n&quot;;
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SCRIPT</span> <span class="o">=</span>
+        <span class="s">&quot;external get_binding : string -&gt; &#39;a = \&quot;script_get_binding\&quot;\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;let () =\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;  let n = Int32.to_int (get_binding \&quot;repetitions\&quot;) in\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;  let s : string = get_binding \&quot;message\&quot; in\n&quot;</span> <span class="o">+</span>
+        <span class="s">&quot;  for i = 1 to n do print_endline s done\n&quot;</span><span class="o">;</span>
 
-    public static void main(final String[] args) throws Throwable {
-        final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName(&quot;OCaml&quot;);
-        final ScriptContext ctxt = new OCamlContext();
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;repetitions&quot;, 3);
-        ctxt.getBindings(ScriptContext.ENGINE_SCOPE).put(&quot;message&quot;, &quot;hello!!!&quot;);
-        final CompiledScript compiled = ((Compilable) engine).compile(SCRIPT);
-        compiled.eval(ctxt);
-    }
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">ScriptEngineManager</span> <span class="n">manager</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ScriptEngineManager</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">ScriptEngine</span> <span class="n">engine</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="na">getEngineByName</span><span class="o">(</span><span class="s">&quot;OCaml&quot;</span><span class="o">);</span>
+        <span class="kd">final</span> <span class="n">ScriptContext</span> <span class="n">ctxt</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">OCamlContext</span><span class="o">();</span>
+        <span class="n">ctxt</span><span class="o">.</span><span class="na">getBindings</span><span class="o">(</span><span class="n">ScriptContext</span><span class="o">.</span><span class="na">ENGINE_SCOPE</span><span class="o">).</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;repetitions&quot;</span><span class="o">,</span> <span class="mi">3</span><span class="o">);</span>
+        <span class="n">ctxt</span><span class="o">.</span><span class="na">getBindings</span><span class="o">(</span><span class="n">ScriptContext</span><span class="o">.</span><span class="na">ENGINE_SCOPE</span><span class="o">).</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;message&quot;</span><span class="o">,</span> <span class="s">&quot;hello!!!&quot;</span><span class="o">);</span>
+        <span class="kd">final</span> <span class="n">CompiledScript</span> <span class="n">compiled</span> <span class="o">=</span> <span class="o">((</span><span class="n">Compilable</span><span class="o">)</span> <span class="n">engine</span><span class="o">).</span><span class="na">compile</span><span class="o">(</span><span class="n">SCRIPT</span><span class="o">);</span>
+        <span class="n">compiled</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="n">ctxt</span><span class="o">);</span>
+    <span class="o">}</span>
 
-}</code></pre>
+<span class="o">}</span></code></pre>
+</div>
 
     </div>
   </div>
