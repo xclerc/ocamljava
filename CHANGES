@@ -1,3 +1,58 @@
+Version 2.0-alpha3 (2015-06-08):
+--------------------------------
+  - typer extensions: use dedicated types for Java primitives types, defined as
+    synonyms to core OCaml types (e.g. type java_int = int32)
+  - typer extensions: introduce 'exec' and 'chain' as variant of 'call' ;
+    'exec' ignores the return value if any, while 'chain' pushes the instance
+    onto the stack after the call
+  - typer extensions: introduce 'iter' and 'fold' for Java iterators
+  - javalib: install files into a dedicated directory (namely 'javalib')
+  - javalib: enhance 'JavaIOStreams' module
+  - javalib: rename 'JavaCharacter' module to 'JavaChar'
+  - javalib: move functions from the 'JavaString' module to a new
+    'JavaString.OCaml' module, and defines bindings to the String class in the
+    'JavaString' module
+  - javalib: add 'JavaPervasives' module, initially opened when Java extensions
+    are enabled
+  - javalib: add 'JavaObject' module, providing complete bindings to the Object
+    class
+  - javalib: add 'JavaCalendar', 'JavaDate', 'JavaLocale', and 'JavaTimeZone'
+    modules, providing support for date manipulations
+  - javalib: renamed 'JavaByteArray.{to,of}_string' functions to
+    'JavaByteArray.{to,of}_ocaml_string'
+  - javalib: add 'JavaStringFormat' and 'JavaStringPrintf' modules, providing
+    support for printing of Java strings
+  - javalib: add 'JavaRandom' module providing bindings to the java.util.Random
+    class
+  - javalib: add 'JavaSystem' module providing bindings to the System class
+  - javalib: add 'JavaRuntime' module providing bindings to the Runtime class
+  - javalib: add 'JavaProperties' module providing bindings to the
+    java.util.Properties class
+  - javalib: add 'JavaStringBuilder' module providing bindings to the
+    StringBuilder class
+  - javalib: add 'JavaThrowable', 'JavaError', and 'JavaException' modules
+    providing bindings to Java base exception classes
+  - javalib: enhance documentation
+  - concurrent: build a library rather than a pack, and install files into a
+    dedicated directory (namely 'concurrent')
+  - concurrent: large/incompatible rewrite
+  - enhanced ocamlbuild: support for shared libraries for ocamljava
+  - enhanced ocamlbuild: support for '-html5', '-sort', and '-t' command-line
+    switches of ocamldoc
+  - enhanced ocamldoc: generate links to online Javadoc for Java types
+  - enhanced ocamldoc: {java fully-qualified-class-name} to refer to Java types
+  - enhanced ocamldoc: {s ...}, {u ...}, and {k ...} for respectively stroke,
+    underline, and keyboard styles
+  - enhanced ocamldoc: support for tables
+  - source distribution: 'ocamlj' script to launch the Java-aware toplevel
+  - fix compilation of 'Java.set'
+  - fix compilation of tail calls
+  - issue #16: ocamljava has exit code 0 even on an error
+  - issue #18: order of exception handlers is not preserved
+  - issue #19: allow compilation of large constant sets
+  - issue #20: some *.cmj files from camlp4 are not installed
+  - issue #21: some *.cmj files from ocamldoc are not installed
+
 Version 2.0-alpha2 (2014-09-22):
 --------------------------------
   - HTML5 / Bootstrap mode for ocamldoc
