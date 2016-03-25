@@ -28,11 +28,14 @@ type parameter =
   | ServletResponse
   | HttpServletRequest
   | HttpServletResponse
+  | FilterConfig
+  | FilterChain
   | ServletContextEvent
   | ServletContextAttributeEvent
   | HttpSessionEvent
   | HttpSessionBindingEvent
   | String
+  | Unit_value
 
 let class_of_parameter = function
   | Nothing -> raise Not_found
@@ -42,11 +45,14 @@ let class_of_parameter = function
   | ServletResponse -> "javax.servlet.ServletResponse"
   | HttpServletRequest -> "javax.servlet.http.HttpServletRequest"
   | HttpServletResponse -> "javax.servlet.http.HttpServletResponse"
+  | FilterConfig -> "javax.servlet.FilterConfig"
+  | FilterChain -> "javax.servlet.FilterChain"
   | ServletContextEvent -> "javax.servlet.ServletContextEvent"
   | ServletContextAttributeEvent -> "javax.servlet.ServletContextAttributeEvent"
   | HttpSessionEvent -> "javax.servlet.http.HttpSessionEvent"
   | HttpSessionBindingEvent -> "javax.servlet.http.HttpSessionBindingEvent"
   | String -> "java.lang.String"
+  | Unit_value -> raise Not_found
 
 type return =
   | Value
@@ -56,7 +62,7 @@ type return =
 type infos = {
     parent : string;
     interface : bool;
-    listener : bool;
+    filter_or_listener : bool;
     functions : (string * (parameter list) * return * string) list;
   }
 
@@ -64,7 +70,7 @@ let infos_of_kind = function
   | Jclflags.Generic ->
       { parent    = "javax.servlet.GenericServlet";
         interface = false;
-        listener  = false;
+        filter_or_listener  = false;
         functions = [ "init",
                       [Nothing],
                       Value,
@@ -80,7 +86,7 @@ let infos_of_kind = function
   | Jclflags.Http ->
       { parent    = "javax.servlet.http.HttpServlet";
         interface = false;
-        listener  = false;
+        filter_or_listener  = false;
         functions = [ "init",
                       [Nothing],
                       Value,
@@ -121,10 +127,26 @@ let infos_of_kind = function
                       [Impl_value; Impl_that],
                       Unit,
                       "destroy" ]; }
+  | Jclflags.Filter ->
+      { parent    = "javax.servlet.Filter";
+        interface = true;
+        filter_or_listener = true;
+        functions = [ "init",
+                      [FilterConfig],
+                      Unit,
+                      "init" ;
+                      "do_filter",
+                      [ServletRequest; ServletResponse; FilterChain],
+                      Unit,
+                      "doFilter" ;
+                      "destroy",
+                      [Unit_value],
+                      Unit,
+                      "destroy" ]; }
   | Jclflags.Context_listener ->
       { parent    = "javax.servlet.ServletContextListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "context_initialized",
                       [ServletContextEvent],
                       Unit,
@@ -136,7 +158,7 @@ let infos_of_kind = function
   | Jclflags.Context_attribute_listener ->
       { parent    = "javax.servlet.ServletContextAttributeListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "attribute_added",
                       [ServletContextAttributeEvent],
                       Unit,
@@ -152,7 +174,7 @@ let infos_of_kind = function
   | Jclflags.Session_listener ->
       { parent    = "javax.servlet.http.HttpSessionListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "session_created",
                       [HttpSessionEvent],
                       Unit,
@@ -164,7 +186,7 @@ let infos_of_kind = function
   | Jclflags.Session_activation_listener ->
       { parent    = "javax.servlet.http.HttpSessionActivationListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "session_did_activate",
                       [HttpSessionEvent],
                       Unit,
@@ -176,7 +198,7 @@ let infos_of_kind = function
   | Jclflags.Session_attribute_listener ->
       { parent    = "javax.servlet.http.HttpSessionAttributeListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "attribute_added",
                       [HttpSessionBindingEvent],
                       Unit,
@@ -192,7 +214,7 @@ let infos_of_kind = function
   | Jclflags.Session_binding_listener ->
       { parent    = "javax.servlet.http.HttpSessionBindingListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "value_bound",
                       [HttpSessionBindingEvent],
                       Unit,
@@ -204,7 +226,7 @@ let infos_of_kind = function
   | Jclflags.Session_id_listener ->
       { parent    = "javax.servlet.http.HttpSessionIdListener";
         interface = true;
-        listener  = true;
+        filter_or_listener  = true;
         functions = [ "session_id_changed",
                       [HttpSessionEvent; String],
                       Unit,
@@ -237,7 +259,7 @@ let extract_func_name func_name signature approx =
         efn approx (succ idx) tl
     | Types.Sig_type _ :: tl | Types.Sig_modtype _ :: tl | Types.Sig_class_type _ :: tl ->
         efn approx idx tl
-    | [] -> assert false in
+    | [] -> print_endline func_name; assert false in
   match efn approx 0 signature with
   | Jlambda.Value_closure ({ Jlambda.fun_label = { Jlambda.fl_class; fl_method };
                              fun_closed;
@@ -262,13 +284,13 @@ let compile_methods impl_class_name infos signature approx =
                               make_method"init",
                               ([], `Void)) in
   let constructor_code, max_stack =
-    if infos.listener then
+    if infos.filter_or_listener then
       leaf [ Instruction.ALOAD_0 ;
-             Instruction.INVOKESPECIAL (make_class infos.parent,
+             Instruction.INVOKESPECIAL (make_class (if infos.interface then "java.lang.Object" else infos.parent),
                                         make_method "<init>",
                                         ([], `Void)) ;
              ensure_init ;
-             Instruction.RETURN ], 0
+             Instruction.RETURN ], 1
     else
       node
         [ leaf [ Instruction.ALOAD_0 ;
@@ -325,13 +347,17 @@ let compile_methods impl_class_name infos signature approx =
                      | ServletResponse
                      | HttpServletRequest
                      | HttpServletResponse
+                     | FilterConfig
+                     | FilterChain
                      | ServletContextEvent
                      | ServletContextAttributeEvent
                      | HttpSessionEvent
                      | HttpSessionBindingEvent
                      | String ->
                          node [ load_next_idx () ;
-                                meth_createInstance ])
+                                meth_createInstance ]
+                     | Unit_value ->
+                         field_Value_UNIT)
                    func_params);
               (if fun_impl_closed then
                 leaf []
@@ -421,7 +447,7 @@ let compile kind mod_kind base_class_name signature =
     else
       infos.parent, [] in
   let fields =
-    if infos.listener then
+    if infos.filter_or_listener then
       []
     else
       [ { Field.flags = [`Private];

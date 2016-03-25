@@ -231,13 +231,15 @@ let mk_scripting f =
 let mk_servlet f =
   "-servlet", Arg.Symbol (["generic";
                            "http";
+                           "filter";
                            "context-listener";
                            "context-attribute-listener";
                            "session-listener";
                            "session-activation-listener";
                            "session-attribute-listener";
                            "session-binding-listener";
-                           "session-id-listener"], f), " Compile as a servlet (passed file is web.xml)"
+                           "session-id-listener"], f),
+  " Compile as a servlet"
 ;;
 
 let mk_shared f =

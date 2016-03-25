@@ -141,6 +141,23 @@ module Default_HTTP = struct
 end
 
 
+(* Filters *)
+
+type filter_config = javax'servlet'FilterConfig java_instance
+
+type filter_chain = javax'servlet'FilterChain java_instance
+
+let do_filter chain req resp =
+  Java.call "javax.servlet.FilterChain.doFilter(javax.servlet.ServletRequest,javax.servlet.ServletResponse)"
+    chain req resp
+
+module type Filter = sig
+  val init : filter_config -> unit
+  val do_filter : request -> response -> filter_chain -> unit
+  val destroy : unit -> unit
+end
+
+
 (* Listeners *)
 
 type servlet_context_event = javax'servlet'ServletContextEvent java_instance

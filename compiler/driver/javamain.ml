@@ -101,6 +101,7 @@ module Options = Java_args.Make_comp_options (struct
     let k = match k with
     | "generic"                     -> Jclflags.Generic
     | "http"                        -> Jclflags.Http
+    | "filter"                      -> Jclflags.Filter
     | "context-listener"            -> Jclflags.Context_listener
     | "context-attribute-listener"  -> Jclflags.Context_attribute_listener
     | "session-listener"            -> Jclflags.Session_listener

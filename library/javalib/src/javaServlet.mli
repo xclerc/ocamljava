@@ -18,10 +18,10 @@
 
 (** Support for Java servlets.
 
-    In order to compile a module as either a servlet or a servlet
+    In order to compile a module as either a servlet, filter, or
     listener, it is necessary to compile the module with the
     {k -servlet {i k}} command-line switch, where {k {i k}} designates
-    the kind of servlet or servlet listener. A servlet class will be
+    the kind of servlet, filter, or listener. A servlet class will be
     generated, with the name {i pack.MImpl} (where {i M} is the name of
     the compiled module) where {i pack} can be set using the
     {k -java-package {i pack}} command-line switch.
@@ -39,6 +39,8 @@
                    {data [Generic]}}
               {row {data {k http}}
                    {data [HTTP]}}
+              {row {data {k filter}}
+                   {data [Filter]}}
               {row {data {k context-listener}}
                    {data [ServletContextListener]}}
               {row {data {k context-attribute-listener}}
@@ -161,6 +163,29 @@ module Default_HTTP : sig
   val destroy           : 'a -> http -> unit
 end
 (** Default implementation for HTTP servlets. *)
+
+
+(** {6 Filters} *)
+
+type filter_config = javax'servlet'FilterConfig java_instance
+(** Shorthand for the type of filter configurations. *)
+
+type filter_chain = javax'servlet'FilterChain java_instance
+(** Shorthand for the type of filter chains. *)
+
+val do_filter : filter_chain -> request -> response -> unit
+(** Calls {java javax.servlet.FilterChain#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse)}. *)
+
+module type Filter = sig
+  val init : filter_config -> unit
+  (** Initializes the filter. *)
+  val do_filter : request -> response -> filter_chain -> unit
+  (** [do_filter req resp chain] handles the request [req] with
+      associated response [resp], possibly forwarding call to [chain]. *)
+  val destroy : unit -> unit
+  (** Called by the servlet container when the filter is being taken out
+      of service. *)
+end
 
 
 (** {6 Listeners} *)

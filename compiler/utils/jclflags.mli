@@ -33,6 +33,8 @@ type servlet_kind =
       (** The class extends {i javax.servlet.GenericServlet}. *)
   | Http
       (** The class extends {i javax.servlet.http.HttpServlet}. *)
+  | Filter
+      (** The class extends {i javax.servlet.Filter}. *)
   | Context_listener
       (** The class extends {i javax.servlet.ServletContextListener}. *)
   | Context_attribute_listener
@@ -47,7 +49,7 @@ type servlet_kind =
       (** The class extends {i javax.servlet.http.HttpSessionBindingListener}. *)
   | Session_id_listener
       (** The class extends {i javax.servlet.http.HttpSessionIdListener}. *)
-(** The type of servlet (or listener) kind. *)
+(** The type of servlet (or filter/listener) kind. *)
 
 val additional_classes : string list ref
 (** Additional classes to add to produced jar file. *)

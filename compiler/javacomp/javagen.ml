@@ -211,6 +211,7 @@ let compile_implementation prefixname ppf (size, lam) =
           match kind with
           | Jclflags.Generic                     -> "Generic"
           | Jclflags.Http                        -> "HTTP"
+          | Jclflags.Filter                      -> "Filter"
           | Jclflags.Context_listener            -> "ServletContextListener"
           | Jclflags.Context_attribute_listener  -> "ServletContextAttributeListener"
           | Jclflags.Session_listener            -> "HTTPSessionListener"

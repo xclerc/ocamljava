@@ -25,6 +25,7 @@ type applet_kind =
 type servlet_kind =
   | Generic
   | Http
+  | Filter
   | Context_listener
   | Context_attribute_listener
   | Session_listener
