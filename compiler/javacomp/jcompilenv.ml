@@ -286,14 +286,15 @@ let check_signature module_name cmi_file sign_mod sign_submod =
       else
         Env.open_pers_signature "Pervasives" env in
     let env = Env.open_pers_signature "JavaApplet" env in
+    let env = Env.open_pers_signature "JavaFX" env in
     let signature_cmi = Env.read_signature module_name cmi_file in
     let path = Longident.(Ldot ((Lident sign_mod), sign_submod)) in
-    let signature_applet = Env.lookup_modtype path env in
-    let signature_applet =
-      match signature_applet with
+    let signature_appl = Env.lookup_modtype path env in
+    let signature_appl =
+      match signature_appl with
       | _, Types.Modtype_manifest (Types.Mty_signature sign) -> sign
       | _ -> raise Not_found in
-    ignore (Includemod.signatures env signature_cmi signature_applet);
+    ignore (Includemod.signatures env signature_cmi signature_appl);
     signature_cmi
   with _ ->
     failwith (sign_mod ^ "." ^ sign_submod)

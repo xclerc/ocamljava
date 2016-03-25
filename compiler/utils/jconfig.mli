@@ -79,6 +79,9 @@ val main_class : string
 val main_applet_class : string
 (** The simple name of the main class of an applet. *)
 
+val main_javafx_application_class : string
+(** The simple name of the main class of a JavaFX application. *)
+
 val main_servlet_class : string
 (** The simple name of the main class of a servlet. *)
 

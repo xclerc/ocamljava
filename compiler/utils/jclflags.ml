@@ -66,6 +66,8 @@ let java_internal_types = ref false   (* -java-internal-types *)
 
 let java_package = ref "pack"         (* -java-package ... *)
 
+let javafx_application = ref false    (* -javafx-application *)
+
 let nobuiltin = ref false             (* -nobuiltin *)
 
 let nomerge = ref false               (* -nomerge *)

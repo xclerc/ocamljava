@@ -22,6 +22,7 @@ open BaristaLibrary
 open Jcompilenv
 open Javalink_startup
 open Javalink_applet
+open Javalink_fxapplication
 open Javalink_servlet
 
 type error =
@@ -37,6 +38,7 @@ type error =
   | Unable_to_add_file of string
   | Duplicate_entry of string
   | Invalid_applet_signature of string
+  | Invalid_fx_application_signature
   | File_compiled_with_a_different_int_size of string
   | Invalid_runtime_parameter of string
 
@@ -342,6 +344,27 @@ let link ppf objfiles output_name =
     | None ->
         ()
     end;
+    (* special linking for JavaFX Applications *)
+    if !Jclflags.javafx_application then begin
+      begin match List.rev units_tolink with
+      | (last_unit, cmj_file, _) :: _ ->
+          (* the last unit should have a signature coherent with the application *)
+          let signature_cmi, approx =
+            try
+              check_fxapplication_signature last_unit cmj_file
+            with Failure _ ->
+              raise (Error Invalid_fx_application_signature) in
+          let approx = extract_fxapplication_approx signature_cmi (Array.to_list approx) in
+          (* add a class that actually inherit from javafx.application.Application *)
+          let application_name, application_class = make_fxapplication_class last_unit approx in
+          Archiveutils.add_entry
+            builder
+            (path_in_archive "" application_name Jconfig.ext_class)
+            application_class
+      | [] ->
+          raise (Error (Linking_error ("internal error in Javalink.link")))
+      end
+    end;
     (* special linking for servlets *)
     begin match !Jclflags.war with
     | Some file ->
@@ -397,9 +420,14 @@ let link ppf objfiles output_name =
       end in
     (* build manifest and add it to archive *)
     if !Jclflags.war = None then begin
+      let entry_point =
+        if !Jclflags.javafx_application then
+          !Jclflags.java_package  ^ "." ^ Jconfig.main_javafx_application_class
+        else
+          startup_name in
       let manifest =
         { Manifest.default with
-          Manifest.main_class = Some (Bytecodeutils.make_class startup_name);
+          Manifest.main_class = Some (Bytecodeutils.make_class entry_point);
           class_path = List.map UTF8.of_string class_path } in
       ArchiveBuilder.add_manifest builder manifest
     end;
@@ -620,6 +648,8 @@ let report_error ppf = function
       Format.fprintf ppf "Duplicate jar entry (%s)" name
   | Invalid_applet_signature kind ->
       Format.fprintf ppf "Invalid %s applet signature" kind
+  | Invalid_fx_application_signature ->
+      Format.fprintf ppf "Invalid JavaFX application signature"
   | File_compiled_with_a_different_int_size name ->
       Format.fprintf ppf "File %s@ has been compiled with a different int size" name
   | Invalid_runtime_parameter msg ->

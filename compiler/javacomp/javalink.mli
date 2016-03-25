@@ -53,6 +53,7 @@ type error =
   | Unable_to_add_file of string
   | Duplicate_entry of string
   | Invalid_applet_signature of string
+  | Invalid_fx_application_signature
   | File_compiled_with_a_different_int_size of string
   | Invalid_runtime_parameter of string
 

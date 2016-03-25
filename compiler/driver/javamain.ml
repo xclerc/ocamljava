@@ -148,6 +148,7 @@ module Options = Java_args.Make_comp_options (struct
     with _ ->
       raise(Arg.Bad("invalid package name " ^ s))
   let _javac s = c_compiler := Some s
+  let _javafx_application = set javafx_application
   let _jopt s = all_ccopts := s :: !all_ccopts
   let _labels = clear classic
   let _linkall = set link_everything
@@ -215,8 +216,10 @@ let main () =
     Compenv.(readenv ppf Before_args);
     Arg.parse Options.list anonymous usage;
     Compenv.(readenv ppf Before_link);
-    if (!Jclflags.applet <> None) && (!Jclflags.war <> None)
-    then Compenv.fatal "Please specify at most one of -applet, -war";
+    if ((if !Jclflags.applet <> None then 1 else 0)
+          + (if !Jclflags.war <> None then 1 else 0)
+          + (if !Jclflags.javafx_application then 1 else 0)) > 1
+    then Compenv.fatal "Please specify at most one of -applet, -javafx-application, -war";
     if List.length (List.filter (fun x -> !x)
                       [Clflags.make_package; Clflags.make_archive;
                        Clflags.shared; Clflags.compile_only]) > 1

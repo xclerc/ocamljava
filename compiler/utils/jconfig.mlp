@@ -59,6 +59,8 @@ let main_class = "ocamljavaMain"
 
 let main_applet_class = "ocamljavaApplet"
 
+let main_javafx_application_class = "ocamljavaFXApplication"
+
 let main_servlet_class = "ocamljavaServlet"
 
 let servlet_version = "%%SERVLET_VERSION%%"

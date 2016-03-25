@@ -94,7 +94,7 @@ JAVACOMP=asmcomp/debuginfo.cmo utils/jcomp.cmo \
   javacomp/bytecodegen_javaprim.cmo javacomp/bytecodegen.cmo \
   javacomp/javagen_servlet.cmo javacomp/javagen.cmo \
   javacomp/javalink_parameters.cmo javacomp/javalink_startup.cmo \
-  javacomp/javalink_applet.cmo javacomp/javalink_servlet.cmo \
+  javacomp/javalink_applet.cmo javacomp/javalink_fxapplication.cmo javacomp/javalink_servlet.cmo \
   javacomp/javalink.cmo javacomp/javalibrarian.cmo javacomp/javapackager.cmo \
   driver/java_args.cmo driver/javaerrors.cmo driver/javacompile.cmo
 

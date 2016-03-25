@@ -137,6 +137,10 @@ let mk_javac f =
   "-javac", Arg.String f, "<comp>  Use <comp> as the Java compiler"
 ;;
 
+let mk_javafx_application f =
+  "-javafx-application", Arg.Unit f, " Build a JavaFX application"
+;;
+
 let mk_jopt f =
   "-jopt", Arg.String f, "<opt>  Pass option <opt> to the Java compiler"
 ;;
@@ -409,6 +413,7 @@ module type Comp_options = sig
   val _java_internal_types : unit -> unit
   val _java_package : string -> unit
   val _javac : string -> unit
+  val _javafx_application : unit -> unit
   val _jopt : string -> unit
   val _labels : unit -> unit
   val _linkall : unit -> unit
@@ -538,6 +543,7 @@ struct
     mk_java_internal_types F._java_internal_types;
     mk_java_package F._java_package;
     mk_javac F._javac;
+    mk_javafx_application F._javafx_application;
     mk_jopt F._jopt;
     mk_labels F._labels;
     mk_linkall F._linkall;

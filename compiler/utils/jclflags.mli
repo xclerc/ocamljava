@@ -100,6 +100,9 @@ val java_internal_types : bool ref
 val java_package : string ref
 (** Package for produced class files. *)
 
+val javafx_application : bool ref
+(** Whether to link as a JavaFX application. *)
+
 val nobuiltin : bool ref
 (** Whether to ignore builtin primitives. *)
 

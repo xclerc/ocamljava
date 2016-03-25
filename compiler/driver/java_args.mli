@@ -46,6 +46,7 @@ module type Comp_options = sig
   val _java_internal_types : unit -> unit
   val _java_package : string -> unit
   val _javac : string -> unit
+  val _javafx_application : unit -> unit
   val _jopt : string -> unit
   val _labels : unit -> unit
   val _linkall : unit -> unit
