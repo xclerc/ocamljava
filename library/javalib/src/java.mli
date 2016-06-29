@@ -46,6 +46,12 @@
     {[
       open Package'java'awt
     ]}
+    A single class can be opened through a modified [open Class'classname]
+    directive ; for example, the [javax.awt.Frame] class can be opened by
+    writing:
+    {[
+      open Class'java'awt'Frame
+    ]}
     It is also possible to take advantage of opened packages in types, by
     replacing the package name with an underscore. The type of Java
     strings can thus be written [_'String java_instance].
